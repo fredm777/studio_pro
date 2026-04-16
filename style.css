@@ -116,7 +116,7 @@ body {
 
 .auth-hint {
     text-align: center;
-    font-size: 0.6875rem;
+    font-size: 0.5rem;
     color: var(--text-muted);
     margin: -1rem 0 0.8rem 0;
     font-weight: 500;
