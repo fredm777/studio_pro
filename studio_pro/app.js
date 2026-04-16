@@ -1,4 +1,4 @@
-// Studio Pro Dashboard Logic v1.5
+// Studio Pro Dashboard Logic v1.8 (ULTIMATE STABLE)
 // ==========================================
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwX9xG_snc8EmBttBBOW3M8bNOUxZojeXjfag22pGgGnb5EcfgphhJ3klR8JPv8cAObFQ/exec';
 const LIFF_ID = '2009659478-RZ3Q85ZU'; 
@@ -8,73 +8,30 @@ let allMembers = [];
 let currentUser = null;
 let registeredUsername = ''; 
 
-// ==========================================
-// Initialization
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log(">> System Init: v1.5 Starting...");
-    
-    // Step 1: Bind Listeners
-    try {
-        initEventListeners();
-        console.log(">> Step 1: Event Listeners OK");
-    } catch(e) { console.error("!! Error in initEventListeners:", e); }
-
-    // Step 2: Init Tabs
-    try {
-        initTabs();
-        console.log(">> Step 2: Tabs OK");
-    } catch(e) { console.error("!! Error in initTabs:", e); }
-
-    // Step 3: Lucide Icons
-    if (window.lucide) {
-        try {
-            lucide.createIcons();
-            console.log(">> Step 3: Lucide Icons OK");
-        } catch(e) { console.error("!! Error in Lucide:", e); }
-    }
-
-    // Step 4: Auth Check
-    if (window.location.search.includes('liffClientId')) {
-        handleLiffBindingRedirect();
-    } else {
-        checkAuth();
-    }
+    console.log(">> System Init: v1.8 Starting...");
+    try { initEventListeners(); } catch(e) { console.error("Event Init Error:", e); }
+    try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
+    if (window.lucide) { lucide.createIcons(); }
+    if (window.location.search.includes('liffClientId')) { handleLiffBindingRedirect(); } else { checkAuth(); }
 });
 
 function checkAuth() {
     const session = localStorage.getItem('studio_pro_session');
     if (session) {
-        try {
-            currentUser = JSON.parse(session);
-            console.log(">> Session Found:", currentUser.username);
-            enterApp();
-        } catch (e) {
-            localStorage.removeItem('studio_pro_session');
-            showAuth();
-        }
-    } else {
-        showAuth();
-    }
+        try { currentUser = JSON.parse(session); enterApp(); } catch (e) { showAuth(); }
+    } else { showAuth(); }
 }
 
 function enterApp() {
     document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('app').classList.remove('hidden');
     document.getElementById('displayUser').innerText = currentUser.nickname || currentUser.username;
-    
-    const lineBtn = document.getElementById('bindLineBtn');
-    const lineStatus = document.getElementById('lineStatus');
     if (currentUser.lineId) {
-        lineBtn.classList.add('hidden');
-        lineStatus.innerText = '✅ LINE';
-    } else {
-        lineBtn.classList.remove('hidden');
+        document.getElementById('bindLineBtn').classList.add('hidden');
+        document.getElementById('lineStatus').innerText = '✅ LINE';
     }
-
-    if (currentUser.level === '管理員') {
-        document.getElementById('adminTabBtn').classList.remove('hidden');
-    }
+    if (currentUser.level === '管理員') document.getElementById('adminTabBtn').classList.remove('hidden');
     fetchCustomers();
 }
 
@@ -84,187 +41,122 @@ function showAuth() {
     switchAuthStage('login');
 }
 
-window.switchAuthStage = function(stage) {
-    console.log(">> Switching to Stage:", stage);
-    document.querySelectorAll('.auth-stage').forEach(s => s.style.display = 'none');
+window.switchAuthStage = (stage) => {
+    document.querySelectorAll('.auth-stage').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
     const target = document.getElementById(`${stage}Stage`);
-    if (target) {
-        target.style.display = 'block';
-        target.classList.add('active');
-    }
+    if (target) { target.style.display = 'block'; target.classList.add('active'); }
 };
 
-// ==========================================
-// Event Bindings
-// ==========================================
-function initEventListeners() {
-    // Auth Forms
-    const lForm = document.getElementById('loginForm');
-    if (lForm) lForm.onsubmit = handleLoginForm;
-    
-    const rForm = document.getElementById('registerForm');
-    if (rForm) rForm.onsubmit = handleRegisterForm;
-    
-    const vForm = document.getElementById('verifyForm');
-    if (vForm) vForm.onsubmit = handleVerifyForm;
-
-    // Controls
-    document.getElementById('logoutBtn').onclick = logout;
-    document.getElementById('bindLineBtn').onclick = startLiffBinding;
-    document.getElementById('userInfoTrigger').onclick = openProfileModal;
-    document.getElementById('profileForm').onsubmit = handleProfileUpdateSubmit;
-
-    // Customers
-    document.getElementById('closeModal').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
-    document.getElementById('addCustomerBtn').onclick = () => openCustomerModal('新增客戶');
-    document.getElementById('customerForm').onsubmit = (e) => {
-        e.preventDefault();
-        saveCustomer();
-    };
-
-    // Members
-    document.getElementById('memberForm').onsubmit = handleMemberUpdateSubmit;
-    document.getElementById('searchInput').oninput = (e) => filterCustomers(e.target.value);
-}
-
-// ==========================================
-// Handlers (With Deep Logging)
-// ==========================================
 async function handleLoginForm(e) {
     e.preventDefault();
     console.log(">> [Login] Attempt started...");
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
-    
     Swal.fire({ title: '登入中...', didOpen: () => Swal.showLoading() });
+    
     try {
-        console.log(">> [Login] Fetching:", GAS_WEB_APP_URL);
-        const res = await fetch(GAS_WEB_APP_URL, { 
+        console.log(">> [Login] Fetching GAS URL...");
+        // v1.8 FIX: 使用 text/plain 避免 OPTIONS 預檢，確保 GAS 相容性
+        const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避開 OPTIONS 預檢
-            body: JSON.stringify({ action: 'login', username, password }) 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'login', username, password })
         });
         
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const json = await res.json();
-        console.log(">> [Login] Response:", json);
+        console.log(">> [Login] Response Received:", json);
+        
         if (json.success) {
             currentUser = json.user;
             localStorage.setItem('studio_pro_session', JSON.stringify(currentUser));
             enterApp();
             Swal.close();
         } else {
-            Swal.fire('登入失敗', json.error, 'error');
+            Swal.fire('失敗', json.error || '帳號密碼錯誤', 'error');
         }
     } catch (err) {
         console.error("!! [Login] Network Error:", err);
-        Swal.fire('連線錯誤', '請確認網路狀態或 GAS 部署設定 (CORS)', 'error');
+        Swal.fire('連線失敗', '系統偵測到連線被攔截。請確認 GAS 權限已設為「所有人 (Anyone)」。\n\n錯誤資訊: ' + err.message, 'error');
     }
 }
 
 async function handleRegisterForm(e) {
     e.preventDefault();
-    console.log(">> [Register] Attempt started...");
     registeredUsername = document.getElementById('regUser').value;
     const password = document.getElementById('regPass').value;
     const nickname = document.getElementById('regNick').value;
     const email = document.getElementById('regEmail').value;
-
-    Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: '註冊中...', didOpen: () => Swal.showLoading() });
     try {
-        console.log(">> [Register] Fetching:", GAS_WEB_APP_URL);
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'register', username: registeredUsername, password, nickname, email })
         });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const json = await res.json();
-        console.log(">> [Register] Response:", json);
         if (json.success) {
-            Swal.fire('註冊成功', '請至信箱收取驗證碼', 'success');
+            Swal.fire('成功', '請至信箱收取驗證碼', 'success');
             switchAuthStage('verify');
-        } else {
-            Swal.fire('失敗', json.error, 'error');
-        }
-    } catch (err) {
-        console.error("!! [Register] Network Error:", err);
-        Swal.fire('錯誤', '無法連接伺服器', 'error');
-    }
+        } else { Swal.fire('失敗', json.error, 'error'); }
+    } catch (err) { Swal.fire('錯誤', '無法連線至系統', 'error'); }
 }
 
 async function handleVerifyForm(e) {
     e.preventDefault();
-    console.log(">> [Verify] Attempt started...");
     const code = document.getElementById('vCodeInput').value;
     Swal.fire({ title: '驗證中...', didOpen: () => Swal.showLoading() });
     try {
-        console.log(">> [Verify] Fetching:", GAS_WEB_APP_URL);
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'verify_code', username: registeredUsername, code })
         });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const json = await res.json();
-        console.log(">> [Verify] Response:", json);
-        if (json.success) {
-            Swal.fire('驗證成功', '請重新登入系統', 'success');
-            switchAuthStage('login');
-        } else {
-            Swal.fire('失敗', json.error, 'error');
-        }
-    } catch (err) {
-        Swal.fire('錯誤', '驗證失敗', 'error');
-    }
+        if (json.success) { Swal.fire('驗證成功', '請重新登入', 'success'); switchAuthStage('login'); }
+        else { Swal.fire('錯誤', json.error, 'error'); }
+    } catch (err) { Swal.fire('失敗', '驗證失敗', 'error'); }
 }
 
-// Profiling
-function openProfileModal() {
-    document.getElementById('profileModal').classList.add('active');
-    document.getElementById('profUser').value = currentUser.username;
-    document.getElementById('profNick').value = currentUser.nickname;
-    document.getElementById('profEmail').value = currentUser.email;
-}
-window.closeProfileModal = () => document.getElementById('profileModal').classList.remove('active');
-
-async function handleProfileUpdateSubmit(e) {
-    e.preventDefault();
-    const payload = {
-        action: 'update_profile',
-        username: currentUser.username,
-        nickname: document.getElementById('profNick').value,
-        email: document.getElementById('profEmail').value,
-        phone: document.getElementById('profPhone').value
-    };
-    try {
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const json = await res.json();
-        if (json.success) {
-            currentUser = json.user;
-            localStorage.setItem('studio_pro_session', JSON.stringify(currentUser));
-            document.getElementById('displayUser').innerText = currentUser.nickname;
-            Swal.fire('更新成功', '', 'success');
-            closeProfileModal();
-        }
-    } catch (err) { Swal.fire('錯誤', '更新失敗', 'error'); }
+// ... 剩餘 UI 輔助函數保持不變 ...
+function initEventListeners() {
+    document.getElementById('loginForm').onsubmit = handleLoginForm;
+    document.getElementById('registerForm').onsubmit = handleRegisterForm;
+    document.getElementById('verifyForm').onsubmit = handleVerifyForm;
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('bindLineBtn').onclick = startLiffBinding;
+    document.getElementById('addCustomerBtn').onclick = () => openCustomerModal('新增客戶');
+    document.getElementById('customerForm').onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
+    document.getElementById('userInfoTrigger').onclick = openProfileModal;
+    document.getElementById('profileForm').onsubmit = handleProfileUpdateSubmit;
+    document.getElementById('memberForm').onsubmit = handleMemberUpdateSubmit;
+    document.getElementById('searchInput').oninput = (e) => filterCustomers(e.target.value);
+    document.getElementById('closeModal').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
 }
 
-// Customers
+function initTabs() {
+    document.querySelectorAll('.tab-link').forEach(t => {
+        t.onclick = () => {
+            const tabId = t.dataset.tab;
+            document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if (tabId === 'admin') fetchMembers();
+        };
+    });
+}
+
 async function fetchCustomers() {
     const loading = document.getElementById('tableLoading');
     if (loading) loading.style.display = 'block';
     try {
         const res = await fetch(`${GAS_WEB_APP_URL}?action=get_customers`);
         const json = await res.json();
-        if (json.success) {
-            allCustomers = json.data;
-            renderCustomers(allCustomers);
-        }
+        if (json.success) { allCustomers = json.data; renderCustomers(allCustomers); }
     } catch (err) { console.error(err); }
 }
 
@@ -283,7 +175,7 @@ function renderCustomers(data) {
 }
 
 function openCustomerModal(title, data = null) {
-    if (currentUser.level === '訪客') return Swal.fire('權限不足', '訪客僅供檢視', 'info');
+    if (currentUser.level === '訪客') return Swal.fire('提示', '訪客無法編輯', 'info');
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalOverlay').classList.add('active');
     document.getElementById('customerForm').reset();
@@ -297,43 +189,37 @@ function openCustomerModal(title, data = null) {
 }
 
 async function saveCustomer() {
-    const rowIndex = document.getElementById('rowIndex').value;
-    const payload = {
-        action: rowIndex ? 'update_customer' : 'add_customer',
-        rowIndex: rowIndex ? parseInt(rowIndex) : null,
+    const rIndex = document.getElementById('rowIndex').value;
+    const body = {
+        action: rIndex ? 'update_customer' : 'add_customer',
+        rowIndex: rIndex ? parseInt(rIndex) : null,
         companyName: document.getElementById('companyName').value,
         taxId: document.getElementById('taxId').value,
         contact: document.getElementById('contact').value,
         email: document.getElementById('email').value
     };
     try {
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const json = await res.json();
-        if (json.success) {
-            Swal.fire('完成', '', 'success');
-            document.getElementById('modalOverlay').classList.remove('active');
-            fetchCustomers();
-        }
-    } catch (err) { Swal.fire('錯誤', '連線失敗', 'error'); }
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+        if ((await res.json()).success) { Swal.fire('完成', '', 'success'); document.getElementById('modalOverlay').classList.remove('active'); fetchCustomers(); }
+    } catch (e) { Swal.fire('錯誤', '儲存失敗', 'error'); }
 }
 
-// Admin
 async function fetchMembers() {
     const tbody = document.getElementById('memberTableBody');
     if (!tbody) return;
     try {
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'get_all_members', username: currentUser.username }) });
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all_members', username: currentUser.username }) });
         const json = await res.json();
         if (json.success) {
             allMembers = json.data;
             tbody.innerHTML = '';
             allMembers.forEach(m => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${m.username}</td><td>${m.nickname}</td><td>${m.level}</td><td>${m.email}</td><td><button class="primary-btn" onclick="openMemberModal(${m.rowIndex})">改</button></td>`;
+                tr.innerHTML = `<td>${m.username}</td><td>${m.nickname}</td><td>${m.level}</td><td>${m.email}</td><td><button class="primary-btn" style="width:auto; padding:4px 12px;" onclick="openMemberModal(${m.rowIndex})">設定</button></td>`;
                 tbody.appendChild(tr);
             });
         }
-    } catch (err) { console.error(err); }
+    } catch (e) { console.error(e); }
 }
 
 window.openMemberModal = (idx) => {
@@ -348,26 +234,34 @@ window.closeMemberModal = () => document.getElementById('memberModal').classList
 
 async function handleMemberUpdateSubmit(e) {
     e.preventDefault();
-    const payload = { action: 'update_member_status', adminUser: currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
+    const body = { action: 'update_member_status', adminUser: currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
     try {
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         if ((await res.json()).success) { Swal.fire('完成', '', 'success'); closeMemberModal(); fetchMembers(); }
     } catch (e) { Swal.fire('失敗', '', 'error'); }
 }
 
-// Helpers
-function initTabs() {
-    document.querySelectorAll('.tab-link').forEach(t => {
-        t.onclick = () => {
-            const tabId = t.dataset.tab;
-            document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
-            t.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            const targetContent = document.getElementById(tabId);
-            if (targetContent) targetContent.classList.add('active');
-            if (tabId === 'admin') fetchMembers();
-        };
-    });
+function openProfileModal() {
+    document.getElementById('profileModal').classList.add('active');
+    document.getElementById('profUser').value = currentUser.username;
+    document.getElementById('profNick').value = currentUser.nickname;
+    document.getElementById('profEmail').value = currentUser.email;
+}
+window.closeProfileModal = () => document.getElementById('profileModal').classList.remove('active');
+
+async function handleProfileUpdateSubmit(e) {
+    e.preventDefault();
+    const body = { action: 'update_profile', username: currentUser.username, nickname: document.getElementById('profNick').value, email: document.getElementById('profEmail').value, phone: document.getElementById('profPhone').value };
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+        const json = await res.json();
+        if (json.success) { currentUser = json.user; localStorage.setItem('studio_pro_session', JSON.stringify(currentUser)); document.getElementById('displayUser').innerText = currentUser.nickname; Swal.fire('完成', '', 'success'); closeProfileModal(); }
+    } catch (e) { Swal.fire('失敗', '', 'error'); }
+}
+
+function filterCustomers(val) {
+    const filtered = allCustomers.filter(c => c.companyName.includes(val) || c.taxId.includes(val) || (c.nickname && c.nickname.includes(val)));
+    renderCustomers(filtered);
 }
 
 function logout() { localStorage.removeItem('studio_pro_session'); location.reload(); }
@@ -399,7 +293,7 @@ async function handleLiffBindingRedirect() {
 }
 
 async function bindLine(id) {
-    await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId: id }) });
+    await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId: id }) });
     currentUser.lineId = id;
     localStorage.setItem('studio_pro_session', JSON.stringify(currentUser));
     location.reload();
