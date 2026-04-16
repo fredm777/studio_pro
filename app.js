@@ -147,7 +147,21 @@ function enterApp() {
     fetchCustomers();
 }
 
-function showAuth() {
+window.switchAuthStage = (stage, clearErrors = true) => {
+    document.querySelectorAll('.auth-stage').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
+    const target = document.getElementById(`${stage}Stage`);
+    if (target) { target.style.display = 'block'; target.classList.add('active'); }
+    
+    if (clearErrors) {
+        // Clear all inline errors
+        document.querySelectorAll('.auth-error-inline, .input-error-msg').forEach(err => {
+            err.innerText = '';
+            err.classList.remove('active');
+        });
+    }
+};
+
+function showAuth(initialErrorMsg = null) {
     const authOverlay = document.getElementById('authOverlay');
     const appEl = document.getElementById('app');
     
@@ -156,20 +170,18 @@ function showAuth() {
         authOverlay.style.display = 'flex';
     }
     if (appEl) appEl.classList.add('hidden');
-    switchAuthStage('login');
-}
-
-window.switchAuthStage = (stage) => {
-    document.querySelectorAll('.auth-stage').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
-    const target = document.getElementById(`${stage}Stage`);
-    if (target) { target.style.display = 'block'; target.classList.add('active'); }
     
-    // Clear all inline errors
-    document.querySelectorAll('.auth-error-inline').forEach(err => {
-        err.innerText = '';
-        err.classList.remove('active');
-    });
-};
+    // Switch to login stage, optionally preserving errors
+    switchAuthStage('login', !initialErrorMsg);
+    
+    if (initialErrorMsg) {
+        const lineErr = document.getElementById('lineAuthError');
+        if (lineErr) {
+            lineErr.innerText = initialErrorMsg;
+            lineErr.classList.add('active');
+        }
+    }
+}
 
 async function handleLoginForm(e) {
     e.preventDefault();
@@ -276,7 +288,7 @@ async function checkAvailability(type, value) {
 
     // Simple Email Check
     if (type === 'email' && !value.includes('@')) {
-        errorEl.innerText = '⚠️ 請輸入有效的電子郵件地址';
+        errorEl.innerText = '請輸入有效的電子郵件地址';
         errorEl.classList.add('active');
         return;
     }
@@ -297,7 +309,7 @@ async function checkAvailability(type, value) {
         if (json.success) {
             const available = type === 'username' ? json.usernameAvailable : json.emailAvailable;
             if (!available) {
-                errorEl.innerText = `⚠️ 此${type === 'username' ? '帳號' : 'E-mail'}已被使用`;
+                errorEl.innerText = `此${type === 'username' ? '帳號' : 'E-mail'}已被使用`;
                 errorEl.classList.add('active');
             } else {
                 errorEl.classList.remove('active');
@@ -1114,23 +1126,13 @@ async function handleSystemLineLogin(id) {
             setTimeout(() => showNavHint('登入成功'), 600);
         } else {
             console.warn(">> Line Login Failed:", json.error);
-            if (errorEl) {
-                errorEl.innerText = "LINE 尚未綁定，請先一般登入後進行綁定";
-                errorEl.classList.add('active');
-                const options = document.getElementById('socialOptions');
-                if (options) options.style.display = 'block';
-            }
-            showAuth();
-        }
-    } catch (e) {
-        console.error(">> handleSystemLineLogin Error:", e);
-        if (errorEl) {
-            errorEl.innerText = "系統暫時無法連動 LINE 服務";
-            errorEl.classList.add('active');
+            showAuth("LINE 尚未綁定，請先一般登入後進行綁定");
             const options = document.getElementById('socialOptions');
             if (options) options.style.display = 'block';
         }
-        showAuth();
+    } catch (e) {
+        console.error(">> handleSystemLineLogin Error:", e);
+        showAuth("系統暫時無法連動 LINE 服務");
     } finally {
         setSyncStatus(false);
     }

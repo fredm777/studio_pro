@@ -314,11 +314,10 @@ input:focus, select:focus {
     top: 0;
     left: 0;
     width: 0%;
-    height: 3px;
+    height: 2px;
     background: linear-gradient(to right, #06C755, #10b981);
     z-index: 10000;
     transition: width 0.3s ease, opacity 0.4s ease;
-    box-shadow: 0 0 10px var(--primary-glow);
     opacity: 0;
 }
 
@@ -333,30 +332,7 @@ input:focus, select:focus {
     100% { filter: brightness(1); }
 }
 
-.sync-status-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    padding: 4px 10px;
-    background: #f1f5f9;
-    border-radius: 20px;
-    transition: all 0.3s;
-    opacity: 0;
-    transform: translateY(-5px);
-}
-
-.sync-status-badge.active {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.sync-status-badge i {
-    color: var(--primary);
-    animation: spin 2s linear infinite;
-}
+/* Sync Status Badge Removed */
 
 .primary-btn, .save-btn {
     width: 100%;
