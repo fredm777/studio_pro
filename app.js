@@ -43,17 +43,23 @@ function setSyncStatus(active) {
     const bar = document.getElementById('syncProgressBar');
     const badge = document.getElementById('syncBadge');
     if (active) {
-        bar.style.width = '30%';
-        bar.classList.add('active');
-        badge.classList.add('active');
+        if (bar) {
+            bar.style.width = '30%';
+            bar.classList.add('active');
+        }
+        if (badge) badge.classList.add('active');
         // Simulate progress
-        setTimeout(() => { if(bar.classList.contains('active')) bar.style.width = '70%'; }, 500);
+        setTimeout(() => { 
+            if (bar && bar.classList.contains('active')) bar.style.width = '70%'; 
+        }, 500);
     } else {
-        bar.style.width = '100%';
+        if (bar) bar.style.width = '100%';
         setTimeout(() => {
-            bar.classList.remove('active');
-            badge.classList.remove('active');
-            bar.style.width = '0%';
+            if (bar) {
+                bar.classList.remove('active');
+                bar.style.width = '0%';
+            }
+            if (badge) badge.classList.remove('active');
         }, 300);
     }
 }
