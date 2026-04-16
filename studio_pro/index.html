@@ -7,45 +7,89 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- (Auth Overlays remain same as before) -->
+    <!-- PREMIUM AUTH OVERLAY (Login/Register/Verify) -->
     <div id="authOverlay">
         <div class="auth-card">
             <!-- Stage: Login -->
             <div id="loginStage" class="auth-stage active">
-                <div class="auth-header"><div class="logo-big">S</div><h2>歡迎回來</h2><p>請輸入您的帳號密碼登入</p></div>
+                <div class="auth-header">
+                    <div class="logo-big" style="width: auto; padding: 0 1.5rem; margin-inline: auto;">Studio Pro</div>
+                    <h2>歡迎回來</h2>
+                    <p>請輸入您的帳號密碼登入系統</p>
+                </div>
                 <form id="loginForm">
-                    <div class="form-group"><label>帳號</label><input type="text" id="loginUser" required></div>
-                    <div class="form-group"><label>密碼</label><input type="password" id="loginPass" required></div>
-                    <button type="submit" class="save-btn">登入系統</button>
-                    <div class="auth-footer">還沒有帳號？ <a href="#" onclick="switchAuthStage('register')">立即註冊</a></div>
+                    <div class="form-group">
+                        <label>帳號 (Username)</label>
+                        <input type="text" id="loginUser" required placeholder="您的帳號">
+                    </div>
+                    <div class="form-group">
+                        <label>密碼 (Password)</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="loginPass" required placeholder="請輸入密碼">
+                            <span class="toggle-password" onclick="togglePassword('loginPass')">
+                                <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <button type="submit" class="primary-btn">登入系統</button>
+                    <div class="auth-footer">
+                        還沒有帳號？ <a href="#" onclick="switchAuthStage('register')">立即註冊</a>
+                    </div>
                 </form>
             </div>
-            <!-- Stage: Register / Verify omitted for brevity but remain in script -->
-            <div id="registerStage" class="auth-stage">
-                <div class="auth-header"><h2>註冊新帳號</h2><p>加入 Studio Pro 管理系統</p></div>
+
+            <!-- Stage: Register -->
+            <div id="registerStage" class="auth-stage" style="display: none;">
+                <div class="auth-header">
+                    <h2>註冊帳號</h2>
+                    <p>建立您的 Studio Pro 會員</p>
+                </div>
                 <form id="registerForm">
-                    <div class="form-group"><label>帳號</label><input type="text" id="regUser" required></div>
-                    <div class="form-group"><label>密碼</label><input type="password" id="regPass" required></div>
-                    <div class="form-group"><label>暱稱</label><input type="text" id="regNick" required></div>
-                    <div class="form-group"><label>電子信箱</label><input type="email" id="regEmail" required></div>
-                    <button type="submit" class="save-btn">註冊帳號</button>
-                    <div class="auth-footer">已有帳號？ <a href="#" onclick="switchAuthStage('login')">返回登入</a></div>
+                    <div class="form-row" style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1;"><label>帳號</label><input type="text" id="regUser" required></div>
+                        <div class="form-group" style="flex:1;"><label>暱稱</label><input type="text" id="regNick" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label>密碼</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="regPass" required>
+                            <span class="toggle-password" onclick="togglePassword('regPass')">
+                                <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>電子信箱</label><input type="email" id="regEmail" required placeholder="用於驗證"></div>
+                    <button type="submit" class="primary-btn">確認註冊</button>
+                    <div class="auth-footer">
+                        已有帳號？ <a href="#" onclick="switchAuthStage('login')">返回登入</a>
+                    </div>
                 </form>
             </div>
-            <div id="verifyStage" class="auth-stage">
-                <div class="auth-header"><h2>電子信箱驗證</h2><p>請輸入 6 位數驗證碼</p></div>
+
+            <!-- Stage: Verify -->
+            <div id="verifyStage" class="auth-stage" style="display: none;">
+                <div class="auth-header">
+                    <h2>驗證您的信箱</h2>
+                    <p>請輸入寄送至您信箱的 6 位數代碼</p>
+                </div>
                 <form id="verifyForm">
-                    <div class="form-group"><input type="text" id="vCodeInput" required maxlength="6" style="text-align:center; font-size:1.5rem;"></div>
-                    <button type="submit" class="save-btn">完成驗證</button>
+                    <div class="form-group">
+                        <input type="text" id="vCodeInput" required maxlength="6" style="text-align:center; font-size:2rem; letter-spacing:0.5rem; font-weight:800; background:#f8fafc; border:none; height:80px; padding:0;">
+                    </div>
+                    <button type="submit" class="primary-btn">確認驗證</button>
+                    <div class="auth-footer">
+                        沒收到信件？ <a href="#" onclick="switchAuthStage('register')">重新嘗試</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Main App -->
+    <!-- Main App Container -->
     <div id="app" class="hidden">
         <header>
             <div class="header-content">
@@ -65,40 +109,31 @@
             <button id="adminTabBtn" class="tab-link hidden" data-tab="admin">會員權限管理</button>
         </nav>
         <main>
-            <!-- (Customers / Admin Tabs remain same) -->
             <section id="customers" class="tab-content active">
-                <div class="section-header"><h2>客戶資料清單</h2><button id="addCustomerBtn" class="primary-btn">+ 新增客戶</button></div>
-                <div class="search-box" style="margin-bottom:1rem;"><input type="text" id="searchInput" placeholder="搜尋..." style="width:300px;"></div>
+                <div class="section-header"><h2>客戶資料清單</h2><button id="addCustomerBtn" class="primary-btn" style="width:auto;">+ 新增客戶</button></div>
+                <div class="search-box" style="margin-bottom:1rem;"><input type="text" id="searchInput" placeholder="搜尋公司、統編或聯絡人..." style="width:300px;"></div>
                 <div class="grid-container">
                     <table id="customerTable">
-                        <thead><tr><th data-col="companyName">公司名稱</th><th data-col="taxId">統編</th><th data-col="contact">聯絡人</th><th data-col="nickname">簡稱</th><th data-col="phone">電話</th><th data-col="email">Email</th><th data-col="address">地址</th><th data-col="invoiceInfo">發票</th></tr></thead>
+                        <thead><tr><th>公司名稱</th><th>統編</th><th>聯絡人</th><th>客戶簡稱</th><th>聯絡電話</th><th>電子信箱</th><th>地址</th><th>電子發票</th></tr></thead>
                         <tbody id="customerTableBody"></tbody>
                     </table>
                     <div id="tableLoading" class="loading-state">讀取中...</div>
                 </div>
             </section>
             <section id="admin" class="tab-content">
-                <div class="section-header"><h2>會員權限管理</h2></div>
-                <div class="grid-container"><table id="memberTable"><thead><tr><th>帳號</th><th>暱稱</th><th>權限</th><th>Email</th><th>狀態</th><th>管理</th></tr></thead><tbody id="memberTableBody"></tbody></table></div>
+                <div class="section-header"><h2>會員資料管理</h2></div>
+                <div class="grid-container"><table id="memberTable"><thead><tr><th>帳號</th><th>暱稱</th><th>權限等級</th><th>Email</th><th>狀態</th><th>管理</th></tr></thead><tbody id="memberTableBody"></tbody></table></div>
             </section>
         </main>
     </div>
 
-    <!-- Profile Modal (Self Service) -->
+    <!-- Modals -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header"><h3>個人資料設定</h3><button onclick="closeProfileModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button></div>
-            <form id="profileForm">
-                <div class="form-group"><label>帳號 (不可修改)</label><input type="text" id="profUser" readonly style="background:#f5f5f5;"></div>
-                <div class="form-group"><label>暱稱</label><input type="text" id="profNick" required></div>
-                <div class="form-group"><label>電子信箱</label><input type="email" id="profEmail" required></div>
-                <div class="form-group"><label>手機號碼</label><input type="text" id="profPhone" placeholder="0912-345-678"></div>
-                <button type="submit" class="save-btn">儲存修改</button>
-            </form>
+            <form id="profileForm"><div class="form-group"><label>帳號 (不可修改)</label><input type="text" id="profUser" readonly style="background:#f5f5f5;"></div><div class="form-group"><label>暱稱</label><input type="text" id="profNick" required></div><div class="form-group"><label>電子信箱</label><input type="email" id="profEmail" required></div><div class="form-group"><label>手機號碼</label><input type="text" id="profPhone" placeholder="0912-345-678"></div><button type="submit" class="save-btn">儲存修改</button></form>
         </div>
     </div>
-
-    <!-- (Customer / Member Admin Modals remain same) -->
     <div id="modalOverlay" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header"><h3 id="modalTitle">資料編輯</h3><button id="closeModal" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button></div>
@@ -107,8 +142,8 @@
     </div>
     <div id="memberModal" class="modal-overlay">
         <div class="modal-card">
-            <div class="modal-header"><h3>修改會員權限</h3><button onclick="closeMemberModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button></div>
-            <form id="memberForm"><input type="hidden" id="memberTargetRow"><div class="form-group"><label>帳號</label><input type="text" id="memberUser" readonly style="background:#f5f5f5;"></div><div class="form-group"><label>權限等級</label><select id="memberLevel"><option value="一般會員">一般會員</option><option value="管理員">管理員</option><option value="訪客">訪客</option></select></div><div class="form-group"><label>狀態</label><select id="memberStatus"><option value="active">啟用</option><option value="blocked">停權</option></select></div><button type="submit" class="save-btn">更新</button></form>
+            <div class="modal-header"><h3>修改權限</h3><button onclick="closeMemberModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button></div>
+            <form id="memberForm"><input type="hidden" id="memberTargetRow"><div class="form-group"><label>帳號</label><input type="text" id="memberUser" readonly style="background:#f5f5f5;"></div><div class="form-group"><label>權限</label><select id="memberLevel"><option value="一般會員">一般會員</option><option value="管理員">管理員</option><option value="訪客">訪客</option></select></div><div class="form-group"><label>狀態</label><select id="memberStatus"><option value="active">啟用</option><option value="blocked">停權</option></select></div><button type="submit" class="save-btn">更新</button></form>
         </div>
     </div>
 
