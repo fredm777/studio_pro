@@ -435,3 +435,49 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     input, select { padding: 0.75rem; font-size: 0.9375rem; }
     .form-group { margin-bottom: 1rem; }
 }
+/* --- Premium SweetAlert2 Overrides --- */
+.swal2-popup {
+    border-radius: 24px !important;
+    padding: 2rem !important;
+    font-family: 'Inter', sans-serif !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+.swal2-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    padding-bottom: 0.5rem !important;
+    color: var(--text-dark) !important;
+}
+.swal2-html-container {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    color: var(--text-main) !important;
+}
+.swal2-confirm {
+    background-color: var(--primary) !important;
+    border-radius: 12px !important;
+    padding: 12px 28px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.2) !important;
+}
+.swal2-cancel {
+    background-color: #f1f5f9 !important;
+    color: var(--text-muted) !important;
+    border-radius: 12px !important;
+    padding: 12px 28px !important;
+    font-weight: 600 !important;
+}
+.swal2-actions {
+    gap: 0.75rem !important;
+}
+.swal2-icon {
+    border-width: 3px !important;
+    margin-top: 1rem !important;
+    margin-bottom: 2rem !important;
+}
+.swal2-success-circular-line, .swal2-success-fix, .swal2-success-line-tip, .swal2-success-line-long {
+    background-color: transparent !important;
+}
+.swal2-confirm:focus {
+    box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.3) !important;
+}

@@ -25,11 +25,26 @@ document.addEventListener('DOMContentLoaded', () => {
     try { initEventListeners(); } catch(e) { console.error("Event Init Error:", e); }
     try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
     if (window.lucide) { lucide.createIcons(); }
-    if (window.location.search.includes('liffClientId') || window.location.search.includes('code')) { 
-        handleLiffRedirect(); 
-    } else { 
-        checkAuth(); 
+    
+    // Safety check for Protocol
+    if (window.location.protocol === 'file:') {
+        Swal.fire({ title: '環境限制提醒', text: 'LIFF (LINE 登入) 不支援以本地檔案 (file://) 方式開啟。', icon: 'warning' });
     }
+
+    // New Combined Init Flow
+    const initApp = async () => {
+        const hasLiffParams = window.location.search.includes('liffClientId') || window.location.search.includes('code') || window.location.search.includes('liff.state');
+        if (hasLiffParams) {
+            await handleLiffRedirect();
+        }
+        
+        // If LIFF didn't log us in, or we are not in redirect flow, check general session
+        if (!currentUser) {
+            checkAuth();
+        }
+    };
+
+    initApp();
     initResizableTable();
 });
 
@@ -121,11 +136,11 @@ async function handleLoginForm(e) {
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
         } else {
-            Swal.fire('登入失敗', json.error || '帳號或密碼錯誤', 'error');
+            Swal.fire({ title: '登入失敗', text: json.error || '帳號或密碼錯誤', icon: 'error', confirmButtonText: '重新嘗試' });
         }
     } catch (err) {
         console.error(">> Login Error Caught:", err);
-        Swal.fire('連線失敗', '無法連接到伺服器: ' + err.toString(), 'error');
+        Swal.fire({ title: '連線失敗', text: '無法連接到伺服器: ' + err.toString(), icon: 'error', confirmButtonText: '知道了' });
     }
 }
 
@@ -153,14 +168,21 @@ async function handleRegister(e) {
         const json = JSON.parse(text);
         
         if (json.success) {
-            alert('註冊成功！若您尚未驗證，即將前往驗證畫面（或直接登入）。');
-            switchAuthStage('verify');
+            Swal.fire({ 
+                title: '歡迎加入 Studio Pro', 
+                text: '帳號建立成功！即將前往驗證畫面以開通權限。', 
+                icon: 'success', 
+                confirmButtonText: '前往驗證', 
+                confirmButtonColor: '#06C755' 
+            }).then(() => {
+                switchAuthStage('verify');
+            });
         } else { 
-            alert('註冊失敗: ' + json.error); 
+            Swal.fire({ title: '註冊失敗', text: '伺服器回報：' + json.error, icon: 'error' }); 
         }
     } catch (err) { 
         console.error(">> Register Error Caught:", err);
-        alert('註冊連線錯誤: ' + err.toString()); 
+        Swal.fire({ title: '連線錯誤', text: '無法連動註冊服務，請檢查網路狀態。', icon: 'error' }); 
     }
 }
 
@@ -185,15 +207,15 @@ async function handleVerify(e) {
         const json = JSON.parse(text);
         
         if (json.success) {
-            Swal.fire('驗證成功！', '您的帳號已開通，請登入。', 'success').then(() => {
+            Swal.fire({ title: '驗證成功！', text: '您的帳號已順利開通，歡迎登入。', icon: 'success', confirmButtonText: '前往登入' }).then(() => {
                 switchAuthStage('login');
             });
         } else {
-            Swal.fire('驗證失敗', json.error || '驗證碼無效', 'error');
+            Swal.fire({ title: '驗證失敗', text: json.error || '驗證碼無效', icon: 'error' });
         }
     } catch (err) { 
         console.error(">> Verify Error:", err);
-        Swal.fire('連線錯誤', err.message, 'error');
+        Swal.fire({ title: '連線錯誤', text: err.message, icon: 'error' });
     }
 }
 
@@ -474,17 +496,17 @@ async function saveCustomer() {
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : ''
     };
     try {
-        Swal.fire({ title: '儲存中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: '儲存中...', text: '正在將資料存入資料庫', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
         if (json.success) { 
-            Swal.fire('完成', '', 'success'); 
+            Swal.fire({ title: '保存成功', icon: 'success', timer: 1500, showConfirmButton: false }); 
             document.getElementById('modalOverlay').classList.remove('active'); 
             fetchCustomers(); 
         } else {
-            Swal.fire('錯誤', json.error || '儲存失敗', 'error');
+            Swal.fire({ title: '操作失敗', text: json.error || '資料儲存過程發生錯誤', icon: 'error' });
         }
-    } catch (e) { Swal.fire('錯誤', '連線失敗', 'error'); }
+    } catch (e) { Swal.fire({ title: '連線失敗', text: '無法連動後端系統', icon: 'error' }); }
 }
 
 async function handleForgotSubmit(e) {
@@ -498,14 +520,14 @@ async function handleForgotSubmit(e) {
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire('驗證碼已寄出', '請查看信箱並輸入新驗證碼', 'success').then(() => {
+            Swal.fire({ title: '驗證碼已寄出', text: '請查看您的信箱並輸入 6 位數驗證碼。', icon: 'success' }).then(() => {
                 registeredUsername = json.username;
                 switchAuthStage('verify');
             });
         } else {
-            Swal.fire('失敗', json.error || '找不到此 Email', 'error');
+            Swal.fire({ title: '發送失敗', text: json.error || '找不到此 Email 帳號', icon: 'error' });
         }
-    } catch (err) { Swal.fire('錯誤', err.toString(), 'error'); }
+    } catch (err) { Swal.fire({ title: '連線錯誤', text: err.toString(), icon: 'error' }); }
 }
 
 async function fetchMembers() {
@@ -556,8 +578,11 @@ async function handleMemberUpdateSubmit(e) {
     const body = { action: 'update_member_status', adminUser: currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
-        if ((await res.json()).success) { Swal.fire('完成', '', 'success'); closeMemberModal(); fetchMembers(); }
-    } catch (e) { Swal.fire('失敗', '', 'error'); }
+        if ((await res.json()).success) { 
+            Swal.fire({ title: '權限已更新', icon: 'success', timer: 1500, showConfirmButton: false }); 
+            closeMemberModal(); fetchMembers(); 
+        }
+    } catch (e) { Swal.fire({ title: '更新失敗', icon: 'error' }); }
 }
 
 function openProfileModal() {
@@ -617,12 +642,12 @@ async function handleProfileUpdateSubmit(e) {
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser)); 
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = currentUser.nickname || currentUser.username;
-            Swal.fire('完成', '個人資料已更新' + (pass1 ? '（包含密碼）' : ''), 'success'); 
+            Swal.fire({ title: '更新成功', text: '個人資料已妥善儲存' + (pass1 ? ' (含新密碼)' : ''), icon: 'success' }); 
             closeProfileModal(); 
         } else {
-            Swal.fire('失敗', json.error || '更新失敗', 'error');
+            Swal.fire({ title: '更新失敗', text: json.error || '請確認輸入資料是否正確', icon: 'error' });
         }
-    } catch (e) { Swal.fire('失敗', '連線錯誤', 'error'); }
+    } catch (e) { Swal.fire({ title: '連線失敗', text: '暫時無法連接至伺服器', icon: 'error' }); }
 }
 
 function filterCustomers(val) {
@@ -656,31 +681,51 @@ async function startLiffBinding() {
 }
 
 async function loginViaLine() {
-    await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) liff.login();
-    else { 
-        const p = await liff.getProfile(); 
-        handleSystemLineLogin(p.userId); 
+    try {
+        if (typeof liff === 'undefined') {
+            throw new Error("LINE SDK (LIFF) 未成功載入。請檢查網路連線或 index.html 的 Script 標籤。");
+        }
+        await liff.init({ liffId: LIFF_ID });
+        console.log(">> LIFF Init Success");
+        if (!liff.isLoggedIn()) {
+            liff.login();
+        } else { 
+            const p = await liff.getProfile(); 
+            handleSystemLineLogin(p.userId); 
+        }
+    } catch (e) {
+        console.error(">> LIFF Login Error:", e);
+        Swal.fire('LINE 登入錯誤', e.toString() + (window.location.protocol === 'file:' ? "\n\n(注意: LIFF 不支援本地檔案 file://)" : ""), 'error');
     }
 }
 
 async function handleLiffRedirect() {
-    await liff.init({ liffId: LIFF_ID });
-    if (liff.isLoggedIn()) {
-        const p = await liff.getProfile();
-        const session = localStorage.getItem('st_pro_session');
+    try {
+        if (typeof liff === 'undefined') return;
+        await liff.init({ liffId: LIFF_ID });
+        console.log(">> Redirect: LIFF Init Success");
         
-        if (session) {
-            // Context: Binding (User is already logged in to the system)
-            currentUser = JSON.parse(session);
-            bindLine(p.userId);
-        } else {
-            // Context: Login (User is not logged in)
-            handleSystemLineLogin(p.userId);
+        if (liff.isLoggedIn()) {
+            const p = await liff.getProfile();
+            console.log(">> Redirect: User is logged in to LINE", p.userId);
+            const session = localStorage.getItem('st_pro_session');
+            
+            if (session) {
+                // Context: Binding (User is already logged in to the system)
+                currentUser = JSON.parse(session);
+                bindLine(p.userId);
+            } else {
+                // Context: Login (User is not logged in)
+                handleSystemLineLogin(p.userId);
+            }
+            
+            const url = window.location.href.split('?')[0];
+            window.history.replaceState({}, '', url);
         }
-        
-        const url = window.location.href.split('?')[0];
-        window.history.replaceState({}, '', url);
+    } catch (e) {
+        console.error(">> Redirect Error:", e);
+        // Usually happens if origin is not allowed or ID is wrong
+        Swal.fire('LINE 導向初始化失敗', e.toString() + "\n\n請檢查 LINE Console 中的 Endpoint URL 是否與目前網址一致。", 'error');
     }
 }
 
@@ -699,16 +744,28 @@ async function handleSystemLineLogin(id) {
             enterApp();
             Swal.close();
         } else {
-            Swal.fire('登入失敗', json.error, 'warning');
+            Swal.fire({
+                title: '尚未綁定 LINE',
+                text: json.error,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '立即註冊',
+                cancelButtonText: '返回登入',
+                confirmButtonColor: '#06C755'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    switchAuthStage('register');
+                }
+            });
         }
     } catch (e) {
-        Swal.fire('連線錯誤', e.toString(), 'error');
+        Swal.fire({ title: '連線錯誤', text: '系統暫時無法連動 LINE 登入服務：' + e.toString(), icon: 'error' });
     }
 }
 
 async function bindLine(id) {
     try {
-        Swal.fire({ title: '綁定中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: '綁定中...', text: '正在將您的社會帳號與系統連動', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId: id }) });
         const json = await res.json();
         if (json.success) {
@@ -719,11 +776,11 @@ async function bindLine(id) {
                 document.getElementById('lineStatusText').style.color = '#06C755';
                 document.getElementById('bindLineBtn').style.display = 'none';
             }
-            Swal.fire('綁定成功', '您之後可以使用 LINE 快速登入！', 'success');
+            Swal.fire({ title: '綁定成功', text: '您之後可以使用 LINE 快速登入系統了！', icon: 'success' });
         } else {
-            Swal.fire('綁定失敗', '無法完成綁定，請稍後再試。', 'error');
+            Swal.fire({ title: '綁定失敗', text: '無法完成帳號連動，請稍後再試。', icon: 'error' });
         }
     } catch (e) {
-        Swal.fire('連線錯誤', e.toString(), 'error');
+        Swal.fire({ title: '連線錯誤', text: '綁定作業連線超時：' + e.toString(), icon: 'error' });
     }
 }
