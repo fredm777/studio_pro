@@ -30,7 +30,8 @@ function checkAuth() {
 function enterApp() {
     document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('app').classList.remove('hidden');
-    document.getElementById('displayUser').innerText = currentUser.nickname || currentUser.username;
+    const displayEl = document.getElementById('displayUser');
+    if (displayEl) displayEl.innerText = (currentUser.nickname || currentUser.username);
     
     if (currentUser.level === '管理員') document.getElementById('adminTabBtn').classList.remove('hidden');
     fetchCustomers();
@@ -167,6 +168,29 @@ function initEventListeners() {
     document.getElementById('searchInput').oninput = (e) => filterCustomers(e.target.value);
     document.getElementById('closeModal').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
     
+    const forgotForm = document.getElementById('forgotForm');
+    if (forgotForm) forgotForm.onsubmit = handleForgotSubmit;
+
+    const itemsInput = document.getElementById('itemsPerPageInput');
+    if (itemsInput) {
+        itemsInput.onchange = (e) => {
+            itemsPerPage = parseInt(e.target.value) || 20;
+            currentPage = 1;
+            renderCustomers();
+        };
+        itemsInput.onwheel = (e) => {
+            e.preventDefault();
+            let val = parseInt(itemsInput.value) || 20;
+            if (e.deltaY < 0) val += 5; else val -= 5;
+            if (val < 1) val = 1;
+            if (val > 200) val = 200;
+            itemsInput.value = val;
+            itemsPerPage = val;
+            currentPage = 1;
+            renderCustomers();
+        };
+    }
+
     const prevBtn = document.getElementById('prevPageBtn');
     if (prevBtn) prevBtn.onclick = () => changePage(-1);
     
@@ -278,10 +302,14 @@ function openCustomerModal(title, data = null) {
     document.getElementById('customerForm').reset();
     document.getElementById('rowIndex').value = data ? data.rowIndex : '';
     if (data) {
-        document.getElementById('companyName').value = data.companyName;
-        document.getElementById('taxId').value = data.taxId;
-        document.getElementById('contact').value = data.contact;
-        document.getElementById('email').value = data.email;
+        document.getElementById('companyName').value = data.companyName || '';
+        document.getElementById('taxId').value = data.taxId || '';
+        document.getElementById('nickname').value = data.nickname || '';
+        document.getElementById('contact').value = data.contact || '';
+        document.getElementById('phone').value = data.phone || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('address').value = data.address || '';
+        document.getElementById('invoiceInfo').checked = (data.invoiceInfo === 'v' || data.invoiceInfo === 'V');
     }
 }
 
@@ -292,13 +320,46 @@ async function saveCustomer() {
         rowIndex: rIndex ? parseInt(rIndex) : null,
         companyName: document.getElementById('companyName').value,
         taxId: document.getElementById('taxId').value,
+        nickname: document.getElementById('nickname').value,
         contact: document.getElementById('contact').value,
-        email: document.getElementById('email').value
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : ''
     };
     try {
+        Swal.fire({ title: '儲存中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
-        if ((await res.json()).success) { Swal.fire('完成', '', 'success'); document.getElementById('modalOverlay').classList.remove('active'); fetchCustomers(); }
-    } catch (e) { Swal.fire('錯誤', '儲存失敗', 'error'); }
+        const json = await res.json();
+        if (json.success) { 
+            Swal.fire('完成', '', 'success'); 
+            document.getElementById('modalOverlay').classList.remove('active'); 
+            fetchCustomers(); 
+        } else {
+            Swal.fire('錯誤', json.error || '儲存失敗', 'error');
+        }
+    } catch (e) { Swal.fire('錯誤', '連線失敗', 'error'); }
+}
+
+async function handleForgotSubmit(e) {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail').value;
+    Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'forgot_password', email })
+        });
+        const json = await res.json();
+        if (json.success) {
+            Swal.fire('驗證碼已寄出', '請查看信箱並輸入新驗證碼', 'success').then(() => {
+                registeredUsername = json.username;
+                switchAuthStage('verify');
+            });
+        } else {
+            Swal.fire('失敗', json.error || '找不到此 Email', 'error');
+        }
+    } catch (err) { Swal.fire('錯誤', err.toString(), 'error'); }
 }
 
 async function fetchMembers() {
@@ -345,6 +406,12 @@ function openProfileModal() {
     document.getElementById('profEmail').value = currentUser.email || '';
     document.getElementById('profPhone').value = currentUser.phone || '';
     
+    // Reset password fields
+    const p1 = document.getElementById('profPass1');
+    const p2 = document.getElementById('profPass2');
+    if (p1) { p1.value = ''; p1.type = 'password'; }
+    if (p2) p2.value = '';
+    
     const bindBtn = document.getElementById('bindLineBtn');
     const statusText = document.getElementById('lineStatusText');
     
@@ -362,12 +429,37 @@ window.closeProfileModal = () => document.getElementById('profileModal').classLi
 
 async function handleProfileUpdateSubmit(e) {
     e.preventDefault();
-    const body = { action: 'update_profile', username: currentUser.username, nickname: document.getElementById('profNick').value, email: document.getElementById('profEmail').value, phone: document.getElementById('profPhone').value };
+    const pass1 = document.getElementById('profPass1').value;
+    const pass2 = document.getElementById('profPass2').value;
+    
+    if (pass1 && pass1 !== pass2) {
+        return Swal.fire('錯誤', '兩次輸入的新密碼不一致', 'error');
+    }
+
+    const body = { 
+        action: 'update_profile', 
+        username: currentUser.username, 
+        nickname: document.getElementById('profNick').value, 
+        email: document.getElementById('profEmail').value, 
+        phone: document.getElementById('profPhone').value,
+        newPassword: pass1 || null
+    };
+
     try {
+        Swal.fire({ title: '更新中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
-        if (json.success) { currentUser = json.user; localStorage.setItem('st_pro_session', JSON.stringify(currentUser)); document.getElementById('displayUser').innerText = currentUser.nickname; Swal.fire('完成', '', 'success'); closeProfileModal(); }
-    } catch (e) { Swal.fire('失敗', '', 'error'); }
+        if (json.success) { 
+            currentUser = json.user; 
+            localStorage.setItem('st_pro_session', JSON.stringify(currentUser)); 
+            const displayEl = document.getElementById('displayUser');
+            if (displayEl) displayEl.innerText = currentUser.nickname || currentUser.username;
+            Swal.fire('完成', '個人資料已更新' + (pass1 ? '（包含密碼）' : ''), 'success'); 
+            closeProfileModal(); 
+        } else {
+            Swal.fire('失敗', json.error || '更新失敗', 'error');
+        }
+    } catch (e) { Swal.fire('失敗', '連線錯誤', 'error'); }
 }
 
 function filterCustomers(val) {

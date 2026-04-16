@@ -82,17 +82,13 @@ body {
 }
 
 .auth-header .logo-big {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
+    color: var(--primary);
     width: auto;
-    padding: 0.5rem 1.75rem;
     display: inline-flex;
     align-items: center; justify-content: center;
-    border-radius: 18px;
-    font-size: 1.75rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    margin-bottom: 1.25rem;
-    box-shadow: 0 8px 16px var(--primary-glow);
+    margin-bottom: 0.5rem;
 }
 
 .auth-card h2 {
@@ -210,7 +206,7 @@ header {
     display: flex;
     justify-content: center;
     position: sticky;
-    top: 0; z-index: 1000;
+    top: 0; z-index: 1100;
 }
 
 .header-content {
@@ -247,7 +243,17 @@ header {
 }
 .logout-btn:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
 
-.tabs { background: white; border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; gap: 0.5rem; justify-content: center; }
+.tabs { 
+    background: white; 
+    border-bottom: 1px solid var(--border); 
+    padding: 0 1.5rem; 
+    display: flex; 
+    gap: 0.5rem; 
+    justify-content: center;
+    position: sticky;
+    top: 65px; /* Adjust based on header height */
+    z-index: 1000;
+}
 .tab-link {
     padding: 1rem 1.5rem; border: none; background: none;
     color: var(--text-muted); font-weight: 700; font-size: 0.9375rem;
@@ -275,6 +281,9 @@ th {
     background: #f8fafc; padding: 1rem; text-align: left;
     font-size: 0.8125rem; font-weight: 700; color: var(--text-muted);
     text-transform: uppercase; border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 td { padding: 1.25rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.9375rem; }
 tbody tr:hover { background: #f9fafb; cursor: pointer; }
