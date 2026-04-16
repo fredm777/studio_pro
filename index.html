@@ -232,10 +232,10 @@
                 <div class="form-group"><label>地址</label><input id="address" style="width: 100%;"></div>
                 <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
                     <input type="checkbox" id="invoiceInfo" style="width: auto; margin:0; cursor: pointer;">
-                    <label for="invoiceInfo" style="margin: 0; cursor: pointer; color: var(--text-main);">需要開立電子發票</label>
+                    <label for="invoiceInfo" style="margin: 0; cursor: pointer; color: var(--text-main);">關網電子發票資料建立</label>
                 </div>
-                <button type="submit" class="save-btn">確認儲存</button>
-                <button type="button" id="closeModal" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消並關閉</button>
+                <button type="submit" class="save-btn">儲存</button>
+                <button type="button" id="closeModal" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
             </form>
         </div>
     </div>
@@ -243,7 +243,27 @@
     <div id="memberModal" class="modal-overlay">
         <div class="modal-card">
             <h3>調整成員級別</h3>
-            <form id="memberForm"><input type="hidden" id="memberTargetRow"><div class="form-group"><input id="memberUser" readonly></div><div class="form-group"><select id="memberLevel"><option value="一般會員">一般會員</option><option value="管理員">終端管理員</option><option value="訪客">唯讀訪客</option></select></div><div class="form-group"><select id="memberStatus"><option value="active">啟用中</option><option value="blocked">暫時停權</option></select></div><button type="submit" class="save-btn">套用變更</button><button type="button" onclick="closeMemberModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer;">取消</button></form>
+            <form id="memberForm">
+                <input type="hidden" id="memberTargetRow">
+                <div class="form-group"><input id="memberUser" readonly style="background:#f8fafc;"></div>
+                <div class="form-group">
+                    <label>權限等級</label>
+                    <select id="memberLevel">
+                        <option value="管理者">管理者 (最高權限)</option>
+                        <option value="操作人員">操作人員 (資料管理)</option>
+                        <option value="客戶">客戶 (讀取個人資料)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>帳號狀態</label>
+                    <select id="memberStatus">
+                        <option value="active">啟用中</option>
+                        <option value="blocked">暫時停權</option>
+                    </select>
+                </div>
+                <button type="submit" class="save-btn">儲存</button>
+                <button type="button" onclick="closeMemberModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
+            </form>
         </div>
     </div>
 

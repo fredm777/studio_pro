@@ -12,12 +12,21 @@ let allMembers = [];
 let currentUser = null;
 let registeredUsername = ''; 
 
+// --- Hybrid Caching Helpers ---
+function getCache(key) {
+    const cached = localStorage.getItem(`st_pro_cache_${key}`);
+    return cached ? JSON.parse(cached) : null;
+}
+function setCache(key, data) {
+    localStorage.setItem(`st_pro_cache_${key}`, JSON.stringify(data));
+}
 document.addEventListener('DOMContentLoaded', () => {
     console.log(">> System Init: v1.9 Release Starting...");
     try { initEventListeners(); } catch(e) { console.error("Event Init Error:", e); }
     try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
     if (window.lucide) { lucide.createIcons(); }
     if (window.location.search.includes('liffClientId')) { handleLiffBindingRedirect(); } else { checkAuth(); }
+    initResizableTable();
 });
 
 function checkAuth() {
@@ -36,7 +45,20 @@ function enterApp() {
     if (authOverlay) authOverlay.style.display = 'none';
     if (appEl) appEl.classList.remove('hidden');
     if (displayEl) displayEl.innerText = (currentUser.nickname || currentUser.username);
-    if (adminBtn && currentUser.level === '管理員') adminBtn.classList.remove('hidden');
+    
+    // Only '管理者' can see the Admin Tab
+    if (adminBtn) {
+        if (currentUser.level === '管理者') adminBtn.classList.remove('hidden');
+        else adminBtn.classList.add('hidden');
+    }
+    
+    // Immediate Load from Cache
+    const cachedCustomers = getCache('customers');
+    if (cachedCustomers) {
+        allCustomers = cachedCustomers;
+        currentFilteredCustomers = allCustomers;
+        renderCustomers();
+    }
     
     fetchCustomers();
 }
@@ -247,13 +269,81 @@ function initTabs() {
             
             if (tabId === 'admin') fetchMembers();
             else renderCustomers(); // reset to full list for customers
+            
+            // Re-init resizers for new tab content
+            initResizableTable();
         };
+    });
+}
+
+function initResizableTable() {
+    document.querySelectorAll('th').forEach(th => {
+        if (th.querySelector('.resizer')) return;
+        const resizer = document.createElement('div');
+        resizer.className = 'resizer';
+        th.appendChild(resizer);
+
+        let x = 0;
+        let w = 0;
+
+        const onMouseMove = (e) => {
+            const dx = e.pageX - x;
+            th.style.width = `${w + dx}px`;
+            th.style.minWidth = `${w + dx}px`; // Important for table-layout
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.body.classList.remove('resizing');
+        };
+
+        resizer.addEventListener('mousedown', (e) => {
+            x = e.pageX;
+            const styles = window.getComputedStyle(th);
+            w = parseInt(styles.width, 10);
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            document.body.classList.add('resizing');
+        });
+
+        // Double Click to Auto-Fit
+        resizer.addEventListener('dblclick', () => {
+            const colIndex = Array.from(th.parentNode.children).indexOf(th);
+            const table = th.closest('table');
+            const rows = table.querySelectorAll('tr');
+            
+            // Create a temporary span to measure text width accurately
+            const tester = document.createElement('span');
+            tester.style.visibility = 'hidden';
+            tester.style.position = 'absolute';
+            tester.style.whiteSpace = 'nowrap';
+            tester.style.font = window.getComputedStyle(th).font;
+            document.body.appendChild(tester);
+
+            let maxWidth = 0;
+            rows.forEach(row => {
+                const cell = row.children[colIndex];
+                if (cell) {
+                    tester.innerText = cell.innerText;
+                    const cellWidth = tester.offsetWidth + 32; // Include padding
+                    if (cellWidth > maxWidth) maxWidth = cellWidth;
+                }
+            });
+
+            document.body.removeChild(tester);
+            th.style.width = `${maxWidth}px`;
+            th.style.minWidth = `${maxWidth}px`;
+        });
     });
 }
 
 async function fetchCustomers() {
     const loading = document.getElementById('tableLoading');
-    if (loading) loading.style.display = 'block';
+    // Only show loading if no cache
+    if (loading && allCustomers.length === 0) loading.style.display = 'block';
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -264,12 +354,19 @@ async function fetchCustomers() {
         const text = await res.text();
         const json = JSON.parse(text);
         if (json.success) { 
-            allCustomers = json.data; 
-            currentFilteredCustomers = allCustomers;
-            currentPage = 1;
-            renderCustomers(); 
+            const hasChanged = JSON.stringify(allCustomers) !== JSON.stringify(json.data);
+            if (hasChanged) {
+                allCustomers = json.data; 
+                setCache('customers', allCustomers);
+                currentFilteredCustomers = allCustomers;
+                renderCustomers(); 
+            }
+            if (loading) loading.style.display = 'none';
         }
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+        console.error("Fetch Error:", err);
+        if (loading) loading.style.display = 'none';
+    }
 }
 
 window.changePage = (dir) => {
@@ -312,13 +409,13 @@ function renderCustomers() {
         const tr = document.createElement('tr');
         // Correct Column Order: Company, TaxId, Nickname, Contact, Phone, Email, Address, Invoice
         tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.nickname || ''}</td><td>${item.contact || ''}</td><td>${item.phone || ''}</td><td>${item.email || ''}</td><td>${item.address || ''}</td><td>${item.invoiceInfo || ''}</td>`;
-        tr.ondblclick = () => openCustomerModal('編輯', item);
+        tr.ondblclick = () => openCustomerModal('資料明細', item);
         tbody.appendChild(tr);
     });
 }
 
 function openCustomerModal(title, data = null) {
-    if (currentUser.level === '訪客') return Swal.fire('提示', '訪客無法編輯', 'info');
+    if (currentUser.level === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
     const titleEl = document.getElementById('modalTitle');
     const overlay = document.getElementById('modalOverlay');
     const form = document.getElementById('customerForm');
@@ -394,6 +491,7 @@ async function handleForgotSubmit(e) {
 }
 
 async function fetchMembers() {
+    if (currentUser.level !== '管理者') return;
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all_members', username: currentUser.username }) });
         const json = await res.json();
@@ -401,7 +499,7 @@ async function fetchMembers() {
             allMembers = json.data;
             renderMembers(allMembers);
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Fetch Members Error:", e); }
 }
 
 function renderMembers(list) {

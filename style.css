@@ -262,6 +262,9 @@ header {
     color: var(--text-muted); font-weight: 700; font-size: 0.9375rem;
     cursor: pointer; position: relative; transition: 0.2s;
 }
+.tab-link:first-child {
+    padding-left: 0; /* Align first tab text with Logo */
+}
 .tab-link.active { color: var(--primary); }
 .tab-link.active::after {
     content: ''; position: absolute; bottom: 0; left: 0; right: 0;
@@ -289,12 +292,32 @@ th {
     background: #f8fafc; padding: 1rem; text-align: left;
     font-size: 0.8125rem; font-weight: 700; color: var(--text-muted);
     text-transform: uppercase; border-bottom: 2px solid var(--border);
-    position: sticky;
-    top: 119px; /* Header(55) + SubNav(64) */
-    z-index: 10;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.resizer {
+    position: absolute;
+    top: 0; right: 0; width: 6px; height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 100;
+}
+.resizer:hover, .resizing .resizer {
+    border-right: 3px solid var(--primary);
+}
+
+body.resizing {
+    cursor: col-resize;
+    user-select: none;
+}
+
+th:first-child, td:first-child {
+    padding-left: 1.5rem; /* Align first column text with Logo & Tabs */
 }
 #admin th {
-    top: 119px;
+    /* No sticky */
 }
 
 td { padding: 1.25rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.9375rem; }
@@ -322,28 +345,34 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
    MOBILE OPTIMIZATION
    ========================================== */
 @media (max-width: 768px) {
-    header { padding: 0.5rem 1rem; }
+    header { padding: 0.5rem 1.5rem; } /* Keep horizontal padding for alignment */
+    .header-content { justify-content: space-between; gap: 0.5rem; }
     .brand h1 { font-size: 1rem; }
-    .user-info { display: none; } /* Hide user info text on mobile */
+    .user-info { display: none; }
     
-    .tabs { top: 49px; padding: 0; }
-    .tab-link { padding: 0.75rem 1rem; font-size: 0.875rem; }
-    
-    main { padding: 1rem; }
-    
-    .search-wrapper { 
-        top: 92px; 
-        flex-direction: column; 
-        align-items: flex-start !important; 
-        gap: 0.75rem; 
-        padding: 0.75rem 1rem;
+    .sub-nav-bar {
+        top: 49px; /* Mobile header height */
+        height: auto;
+        min-height: 100px;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.75rem 1.5rem;
+        gap: 0.5rem;
     }
-    #admin th { top: 92px; } /* Mobile: Header(49) + Tabs(43) */
+    
+    .tabs { height: auto; margin-bottom: 0.25rem; }
+    .tab-link { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+    .tab-link:first-child { padding-left: 0; }
+    
+    .search-wrapper { width: 100%; flex-wrap: wrap; gap: 0.5rem; }
+    #searchInput { width: 100% !important; max-width: none !important; }
     #addCustomerBtn { width: 100% !important; margin: 0; }
-    #searchInput { max-width: 100% !important; }
+    
+    main { padding: 1rem 1.5rem; } /* Align main content padding */
     
     td { padding: 0.75rem 0.5rem; font-size: 0.8125rem; }
     th { padding: 0.75rem 0.5rem; font-size: 0.75rem; }
+    th:first-child, td:first-child { padding-left: 0; } /* Matches container padding for alignment */
     
     .modal-card { padding: 1.5rem; }
     .auth-card { padding: 2rem 1.5rem; }
