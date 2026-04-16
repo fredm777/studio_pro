@@ -202,7 +202,7 @@ header {
     padding: 0.75rem 1.5rem;
     border-bottom: 1px solid var(--border);
     display: flex;
-    justify-content: center;
+    justify-content: center; /* Center the layout */
     position: sticky;
     top: 0; z-index: 1200;
 }
@@ -240,22 +240,41 @@ header {
 
 .sub-nav-bar {
     position: sticky;
-    top: 55px; /* Directly under header */
+    top: 55px;
     background: white;
     border-bottom: 1px solid var(--border);
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: 0 1.5rem;
     height: 64px;
     z-index: 1100;
 }
 
+.sub-nav-content {
+    width: 100%;
+    max-width: 1400px;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: relative; /* Base for absolute centered tabs */
+}
+
 .tabs { 
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex; 
-    gap: 0.25rem; 
+    gap: 1.25rem;
     height: 100%;
     align-items: center;
+}
+
+.search-wrapper {
+    margin-left: auto; /* Push to right */
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 .tab-link {
     padding: 1rem 1.5rem; border: none; background: none;
@@ -271,8 +290,17 @@ header {
     height: 3px; background: var(--primary); border-radius: 3px 3px 0 0;
 }
 
-main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-.tab-content { display: none; }
+main { 
+    padding: 2rem 1.5rem; 
+    display: flex;
+    justify-content: center; /* Center the table card */
+}
+
+.tab-content { 
+    display: none; 
+    width: 100%;
+    max-width: 1400px;
+}
 .tab-content.active { display: block; animation: fadeIn 0.3s; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -286,6 +314,8 @@ main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 .grid-container {
     background: white; border-radius: 16px; border: 1px solid var(--border);
     overflow: auto; box-shadow: var(--shadow-sm);
+    width: fit-content; /* Hug the content */
+    max-width: 100%;
 }
 
 th {
@@ -303,9 +333,6 @@ th {
     cursor: col-resize;
     user-select: none;
     z-index: 100;
-}
-.resizer:hover, .resizing .resizer {
-    border-right: 3px solid var(--primary);
 }
 
 body.resizing {

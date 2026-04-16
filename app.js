@@ -117,8 +117,9 @@ async function handleRegister(e) {
     e.preventDefault();
     registeredUsername = document.getElementById('regUser').value;
     const password = document.getElementById('regPass').value;
-    const nickname = document.getElementById('regNick').value;
     const email = document.getElementById('regEmail').value;
+    // Nickname defaults to username during registration
+    const nickname = registeredUsername; 
     console.log(">> handleRegister called", { username: registeredUsername, email });
     
     try {
