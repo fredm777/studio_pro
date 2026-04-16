@@ -31,6 +31,7 @@
                             <span class="toggle-password" onclick="togglePassword('loginPass')"><i data-lucide="eye"></i></span>
                         </div>
                     </div>
+                    <div id="loginMainError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0.5rem;"></div>
                     <button type="submit" class="primary-btn">登入</button>
                     <div class="auth-footer" style="margin: 1.5rem 0 0 0;">還沒有帳號？ <a href="#" onclick="switchAuthStage('register')">點此註冊</a></div>
                     
@@ -70,6 +71,7 @@
                             <span class="toggle-password" onclick="togglePassword('regPass')"><i data-lucide="eye"></i></span>
                         </div>
                     </div>
+                    <div id="registerMainError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0.5rem;"></div>
                     <button type="submit" class="primary-btn">註冊</button>
                     <div class="auth-footer">已有帳號？ <a href="#" onclick="switchAuthStage('login')">返回登入</a></div>
                 </form>
@@ -83,23 +85,25 @@
                 </div>
                 <form id="forgotForm">
                     <div class="form-group"><label>註冊 Email</label><input type="email" id="forgotEmail" required></div>
+                    <div id="forgotError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0.5rem;"></div>
                     <button type="submit" class="primary-btn">發送重設驗證碼</button>
-                    <div class="auth-footer"><a href="#" onclick="switchAuthStage('login')">返回登入</a></div>
+                    <div class="auth-footer">想起來了？ <a href="#" onclick="switchAuthStage('login')">返回登入</a></div>
                 </form>
             </div>
 
             <!-- Verify -->
             <div id="verifyStage" class="auth-stage">
-                <div class="auth-header">
+                <div class="auth-header" style="margin-bottom: 1.5rem;">
                     <div class="logo-big">Studio Pro</div>
-                    <h2>驗證身分</h2>
-                    <p>請輸入發送至信箱的 6 位數代碼</p>
+                    <p style="font-weight:700; color:var(--text-dark); font-size:0.875rem;">身分驗證</p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">請輸入發送至信箱的 6 位數代碼</p>
                 </div>
                 <form id="verifyForm">
                     <div class="form-group">
                         <input type="text" id="vCodeInput" required maxlength="6" 
                                style="text-align: center; font-size: 2.5rem; letter-spacing: 0.5rem; height: 80px;">
                     </div>
+                    <div id="verifyError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0.5rem;"></div>
                     <button type="submit" class="primary-btn">完成驗證</button>
                 </form>
             </div>
@@ -245,8 +249,7 @@
                             <input type="password" id="profPass2" placeholder="再次輸入以確認">
                         </div>
                     </div>
-                </div>
-
+                <div id="profPassError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0;"></div>
                 <button type="submit" class="save-btn">儲存</button>
                 <button type="button" onclick="closeProfileModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
             </form>
@@ -275,6 +278,7 @@
                     <input type="checkbox" id="invoiceInfo" style="width: auto; margin:0; cursor: pointer;">
                     <label for="invoiceInfo" style="margin: 0; cursor: pointer; color: var(--text-main);">關網電子發票資料建立</label>
                 </div>
+                <div id="customerError" class="auth-error-inline" style="margin-bottom: 1.5rem; margin-top: -0.5rem;"></div>
                 <button type="submit" class="save-btn">儲存</button>
                 <button type="button" id="closeModal" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
             </form>
@@ -302,6 +306,7 @@
                         <option value="blocked">暫時停權</option>
                     </select>
                 </div>
+                <div id="memberError" class="auth-error-inline" style="margin-bottom: 1.5rem; margin-top: -0.5rem;"></div>
                 <button type="submit" class="save-btn">儲存</button>
                 <button type="button" onclick="closeMemberModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
             </form>

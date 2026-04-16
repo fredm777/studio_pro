@@ -11,6 +11,7 @@ let itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 20
 let allMembers = [];
 let currentUser = null;
 let registeredUsername = ''; 
+let verifyContext = 'register'; 
 
 // --- Toast Mixin for Non-blocking Notifications ---
 const Toast = Swal.mixin({
@@ -150,6 +151,12 @@ window.switchAuthStage = (stage) => {
     document.querySelectorAll('.auth-stage').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
     const target = document.getElementById(`${stage}Stage`);
     if (target) { target.style.display = 'block'; target.classList.add('active'); }
+    
+    // Clear all inline errors
+    document.querySelectorAll('.auth-error-inline').forEach(err => {
+        err.innerText = '';
+        err.classList.remove('active');
+    });
 };
 
 async function handleLoginForm(e) {
@@ -160,6 +167,9 @@ async function handleLoginForm(e) {
     
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
+
+    const loginErr = document.getElementById('loginMainError');
+    if (loginErr) { loginErr.innerText = ''; loginErr.classList.remove('active'); }
 
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -176,11 +186,21 @@ async function handleLoginForm(e) {
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
         } else {
-            Toast.fire({ title: '登入失敗', text: json.error || '帳號或密碼錯誤', icon: 'error' });
+            if (loginErr) {
+                loginErr.innerText = json.error || '帳號或密碼錯誤';
+                loginErr.classList.add('active');
+            } else {
+                Toast.fire({ title: '登入失敗', text: json.error || '帳號或密碼錯誤', icon: 'error' });
+            }
         }
     } catch (err) {
         console.error(">> Login Error Caught:", err);
-        Toast.fire({ title: '連線失敗', text: '請檢查網路連線', icon: 'error' });
+        if (loginErr) {
+            loginErr.innerText = '連線失敗，請檢查網路';
+            loginErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '連線失敗', text: '請檢查網路連線', icon: 'error' });
+        }
     } finally {
         if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
@@ -198,6 +218,10 @@ async function handleRegister(e) {
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
     
+    // Clear error
+    const regErr = document.getElementById('registerMainError');
+    if (regErr) { regErr.innerText = ''; regErr.classList.remove('active'); }
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -210,12 +234,23 @@ async function handleRegister(e) {
         
         if (json.success) {
             Toast.fire({ title: '帳號建立成功', text: '請完成 E-mail 驗證', icon: 'success' });
+            verifyContext = 'register';
             switchAuthStage('verify');
         } else { 
-            Toast.fire({ title: '註冊失敗', text: json.error, icon: 'error' }); 
+            if (regErr) {
+                regErr.innerText = json.error || '註冊失敗';
+                regErr.classList.add('active');
+            } else {
+                Toast.fire({ title: '註冊失敗', text: json.error, icon: 'error' }); 
+            }
         }
     } catch (err) { 
-        Toast.fire({ title: '連線錯誤', icon: 'error' }); 
+        if (regErr) {
+            regErr.innerText = '連線失敗，請檢查網路';
+            regErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '連線錯誤', icon: 'error' }); 
+        }
     } finally {
         if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
@@ -260,6 +295,10 @@ async function handleVerify(e) {
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
     
+    // Clear error
+    const vErr = document.getElementById('verifyError');
+    if (vErr) { vErr.innerText = ''; vErr.classList.remove('active'); }
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -270,13 +309,37 @@ async function handleVerify(e) {
         const json = await res.json();
         
         if (json.success) {
-            Toast.fire({ title: '驗證成功', icon: 'success' });
-            switchAuthStage('login');
+            if (verifyContext === 'forgot' && json.user) {
+                currentUser = json.user;
+                localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
+                enterApp();
+                openProfileModal();
+                
+                // Show hint in red text
+                const passErr = document.getElementById('profPassError');
+                if (passErr) {
+                    passErr.innerText = '驗證成功，請直接輸入新密碼並儲存';
+                    passErr.classList.add('active');
+                }
+            } else {
+                Toast.fire({ title: '驗證成功', icon: 'success' });
+                switchAuthStage('login');
+            }
         } else {
-            Toast.fire({ title: '驗證失敗', text: json.error || '驗證碼無效', icon: 'error' });
+            if (vErr) {
+                vErr.innerText = json.error || '驗證碼無效';
+                vErr.classList.add('active');
+            } else {
+                Toast.fire({ title: '驗證失敗', text: json.error || '驗證碼無效', icon: 'error' });
+            }
         }
     } catch (err) { 
-        Toast.fire({ title: '連線錯誤', text: '請稍後再試', icon: 'error' });
+        if (vErr) {
+            vErr.innerText = '連線失敗，請稍後再試';
+            vErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '連線錯誤', text: '請稍後再試', icon: 'error' });
+        }
     } finally {
         if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
@@ -559,6 +622,10 @@ function openCustomerModal(title, data = null) {
     if (overlay) overlay.classList.add('active');
     if (form) form.reset();
     
+    // Clear error
+    const custErr = document.getElementById('customerError');
+    if (custErr) { custErr.innerText = ''; custErr.classList.remove('active'); }
+    
     const rowIdxEl = document.getElementById('rowIndex');
     if (rowIdxEl) rowIdxEl.value = data ? data.rowIndex : '';
     
@@ -593,8 +660,10 @@ async function saveCustomer() {
 
     // --- Optimistic UI Update ---
     const originalData = JSON.parse(JSON.stringify(allCustomers));
-    const modal = document.getElementById('modalOverlay');
-    if (modal) modal.classList.remove('active');
+    
+    // Clear error
+    const custErr = document.getElementById('customerError');
+    if (custErr) { custErr.innerText = ''; custErr.classList.remove('active'); }
     
     if (rIndex) {
         const idx = allCustomers.findIndex(c => c.rowIndex == rIndex);
@@ -618,6 +687,8 @@ async function saveCustomer() {
         const json = await res.json();
         if (json.success) { 
             Toast.fire({ title: '資料已安全存入', icon: 'success' }); 
+            const modal = document.getElementById('modalOverlay');
+            if (modal) modal.classList.remove('active');
             fetchCustomers(); // Refresh to get actual server state/IDs
         } else {
             throw new Error(json.error);
@@ -627,7 +698,13 @@ async function saveCustomer() {
         allCustomers = originalData;
         currentFilteredCustomers = allCustomers;
         renderCustomers();
-        Toast.fire({ title: '同步失敗', text: '資料已還原，請重新嘗試。', icon: 'error' }); 
+        
+        if (custErr) {
+            custErr.innerText = '同步失敗: ' + (e.message || '請重新嘗試');
+            custErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '同步失敗', text: '資料已還原，編號：' + (e.message || ''), icon: 'error' }); 
+        }
     } finally {
         setSyncStatus(false);
     }
@@ -641,6 +718,10 @@ async function handleForgotSubmit(e) {
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
     
+    // Clear error
+    const fErr = document.getElementById('forgotError');
+    if (fErr) { fErr.innerText = ''; fErr.classList.remove('active'); }
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -650,12 +731,24 @@ async function handleForgotSubmit(e) {
         if (json.success) {
             Toast.fire({ title: '驗證碼已寄出', text: '請查收您的電子郵件', icon: 'success' });
             registeredUsername = json.username;
+            verifyContext = 'forgot';
             switchAuthStage('verify');
         } else {
-            Toast.fire({ title: '發送失敗', text: json.error, icon: 'error' });
+            if (fErr) {
+                fErr.innerText = json.error || '發送失敗';
+                fErr.classList.add('active');
+            } else {
+                Toast.fire({ title: '發送失敗', text: json.error, icon: 'error' });
+            }
         }
-    } catch (err) { Toast.fire({ title: '連線錯誤', icon: 'error' }); }
-    finally {
+    } catch (err) { 
+        if (fErr) {
+            fErr.innerText = '連線失敗，請檢查網路';
+            fErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '連線錯誤', icon: 'error' }); 
+        }
+    } finally {
         if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
     }
@@ -701,6 +794,10 @@ window.openMemberModal = (idx) => {
     document.getElementById('memberUser').value = m.username;
     document.getElementById('memberLevel').value = m.level;
     document.getElementById('memberStatus').value = m.status;
+
+    // Clear error
+    const memErr = document.getElementById('memberError');
+    if (memErr) { memErr.innerText = ''; memErr.classList.remove('active'); }
 };
 window.closeMemberModal = () => document.getElementById('memberModal').classList.remove('active');
 
@@ -712,14 +809,33 @@ async function handleMemberUpdateSubmit(e) {
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
     
+    // Clear error
+    const memErr = document.getElementById('memberError');
+    if (memErr) { memErr.innerText = ''; memErr.classList.remove('active'); }
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
-        if ((await res.json()).success) { 
+        const json = await res.json();
+        if (json.success) { 
             Toast.fire({ title: '權限已成功更新', icon: 'success' }); 
             closeMemberModal(); 
             fetchMembers(); 
+        } else {
+            if (memErr) {
+                memErr.innerText = json.error || '更新失敗';
+                memErr.classList.add('active');
+            } else {
+                Toast.fire({ title: '更新失敗', icon: 'error' });
+            }
         }
-    } catch (e) { Toast.fire({ title: '更新失敗', icon: 'error' }); }
+    } catch (e) { 
+        if (memErr) {
+            memErr.innerText = '更新失敗，請檢查網路';
+            memErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '更新失敗', icon: 'error' }); 
+        }
+    }
     finally {
         if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
@@ -740,6 +856,13 @@ function openProfileModal() {
     const p2 = document.getElementById('profPass2');
     if (p1) { p1.value = ''; p1.type = 'password'; }
     if (p2) p2.value = '';
+    
+    // Clear error message
+    const passErr = document.getElementById('profPassError');
+    if (passErr) { 
+        passErr.innerText = ''; 
+        passErr.classList.remove('active'); 
+    }
     
     const bindBtn = document.getElementById('bindLineBtn');
     const statusText = document.getElementById('lineStatusText');
@@ -762,8 +885,21 @@ async function handleProfileUpdateSubmit(e) {
     const pass1 = document.getElementById('profPass1').value;
     const pass2 = document.getElementById('profPass2').value;
     
+    // Clear error message first
+    const passErr = document.getElementById('profPassError');
+    if (passErr) { 
+        passErr.innerText = ''; 
+        passErr.classList.remove('active'); 
+    }
+    
     if (pass1 && pass1 !== pass2) {
-        return Toast.fire('錯誤', '兩次密碼不一致', 'error');
+        if (passErr) {
+            passErr.innerText = '兩次輸入的密碼不一致';
+            passErr.classList.add('active');
+        } else {
+            Toast.fire('錯誤', '兩次密碼不一致', 'error');
+        }
+        return;
     }
 
     const body = { 
@@ -789,9 +925,21 @@ async function handleProfileUpdateSubmit(e) {
             Toast.fire({ title: '資料已更新', icon: 'success' }); 
             closeProfileModal(); 
         } else {
-            Toast.fire({ title: '更新失敗', text: json.error, icon: 'error' });
+            if (passErr) {
+                passErr.innerText = json.error || '更新失敗';
+                passErr.classList.add('active');
+            } else {
+                Toast.fire({ title: '更新失敗', text: json.error, icon: 'error' });
+            }
         }
-    } catch (e) { Toast.fire({ title: '連線失敗', icon: 'error' }); }
+    } catch (e) { 
+        if (passErr) {
+            passErr.innerText = '連線失敗，請檢查網路';
+            passErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '連線失敗', icon: 'error' }); 
+        }
+    }
     finally {
         if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
@@ -858,12 +1006,15 @@ async function loginViaLine() {
         }
     } catch (e) {
         console.error(">> LIFF Login Error:", e);
-        Swal.fire({
-            title: 'LINE 登入錯誤',
-            text: e.toString(),
-            icon: 'error',
-            confirmButtonText: '確定'
-        });
+        const errorEl = document.getElementById('lineAuthError');
+        if (errorEl) {
+            errorEl.innerText = "LINE 初始化失敗: " + e.toString();
+            errorEl.classList.add('active');
+            const options = document.getElementById('socialOptions');
+            if (options) options.style.display = 'block';
+        } else {
+            Toast.fire({ title: 'LINE 登入錯誤', text: e.toString(), icon: 'error' });
+        }
     } finally {
         if (btn) btn.classList.remove('btn-loading');
     }
@@ -894,11 +1045,13 @@ async function handleLiffRedirect() {
         }
     } catch (e) {
         console.error(">> Redirect Error:", e);
-        await Swal.fire({
-            title: 'LINE 導向初始化失敗',
-            text: e.toString() + "\n\n請檢查 LINE Console 中的 Endpoint URL 是否與目前網址一致。",
-            icon: 'error'
-        });
+        const errorEl = document.getElementById('lineAuthError');
+        if (errorEl) {
+            errorEl.innerText = "LINE 導向失敗: " + e.toString();
+            errorEl.classList.add('active');
+            const options = document.getElementById('socialOptions');
+            if (options) options.style.display = 'block';
+        }
         showAuth();
     }
 }
@@ -906,6 +1059,9 @@ async function handleLiffRedirect() {
 async function handleSystemLineLogin(id) {
     setSyncStatus(true);
     console.log(">> HandleSystemLineLogin called for:", id);
+    const errorEl = document.getElementById('lineAuthError');
+    if (errorEl) { errorEl.innerText = ''; errorEl.classList.remove('active'); }
+
     try {
         const res = await fetch(GAS_WEB_APP_URL, { 
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -924,28 +1080,22 @@ async function handleSystemLineLogin(id) {
             Toast.fire({ title: 'LINE 登入成功', icon: 'success' });
         } else {
             console.warn(">> Line Login Failed:", json.error);
-            setSyncStatus(false);
-            
-            const errorEl = document.getElementById('lineAuthError');
             if (errorEl) {
-                errorEl.innerText = "LINE 尚未綁定，請先登入後進行綁定";
+                errorEl.innerText = "LINE 尚未綁定，請先一般登入後進行綁定";
                 errorEl.classList.add('active');
-                
-                // Expand social options so the error message is visible
                 const options = document.getElementById('socialOptions');
                 if (options) options.style.display = 'block';
             }
-            
             showAuth();
         }
     } catch (e) {
         console.error(">> handleSystemLineLogin Error:", e);
-        setSyncStatus(false);
-        await Swal.fire({
-            title: '登入失敗',
-            text: '系統暫時無法連動 LINE 服務：' + e.toString(),
-            icon: 'error'
-        });
+        if (errorEl) {
+            errorEl.innerText = "系統暫時無法連動 LINE 服務";
+            errorEl.classList.add('active');
+            const options = document.getElementById('socialOptions');
+            if (options) options.style.display = 'block';
+        }
         showAuth();
     } finally {
         setSyncStatus(false);
@@ -954,6 +1104,8 @@ async function handleSystemLineLogin(id) {
 
 async function bindLine(id) {
     setSyncStatus(true);
+    const passErr = document.getElementById('profPassError');
+    if (passErr) { passErr.innerText = ''; passErr.classList.remove('active'); }
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId: id }) });
         const json = await res.json();
@@ -967,10 +1119,20 @@ async function bindLine(id) {
             }
             Toast.fire({ title: '綁定成功', text: '您可以使用 LINE 快速登入了', icon: 'success' });
         } else {
-            Toast.fire({ title: '綁定失敗', icon: 'error' });
+            if (passErr) {
+                passErr.innerText = json.error || '綁定失敗';
+                passErr.classList.add('active');
+            } else {
+                Toast.fire({ title: '綁定失敗', icon: 'error' });
+            }
         }
     } catch (e) {
-        Toast.fire({ title: '連線錯誤', icon: 'error' });
+        if (passErr) {
+            passErr.innerText = '連線錯誤，請稍後再試';
+            passErr.classList.add('active');
+        } else {
+            Toast.fire({ title: '連線錯誤', icon: 'error' });
+        }
     } finally {
         setSyncStatus(false);
     }
