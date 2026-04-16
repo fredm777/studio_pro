@@ -432,11 +432,14 @@ function logout() {
 function initTabs() {
     document.querySelectorAll('.tab-link').forEach(t => {
         t.onclick = () => {
+            const tabId = t.dataset.tab;
             document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
             t.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(t.dataset.tab).classList.add('active');
-            if (target === 'admin') fetchMembers();
+            const targetContent = document.getElementById(tabId);
+            if (targetContent) targetContent.classList.add('active');
+            
+            if (tabId === 'admin') fetchMembers();
         };
     });
 }
