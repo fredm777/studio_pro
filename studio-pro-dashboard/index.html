@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Pro Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <div class="brand">
+                    <span class="logo-icon">S</span>
+                    <h1>Studio Pro</h1>
+                </div>
+                <div id="userInfo" class="user-info">
+                    <span id="userName">載入中...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab-link active" data-tab="customers">客戶資料</button>
+            <button class="tab-link" data-tab="settings" disabled>設定 (TBD)</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Customers Tab -->
+            <section id="customers" class="tab-content active">
+                <div class="section-header">
+                    <h2>客戶管理</h2>
+                    <button id="addCustomerBtn" class="primary-btn">+ 新增客戶</button>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜尋公司、統編或聯絡人...">
+                </div>
+
+                <div id="customerList" class="customer-grid">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <span>讀取客戶資料中...</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer / Status Bar -->
+        <footer>
+            <p>&copy; 2026 Studio Pro. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Modals (Hidden by default) -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">新增客戶</h3>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            <form id="customerForm">
+                <input type="hidden" id="rowIndex">
+                <div class="form-group">
+                    <label>公司名稱</label>
+                    <input type="text" id="companyName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>統編</label>
+                        <input type="text" id="taxId">
+                    </div>
+                    <div class="form-group">
+                        <label>聯絡人</label>
+                        <input type="text" id="contact">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>客戶簡稱</label>
+                    <input type="text" id="nickname">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>聯絡電話</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label>電子信箱</label>
+                        <input type="email" id="email">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>地址</label>
+                    <input type="text" id="address">
+                </div>
+                <div class="form-group">
+                    <label>電子發票資訊</label>
+                    <input type="text" id="invoiceInfo">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">儲存資料</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
