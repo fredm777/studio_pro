@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css?v=1.5">
+    <link rel="stylesheet" href="style.css?v=1.6">
 </head>
 <body>
     <div id="authOverlay">
@@ -16,26 +16,31 @@
             <!-- Login -->
             <div id="loginStage" class="auth-stage active">
                 <div class="auth-header">
-                    <div class="logo-big" style="width: auto; padding: 0 1.5rem; margin-inline: auto;">Studio Pro</div>
+                    <div class="logo-big">Studio Pro</div>
                     <h2>歡迎回來</h2>
                     <p>請登入您的帳號</p>
                 </div>
                 <form id="loginForm">
-                    <div class="form-group"><label>帳號</label><input type="text" id="loginUser" required></div>
+                    <div class="form-group"><label>帳號 (Username)</label><input type="text" id="loginUser" required></div>
                     <div class="form-group">
-                        <label>密碼</label>
+                        <label>密碼 (Password)</label>
                         <div class="password-wrapper">
                             <input type="password" id="loginPass" required>
-                            <span class="toggle-password" onclick="togglePassword('loginPass')"><i data-lucide="eye"></i></span>
+                            <span class="toggle-password" onclick="togglePassword('loginPass')">👁️</span>
                         </div>
                     </div>
                     <button type="submit" class="primary-btn">登入系統</button>
-                    <div class="auth-footer">還沒有帳號？ <a href="#" onclick="switchAuthStage('register')">註冊</a></div>
+                    <div class="auth-footer">還沒有帳號？ <a href="#" onclick="switchAuthStage('register')">點此註冊</a></div>
                 </form>
             </div>
+
             <!-- Register -->
-            <div id="registerStage" class="auth-stage" style="display:none;">
-                <div class="auth-header"><h2>建立帳號</h2><p>加入 Studio Pro 會員</p></div>
+            <div id="registerStage" class="auth-stage">
+                <div class="auth-header">
+                    <div class="logo-big">Studio Pro</div>
+                    <h2>建立帳號</h2>
+                    <p>加入會員以開啟專業服務</p>
+                </div>
                 <form id="registerForm">
                     <div class="form-group"><label>帳號 (Username)</label><input type="text" id="regUser" required></div>
                     <div class="form-group"><label>暱稱 (Nickname)</label><input type="text" id="regNick" required></div>
@@ -43,72 +48,128 @@
                         <label>密碼 (Password)</label>
                         <div class="password-wrapper">
                             <input type="password" id="regPass" required>
-                            <span class="toggle-password" onclick="togglePassword('regPass')"><i data-lucide="eye"></i></span>
+                            <span class="toggle-password" onclick="togglePassword('regPass')">👁️</span>
                         </div>
                     </div>
                     <div class="form-group"><label>Email</label><input type="email" id="regEmail" required></div>
-                    <button type="submit" class="primary-btn">確認註冊</button>
-                    <div class="auth-footer">已有帳號？ <a href="#" onclick="switchAuthStage('login')">返回</a></div>
+                    <button type="submit" class="primary-btn">建立我的帳號</button>
+                    <div class="auth-footer">已有帳號？ <a href="#" onclick="switchAuthStage('login')">返回登入</a></div>
                 </form>
             </div>
+
             <!-- Verify -->
-            <div id="verifyStage" class="auth-stage" style="display:none;">
-                <div class="auth-header"><h2>完成驗證</h2><p>請輸入代碼</p></div>
+            <div id="verifyStage" class="auth-stage">
+                <div class="auth-header">
+                    <div class="logo-big">Studio Pro</div>
+                    <h2>驗證身分</h2>
+                    <p>請輸入發送至信箱的 6 位數代碼</p>
+                </div>
                 <form id="verifyForm">
-                    <div class="form-group"><input type="text" id="vCodeInput" required maxlength="6" style="text-align:center; font-size:2rem; height:80px;"></div>
-                    <button type="submit" class="primary-btn">驗證並登入</button>
+                    <div class="form-group">
+                        <input type="text" id="vCodeInput" required maxlength="6" 
+                               style="text-align: center; font-size: 2.5rem; letter-spacing: 0.5rem; height: 80px;">
+                    </div>
+                    <button type="submit" class="primary-btn">完成驗證</button>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- Dashboard View (Initially Hidden) -->
     <div id="app" class="hidden">
         <header>
             <div class="header-content">
                 <div class="brand"><span class="logo-icon">S</span><h1>Studio Pro</h1></div>
                 <div class="user-controls">
-                    <div class="user-info" id="userInfoTrigger"><span id="displayUser"></span><div id="lineStatus"></div></div>
-                    <button id="bindLineBtn" class="logout-btn" style="background:#06C755; color:white;">+ LINE</button>
-                    <button id="logoutBtn" class="logout-btn">登出</button>
+                    <div class="user-info" id="userInfoTrigger">
+                        <span id="displayUser"></span>
+                        <div id="lineStatus"></div>
+                    </div>
+                    <button id="bindLineBtn" class="logout-btn" style="background:var(--primary); color:white; border:none;">綁定 LINE</button>
+                    <button id="logoutBtn" class="logout-btn">安全登出</button>
                 </div>
             </div>
         </header>
-        <nav class="tabs"><button class="tab-link active" data-tab="customers">客戶</button><button id="adminTabBtn" class="tab-link hidden" data-tab="admin">管理</button></nav>
+
+        <nav class="tabs">
+            <button class="tab-link active" data-tab="customers">客戶管理</button>
+            <button id="adminTabBtn" class="tab-link hidden" data-tab="admin">系統管理</button>
+        </nav>
+
         <main>
             <section id="customers" class="tab-content active">
-                <div class="section-header"><h2>客戶資料</h2><button id="addCustomerBtn" class="primary-btn" style="width:auto;">新增</button></div>
-                <div class="search-box"><input type="text" id="searchInput" placeholder="搜尋..." style="width:200px;"></div>
-                <div class="grid-container"><table><thead><tr><th>公司</th><th>統編</th><th>聯絡人</th><th>簡稱</th><th>電話</th><th>Email</th><th>地址</th><th>發票</th></tr></thead><tbody id="customerTableBody"></tbody></table><div id="tableLoading">載入中...</div></div>
+                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <h2>資料庫概覽</h2>
+                    <button id="addCustomerBtn" class="primary-btn" style="width: auto; padding: 0.75rem 2rem;">+ 新增資料</button>
+                </div>
+                
+                <div style="margin-bottom:1.5rem;">
+                    <input type="text" id="searchInput" placeholder="透過公司名稱或統編搜尋..." 
+                           style="width:100%; max-width:400px; padding:0.75rem 1.25rem; border-radius:12px; border:1px solid var(--border);">
+                </div>
+
+                <div class="grid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>公司單位</th>
+                                <th>統一編號</th>
+                                <th>聯絡窗口</th>
+                                <th>內部簡稱</th>
+                                <th>電話</th>
+                                <th>Email</th>
+                                <th>寄送地址</th>
+                                <th>發票資訊</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody"></tbody>
+                    </table>
+                    <div id="tableLoading" style="padding:4rem; text-align:center; color:var(--text-muted); font-weight:600;">正在與資料庫建立連線...</div>
+                </div>
             </section>
+
             <section id="admin" class="tab-content">
-                <div class="section-header"><h2>權限管理</h2></div>
-                <div class="grid-container"><table><thead><tr><th>帳號</th><th>暱稱</th><th>級別</th><th>Email</th><th>控制</th></tr></thead><tbody id="memberTableBody"></tbody></table></div>
+                <div class="section-header"><h2>權限與密鑰管理</h2></div>
+                <div class="grid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>系統帳號</th>
+                                <th>使用者暱稱</th>
+                                <th>目前的級別</th>
+                                <th>郵件地址</th>
+                                <th>管理操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTableBody"></tbody>
+                    </table>
+                </div>
             </section>
         </main>
     </div>
 
-    <!-- Profile Modal -->
+    <!-- Modals (Profile, Customer, Member) - Keep existing logic IDs -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-card">
-            <h3>個人資料</h3>
-            <form id="profileForm"><div class="form-group"><input type="text" id="profUser" readonly></div><div class="form-group"><input type="text" id="profNick"></div><div class="form-group"><input type="email" id="profEmail"></div><div class="form-group"><input type="text" id="profPhone" placeholder="手機"></div><button type="submit" class="save-btn">更新</button><button type="button" onclick="closeProfileModal()">關閉</button></form>
-        </div>
-    </div>
-    <!-- Customer Modal -->
-    <div id="modalOverlay" class="modal-overlay">
-        <div class="modal-card">
-            <h3 id="modalTitle">編輯資料</h3>
-            <form id="customerForm"><input type="hidden" id="rowIndex"><div class="form-group"><input id="companyName" placeholder="公司"></div><div class="form-group"><input id="taxId" placeholder="統編"></div><div class="form-group"><input id="contact" placeholder="人"></div><div class="form-group"><input id="email" placeholder="Email"></div><button type="submit" class="save-btn">儲存</button><button type="button" id="closeModal">取消</button></form>
-        </div>
-    </div>
-    <!-- Member Modal -->
-    <div id="memberModal" class="modal-overlay">
-        <div class="modal-card">
-            <h3>權限設定</h3>
-            <form id="memberForm"><input type="hidden" id="memberTargetRow"><div class="form-group"><input id="memberUser" readonly></div><div class="form-group"><select id="memberLevel"><option value="一般會員">一般</option><option value="管理員">管理員</option><option value="訪客">訪客</option></select></div><div class="form-group"><select id="memberStatus"><option value="active">啟用</option><option value="blocked">停權</option></select></div><button type="submit" class="save-btn">設定</button><button type="button" onclick="closeMemberModal()">關閉</button></form>
+            <h3>修改個人資料</h3>
+            <form id="profileForm"><div class="form-group"><input type="text" id="profUser" readonly></div><div class="form-group"><input type="text" id="profNick" placeholder="暱稱"></div><div class="form-group"><input type="email" id="profEmail" placeholder="Email"></div><div class="form-group"><input type="text" id="profPhone" placeholder="手機號碼"></div><button type="submit" class="save-btn">儲存更新</button><button type="button" onclick="closeProfileModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer;">取消並關閉</button></form>
         </div>
     </div>
 
-    <script src="app.js?v=1.5"></script>
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-card">
+            <h3 id="modalTitle">資料明細</h3>
+            <form id="customerForm"><input type="hidden" id="rowIndex"><div class="form-group"><label>公司名稱</label><input id="companyName" required></div><div class="form-group"><label>統一編號</label><input id="taxId"></div><div class="form-group"><label>聯絡窗口</label><input id="contact"></div><div class="form-group"><label>Email</label><input id="email"></div><button type="submit" class="save-btn">確認儲存</button><button type="button" id="closeModal" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer;">取消</button></form>
+        </div>
+    </div>
+
+    <div id="memberModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>調整成員級別</h3>
+            <form id="memberForm"><input type="hidden" id="memberTargetRow"><div class="form-group"><input id="memberUser" readonly></div><div class="form-group"><select id="memberLevel"><option value="一般會員">一般會員</option><option value="管理員">終端管理員</option><option value="訪客">唯讀訪客</option></select></div><div class="form-group"><select id="memberStatus"><option value="active">啟用中</option><option value="blocked">暫時停權</option></select></div><button type="submit" class="save-btn">套用變更</button><button type="button" onclick="closeMemberModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer;">取消</button></form>
+        </div>
+    </div>
+
+    <script src="app.js?v=1.6"></script>
 </body>
 </html>

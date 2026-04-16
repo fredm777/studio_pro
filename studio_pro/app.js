@@ -138,10 +138,16 @@ async function handleLoginForm(e) {
     
     Swal.fire({ title: '登入中...', didOpen: () => Swal.showLoading() });
     try {
+        console.log(">> [Login] Fetching:", GAS_WEB_APP_URL);
         const res = await fetch(GAS_WEB_APP_URL, { 
-            method: 'POST', 
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 避開 OPTIONS 預檢
             body: JSON.stringify({ action: 'login', username, password }) 
         });
+        
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        
         const json = await res.json();
         console.log(">> [Login] Response:", json);
         if (json.success) {
@@ -168,10 +174,14 @@ async function handleRegisterForm(e) {
 
     Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
     try {
+        console.log(">> [Register] Fetching:", GAS_WEB_APP_URL);
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'register', username: registeredUsername, password, nickname, email })
         });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const json = await res.json();
         console.log(">> [Register] Response:", json);
         if (json.success) {
@@ -192,10 +202,14 @@ async function handleVerifyForm(e) {
     const code = document.getElementById('vCodeInput').value;
     Swal.fire({ title: '驗證中...', didOpen: () => Swal.showLoading() });
     try {
+        console.log(">> [Verify] Fetching:", GAS_WEB_APP_URL);
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'verify_code', username: registeredUsername, code })
         });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const json = await res.json();
         console.log(">> [Verify] Response:", json);
         if (json.success) {
