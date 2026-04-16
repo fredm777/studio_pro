@@ -436,6 +436,17 @@ function initEventListeners() {
         const modal = document.getElementById('modalOverlay');
         if (modal) modal.classList.remove('active');
     });
+
+    // Click outside to close modals
+    const modalOverlays = ['modalOverlay', 'profileModal', 'memberModal'];
+    modalOverlays.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.onclick = (e) => {
+                if (e.target === el) el.classList.remove('active');
+            };
+        }
+    });
     
     safeBind('forgotForm', 'onsubmit', handleForgotSubmit);
 
