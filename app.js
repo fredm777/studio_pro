@@ -125,28 +125,39 @@ function enterApp() {
 
     if (authOverlay) authOverlay.style.display = 'none';
     if (appEl) appEl.classList.remove('hidden');
-    if (displayEl) displayEl.innerText = (currentUser.nickname || currentUser.username);
+    if (!currentUser) {
+        console.error(">> enterApp Error: currentUser is NULL. Redirecting to auth...");
+        showAuth();
+        return;
+    }
     
-    // Role-based UI Gating
-    if (currentUser.level === '管理者') {
+    if (displayEl) displayEl.innerText = (currentUser.nickname || currentUser.username || "使用者");
+    
+    const userLevel = (currentUser.level || '').trim();
+    console.log(">> Normalized User Level:", userLevel);
+
+    if (userLevel === '管理者') {
         if (adminBtn) adminBtn.classList.remove('hidden');
-        if (customersBtn) customersBtn.classList.remove('hidden');
+        if (customersBtn) {
+            customersBtn.classList.remove('hidden');
+            customersBtn.click();
+        }
         if (customerActions) customerActions.style.display = 'flex';
-        // Default to customers for admin
-        if (customersBtn) customersBtn.click();
-    } else if (currentUser.level === '操作人員') {
+    } else if (userLevel === '操作人員') {
         if (adminBtn) adminBtn.classList.add('hidden');
-        if (customersBtn) customersBtn.classList.remove('hidden');
+        if (customersBtn) {
+            customersBtn.classList.remove('hidden');
+            customersBtn.click();
+        }
         if (customerActions) customerActions.style.display = 'flex';
-        // Default to customers for operator
-        if (customersBtn) customersBtn.click();
     } else {
-        // '客戶' or others
+        // '客戶' or unknown
         if (adminBtn) adminBtn.classList.add('hidden');
-        if (customersBtn) customersBtn.classList.add('hidden');
-        if (customerActions) customerActions.style.display = 'none';
-        // Switch to Projects for Customers
-        if (projectsBtn) projectsBtn.click();
+        if (customersBtn) {
+            customersBtn.classList.remove('hidden'); // allow viewing but restricted actions
+            customersBtn.click();
+        }
+        if (customerActions) customerActions.style.display = 'none'; // strictly read-only
     }
     
     // Background Load
@@ -672,7 +683,10 @@ function renderCustomers() {
 }
 
 window.openCustomerModal = (title, data = null) => {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.warn(">> openCustomerModal inhibited: currentUser is NULL");
+        return Toast.fire({ icon: 'warning', title: '請先登入' });
+    }
     if (currentUser.level === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
     const titleEl = document.getElementById('modalTitle');
     const overlay = document.getElementById('modalOverlay');
@@ -815,15 +829,28 @@ async function handleForgotSubmit(e) {
 }
 
 async function fetchMembers() {
-    if (currentUser.level !== '管理者') return;
+    if (!currentUser || (currentUser.level || '').trim() !== '管理者') {
+        console.warn(">> fetchMembers blocked: insufficient permissions or no user");
+        return;
+    }
     try {
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all_members', username: currentUser.username }) });
+        setSyncStatus(true);
+        const res = await fetch(GAS_WEB_APP_URL, { 
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ action: 'get_all_members', username: currentUser.username }) 
+        });
         const json = await res.json();
         if (json.success) {
             allMembers = json.data;
             renderMembers(allMembers);
+        } else {
+            console.error("Fetch Members Backend Error:", json.error);
         }
-    } catch (e) { console.error("Fetch Members Error:", e); }
+    } catch (e) { 
+        console.error("Fetch Members Network/Request Error:", e); 
+    } finally {
+        setSyncStatus(false);
+    }
 }
 
 function renderMembers(list) {
