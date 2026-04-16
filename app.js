@@ -700,7 +700,9 @@ window.openCustomerModal = (title, data = null) => {
         console.warn(">> openCustomerModal inhibited: currentUser is NULL");
         return Toast.fire({ icon: 'warning', title: '請先登入' });
     }
-    if (currentUser.level === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
+    const userRole = (currentUser.level || '').trim();
+    if (userRole === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
+    
     const titleEl = document.getElementById('modalTitle');
     const overlay = document.getElementById('modalOverlay');
     const form = document.getElementById('customerForm');
@@ -721,7 +723,7 @@ window.openCustomerModal = (title, data = null) => {
         if (document.getElementById('taxId')) document.getElementById('taxId').value = data.taxId || '';
         if (document.getElementById('nickname')) document.getElementById('nickname').value = data.nickname || '';
         if (document.getElementById('contact')) document.getElementById('contact').value = data.contact || '';
-        let phone = data.phone || '';
+        let phone = String(data.phone || '');
         if (phone.startsWith("'")) phone = phone.slice(1);
         if (document.getElementById('phone')) document.getElementById('phone').value = phone;
         if (document.getElementById('email')) document.getElementById('email').value = data.email || '';
@@ -954,7 +956,7 @@ function openProfileModal() {
     document.getElementById('profUser').value = currentUser.username;
     document.getElementById('profNick').value = currentUser.nickname || '';
     document.getElementById('profEmail').value = currentUser.email || '';
-    let phone = currentUser.phone || '';
+    let phone = String(currentUser.phone || '');
     if (phone.startsWith("'")) phone = phone.slice(1);
     document.getElementById('profPhone').value = phone;
     
