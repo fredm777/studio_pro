@@ -27,10 +27,19 @@ async function initLiff() {
         }
 
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) {
+        
+        // --- 新增：清理網址參數 ---
+        if (liff.isLoggedIn()) {
+            // 如果網址帶有 code 參數，表示剛登入完畢，我們把它清掉
+            if (window.location.search.includes('code=')) {
+                const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+            }
+        } else {
             liff.login();
             return;
         }
+        // -------------------------
 
         currentProfile = await liff.getProfile();
         document.getElementById('userName').innerText = currentProfile.displayName;
