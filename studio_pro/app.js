@@ -1,24 +1,32 @@
 // ==========================================
 // Configuration & State
 // ==========================================
-const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzO3QkIj-ZWXJaZyXEa5PiaM_jB-BLvEXFV6VFwa4Z1One8-VAW2k5lk-XhAk4oHmiQJQ/exec';
-const LIFF_ID = '2009659478-RZ3Q85ZU';
+const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwLbDcNaLrHrCM7cINe6NGFAEWggtTaeRSdBmk53snUYMmmZMXSwgnyN2gu5mum8Rk_dA/exec';
+const LIFF_ID = '2009659478-RZ3Q85ZU'; 
 
 let allCustomers = [];
 let allMembers = [];
 let currentUser = null;
-let registeredUsername = ''; // 用於註冊後檢查驗證碼
+let registeredUsername = ''; 
 
 // ==========================================
 // Initialization
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
-    initTabs();
-    initEventListeners();
-    initResizableColumns();
+    console.log("Studio Pro Init v1.2");
+    
+    // 初始化事件監聽
+    try { initEventListeners(); } catch(e) { console.error("Event Listeners Error:", e); }
+    
+    // 初始化分頁邏輯
+    try { initTabs(); } catch(e) { console.error("Tabs Init Error:", e); }
+    
+    // 初始化 Lucide 圖標
+    if (window.lucide) {
+        try { lucide.createIcons(); } catch(e) { console.error("Lucide Error:", e); }
+    }
 
-    if (window.lucide) lucide.createIcons();
-
+    // 檢查認證狀態
     if (window.location.search.includes('liffClientId')) {
         handleLiffBindingRedirect();
     } else {
@@ -29,18 +37,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 function checkAuth() {
     const session = localStorage.getItem('studio_pro_session');
     if (session) {
-        currentUser = JSON.parse(session);
-        enterApp();
+        try {
+            currentUser = JSON.parse(session);
+            enterApp();
+        } catch (e) {
+            localStorage.removeItem('studio_pro_session');
+            showAuth();
+        }
     } else {
         showAuth();
     }
 }
 
 function enterApp() {
-    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('app').classList.remove('hidden');
     document.getElementById('displayUser').innerText = `${currentUser.nickname} (${currentUser.level})`;
-
+    
     const lineBtn = document.getElementById('bindLineBtn');
     const lineStatus = document.getElementById('lineStatus');
     if (currentUser.lineId) {
@@ -59,7 +72,7 @@ function enterApp() {
 }
 
 function showAuth() {
-    document.getElementById('authOverlay').classList.remove('hidden');
+    document.getElementById('authOverlay').style.display = 'flex';
     document.getElementById('app').classList.add('hidden');
     switchAuthStage('login');
 }
@@ -76,11 +89,11 @@ function switchAuthStage(stage) {
 // ==========================================
 // Auth Helpers
 // ==========================================
-window.togglePassword = function (inputId) {
+window.togglePassword = function(inputId) {
     const input = document.getElementById(inputId);
     const iconContainer = input.nextElementSibling;
     const icon = iconContainer.querySelector('i');
-
+    
     if (input.type === 'password') {
         input.type = 'text';
         icon.setAttribute('data-lucide', 'eye-off');
@@ -92,9 +105,15 @@ window.togglePassword = function (inputId) {
 };
 
 function initEventListeners() {
-    document.getElementById('loginForm').addEventListener('submit', handleLoginForm);
-    document.getElementById('registerForm').addEventListener('submit', handleRegisterForm);
-    document.getElementById('verifyForm').addEventListener('submit', handleVerifyForm);
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) loginForm.addEventListener('submit', handleLoginForm);
+    
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) registerForm.addEventListener('submit', handleRegisterForm);
+    
+    const verifyForm = document.getElementById('verifyForm');
+    if (verifyForm) verifyForm.addEventListener('submit', handleVerifyForm);
+    
     document.getElementById('logoutBtn').addEventListener('click', logout);
     document.getElementById('bindLineBtn').addEventListener('click', startLiffBinding);
     document.getElementById('userInfoTrigger').addEventListener('click', openProfileModal);
@@ -106,7 +125,10 @@ function initEventListeners() {
         e.preventDefault();
         saveCustomer();
     });
-    document.getElementById('memberForm').addEventListener('submit', handleMemberUpdateSubmit);
+    
+    const mForm = document.getElementById('memberForm');
+    if (mForm) mForm.addEventListener('submit', handleMemberUpdateSubmit);
+    
     document.getElementById('searchInput').addEventListener('input', (e) => filterCustomers(e.target.value));
 }
 
@@ -119,9 +141,9 @@ async function handleLoginForm(e) {
     const password = document.getElementById('loginPass').value;
     Swal.fire({ title: '登入中...', didOpen: () => Swal.showLoading() });
     try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'login', username, password })
+        const res = await fetch(GAS_WEB_APP_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'login', username, password }) 
         });
         const json = await res.json();
         if (json.success) {
@@ -144,7 +166,7 @@ async function handleRegisterForm(e) {
     const nickname = document.getElementById('regNick').value;
     const email = document.getElementById('regEmail').value;
 
-    Swal.fire({ title: '註冊中...', didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: '正在處理註冊...', didOpen: () => Swal.showLoading() });
 
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -153,13 +175,13 @@ async function handleRegisterForm(e) {
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire('註冊成功', '驗證碼已寄送到您的信箱', 'success');
+            Swal.fire('註冊提交成功', '請檢查您的電子信箱獲取驗證碼', 'success');
             switchAuthStage('verify');
         } else {
             Swal.fire('註冊失敗', json.error, 'error');
         }
     } catch (err) {
-        Swal.fire('錯誤', '註冊暫時無法使用', 'error');
+        Swal.fire('錯誤', '網路連線異常，請確認伺服器狀態', 'error');
     }
 }
 
@@ -174,13 +196,13 @@ async function handleVerifyForm(e) {
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire('驗證成功', '請使用您的帳號進行登入', 'success');
+            Swal.fire('驗證成功', '您的帳號已啟用，請重新登入', 'success');
             switchAuthStage('login');
         } else {
             Swal.fire('驗證失敗', json.error, 'error');
         }
     } catch (err) {
-        Swal.fire('錯誤', '驗證暫時無法使用', 'error');
+        Swal.fire('錯誤', '伺服器連線失敗', 'error');
     }
 }
 
@@ -196,7 +218,7 @@ function openProfileModal() {
     document.getElementById('profPhone').value = currentUser.phone || '';
 }
 
-window.closeProfileModal = function () {
+window.closeProfileModal = function() {
     document.getElementById('profileModal').classList.remove('active');
 };
 
@@ -220,7 +242,7 @@ async function handleProfileUpdateSubmit(e) {
             Swal.fire('更新成功', '', 'success');
             closeProfileModal();
         } else { Swal.fire('更新失敗', json.error, 'error'); }
-    } catch (err) { Swal.fire('錯誤', '網路異常', 'error'); }
+    } catch (err) { Swal.fire('錯誤', '系統異常', 'error'); }
 }
 
 // ==========================================
@@ -228,8 +250,10 @@ async function handleProfileUpdateSubmit(e) {
 // ==========================================
 async function fetchCustomers() {
     const loading = document.getElementById('tableLoading');
-    loading.style.display = 'block';
-    loading.innerText = '讀取中...';
+    if (loading) {
+        loading.style.display = 'block';
+        loading.innerText = '正在從伺服器讀取客戶資料...';
+    }
     try {
         const res = await fetch(`${GAS_WEB_APP_URL}?action=get_customers`);
         const json = await res.json();
@@ -238,14 +262,16 @@ async function fetchCustomers() {
             renderCustomers(allCustomers);
         }
     } catch (err) {
-        loading.innerHTML = '<span style="color:red;">載入失敗，請檢查網路</span>';
+        if (loading) loading.innerHTML = '<span style="color:red;">資料讀取失敗</span>';
     }
 }
 
 function renderCustomers(data) {
     const tbody = document.getElementById('customerTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    document.getElementById('tableLoading').style.display = 'none';
+    const loading = document.getElementById('tableLoading');
+    if (loading) loading.style.display = 'none';
     data.forEach(item => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -265,7 +291,7 @@ function renderCustomers(data) {
 
 function openCustomerModal(title, data = null) {
     if (currentUser.level === '訪客') {
-        Swal.fire('權限不足', '訪客僅供檢視', 'warning');
+        Swal.fire('溫馨提示', '您目前是訪客權限，無法修改資料', 'info');
         return;
     }
     document.getElementById('modalTitle').innerText = title;
@@ -289,10 +315,9 @@ async function saveCustomer() {
         companyName: document.getElementById('companyName').value,
         taxId: document.getElementById('taxId').value,
         contact: document.getElementById('contact').value,
-        email: document.getElementById('email').value,
-        nickname: "", phone: "", address: "", invoiceInfo: "" // 補齊欄位避免後端錯誤
+        email: document.getElementById('email').value
     };
-    Swal.fire({ title: '儲存中...', didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: '正在儲存...', didOpen: () => Swal.showLoading() });
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
@@ -310,7 +335,8 @@ async function saveCustomer() {
 async function fetchMembers() {
     if (currentUser.level !== '管理員') return;
     const tbody = document.getElementById('memberTableBody');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">載入中...</td></tr>';
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">會員清單載入中...</td></tr>';
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -321,11 +347,12 @@ async function fetchMembers() {
             allMembers = json.data;
             renderMembers(allMembers);
         }
-    } catch (err) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">無法載入會員資料</td></tr>'; }
+    } catch (err) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">伺服器讀取會員資料失敗</td></tr>'; }
 }
 
 function renderMembers(data) {
     const tbody = document.getElementById('memberTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     data.forEach(m => {
         const tr = document.createElement('tr');
@@ -335,13 +362,13 @@ function renderMembers(data) {
             <td><strong>${m.level}</strong></td>
             <td>${m.email}</td>
             <td><span class="badge ${m.status}">${m.status}</span></td>
-            <td><button class="primary-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="openMemberEditModal(${m.rowIndex})">修改</button></td>
+            <td><button class="primary-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="openMemberEditModal(${m.rowIndex})">管理帳號</button></td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-window.openMemberEditModal = function (rowIndex) {
+window.openMemberEditModal = function(rowIndex) {
     const member = allMembers.find(m => m.rowIndex === rowIndex);
     if (!member) return;
     document.getElementById('memberModal').classList.add('active');
@@ -351,7 +378,7 @@ window.openMemberEditModal = function (rowIndex) {
     document.getElementById('memberStatus').value = member.status;
 };
 
-window.closeMemberModal = function () {
+window.closeMemberModal = function() {
     document.getElementById('memberModal').classList.remove('active');
 };
 
@@ -364,16 +391,16 @@ async function handleMemberUpdateSubmit(e) {
         level: document.getElementById('memberLevel').value,
         status: document.getElementById('memberStatus').value
     };
-    Swal.fire({ title: '更新中...', didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: '更新權限中...', didOpen: () => Swal.showLoading() });
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const json = await res.json();
         if (json.success) {
-            Swal.fire('更新成功', '', 'success');
+            Swal.fire('更新成功', '會員權限已更新', 'success');
             closeMemberModal();
             fetchMembers();
         }
-    } catch (err) { Swal.fire('錯誤', '更動失敗', 'error'); }
+    } catch (err) { Swal.fire('錯誤', '更動權限失敗', 'error'); }
 }
 
 // ==========================================
@@ -388,7 +415,7 @@ async function startLiffBinding() {
             const profile = await liff.getProfile();
             bindLine(profile.userId);
         }
-    } catch (err) { Swal.fire('錯誤', 'LIFF 初始化失敗', 'error'); }
+    } catch (err) { Swal.fire('錯誤', 'LINE 服務啟動失敗', 'error'); }
 }
 
 async function handleLiffBindingRedirect() {
@@ -403,7 +430,7 @@ async function handleLiffBindingRedirect() {
             const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
         }
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("LIFF Redirect Error:", err); }
 }
 
 async function bindLine(lineId) {
@@ -417,8 +444,9 @@ async function bindLine(lineId) {
             currentUser.lineId = lineId;
             localStorage.setItem('studio_pro_session', JSON.stringify(currentUser));
             enterApp();
+            Swal.fire('綁定成功', '您現在可以使用 LINE ID 識別身置', 'success');
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("GAS Binding Error:", e); }
 }
 
 // ==========================================
@@ -446,12 +474,12 @@ function initTabs() {
 
 function filterCustomers(query) {
     const q = query.toLowerCase();
-    const filtered = allCustomers.filter(c =>
-        (c.companyName || '').toLowerCase().includes(q) ||
-        (c.taxId || '').toLowerCase().includes(q) ||
+    const filtered = allCustomers.filter(c => 
+        (c.companyName || '').toLowerCase().includes(q) || 
+        (c.taxId || '').toLowerCase().includes(q) || 
         (c.contact || '').toLowerCase().includes(q)
     );
     renderCustomers(filtered);
 }
 
-function initResizableColumns() { }
+function initResizableColumns() {}
