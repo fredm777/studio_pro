@@ -38,13 +38,7 @@ function showNavHint(msg) {
     }, 4000);
 }
 
-// --- Modal Management Helpers ---
-window.closeAllModals = () => {
-    ['modalOverlay', 'profileModal', 'memberModal'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('active');
-    });
-};
+// --- Modal Management Helpers Removed per user request ---
 
 // --- Performance & Sync Helpers ---
 
@@ -694,7 +688,6 @@ function renderCustomers() {
 }
 
 window.openCustomerModal = (title, data = null) => {
-    window.closeAllModals();
 
     if (!currentUser) {
         console.warn(">> openCustomerModal inhibited: currentUser is NULL");
@@ -890,7 +883,6 @@ function filterMembers(query) {
 }
 
 window.openMemberModal = (idx) => {
-    window.closeAllModals();
 
     if (!currentUser) return;
     const m = allMembers.find(x => x.rowIndex == idx);
@@ -950,7 +942,6 @@ async function handleMemberUpdateSubmit(e) {
 }
 
 function openProfileModal() {
-    window.closeAllModals();
 
     document.getElementById('profileModal').classList.add('active');
     document.getElementById('profUser').value = currentUser.username;
