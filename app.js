@@ -25,7 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try { initEventListeners(); } catch(e) { console.error("Event Init Error:", e); }
     try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
     if (window.lucide) { lucide.createIcons(); }
-    if (window.location.search.includes('liffClientId')) { handleLiffBindingRedirect(); } else { checkAuth(); }
+    if (window.location.search.includes('liffClientId') || window.location.search.includes('code')) { 
+        handleLiffRedirect(); 
+    } else { 
+        checkAuth(); 
+    }
     initResizableTable();
 });
 
@@ -41,25 +45,37 @@ function enterApp() {
     const appEl = document.getElementById('app');
     const displayEl = document.getElementById('displayUser');
     const adminBtn = document.getElementById('adminTabBtn');
+    const customersBtn = document.getElementById('customersTabBtn');
+    const projectsBtn = document.getElementById('projectsTabBtn');
+    const customerActions = document.getElementById('customerActions');
 
     if (authOverlay) authOverlay.style.display = 'none';
     if (appEl) appEl.classList.remove('hidden');
     if (displayEl) displayEl.innerText = (currentUser.nickname || currentUser.username);
     
-    // Only '管理者' can see the Admin Tab
-    if (adminBtn) {
-        if (currentUser.level === '管理者') adminBtn.classList.remove('hidden');
-        else adminBtn.classList.add('hidden');
+    // Role-based UI Gating
+    if (currentUser.level === '管理者') {
+        if (adminBtn) adminBtn.classList.remove('hidden');
+        if (customersBtn) customersBtn.classList.remove('hidden');
+        if (customerActions) customerActions.style.display = 'flex';
+        // Default to customers for admin
+        if (customersBtn) customersBtn.click();
+    } else if (currentUser.level === '操作人員') {
+        if (adminBtn) adminBtn.classList.add('hidden');
+        if (customersBtn) customersBtn.classList.remove('hidden');
+        if (customerActions) customerActions.style.display = 'flex';
+        // Default to customers for operator
+        if (customersBtn) customersBtn.click();
+    } else {
+        // '客戶' or others
+        if (adminBtn) adminBtn.classList.add('hidden');
+        if (customersBtn) customersBtn.classList.add('hidden');
+        if (customerActions) customerActions.style.display = 'none';
+        // Switch to Projects for Customers
+        if (projectsBtn) projectsBtn.click();
     }
     
-    // Immediate Load from Cache
-    const cachedCustomers = getCache('customers');
-    if (cachedCustomers) {
-        allCustomers = cachedCustomers;
-        currentFilteredCustomers = allCustomers;
-        renderCustomers();
-    }
-    
+    // Background Load
     fetchCustomers();
 }
 
@@ -187,6 +203,7 @@ function initEventListeners() {
     document.getElementById('verifyForm').onsubmit = handleVerify;
     document.getElementById('logoutBtn').onclick = logout;
     document.getElementById('bindLineBtn').onclick = startLiffBinding;
+    document.getElementById('lineLoginBtn').onclick = loginViaLine;
     document.getElementById('addCustomerBtn').onclick = () => openCustomerModal('新增客戶');
     document.getElementById('customerForm').onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
     document.getElementById('userInfoTrigger').onclick = openProfileModal;
@@ -638,14 +655,54 @@ async function startLiffBinding() {
     else { const p = await liff.getProfile(); bindLine(p.userId); }
 }
 
-async function handleLiffBindingRedirect() {
+async function loginViaLine() {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) liff.login();
+    else { 
+        const p = await liff.getProfile(); 
+        handleSystemLineLogin(p.userId); 
+    }
+}
+
+async function handleLiffRedirect() {
     await liff.init({ liffId: LIFF_ID });
     if (liff.isLoggedIn()) {
         const p = await liff.getProfile();
-        currentUser = JSON.parse(localStorage.getItem('st_pro_session'));
-        bindLine(p.userId);
+        const session = localStorage.getItem('st_pro_session');
+        
+        if (session) {
+            // Context: Binding (User is already logged in to the system)
+            currentUser = JSON.parse(session);
+            bindLine(p.userId);
+        } else {
+            // Context: Login (User is not logged in)
+            handleSystemLineLogin(p.userId);
+        }
+        
         const url = window.location.href.split('?')[0];
         window.history.replaceState({}, '', url);
+    }
+}
+
+async function handleSystemLineLogin(id) {
+    try {
+        Swal.fire({ title: 'LINE 登入中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const res = await fetch(GAS_WEB_APP_URL, { 
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ action: 'line_login', lineId: id }) 
+        });
+        const json = await res.json();
+        
+        if (json.success) {
+            currentUser = json.user;
+            localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
+            enterApp();
+            Swal.close();
+        } else {
+            Swal.fire('登入失敗', json.error, 'warning');
+        }
+    } catch (e) {
+        Swal.fire('連線錯誤', e.toString(), 'error');
     }
 }
 
@@ -657,9 +714,11 @@ async function bindLine(id) {
         if (json.success) {
             currentUser.lineId = id;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
-            document.getElementById('lineStatusText').innerHTML = '已綁定';
-            document.getElementById('lineStatusText').style.color = '#06C755';
-            document.getElementById('bindLineBtn').style.display = 'none';
+            if (document.getElementById('lineStatusText')) {
+                document.getElementById('lineStatusText').innerHTML = '已綁定';
+                document.getElementById('lineStatusText').style.color = '#06C755';
+                document.getElementById('bindLineBtn').style.display = 'none';
+            }
             Swal.fire('綁定成功', '您之後可以使用 LINE 快速登入！', 'success');
         } else {
             Swal.fire('綁定失敗', '無法完成綁定，請稍後再試。', 'error');
