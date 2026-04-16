@@ -1,8 +1,9 @@
 // ==========================================
-// Configuration
+// Configuration & State
 // ==========================================
-const GAS_WEB_APP_URL = 'YOUR_GAS_WEB_APP_URL'; // 更新此處為您的 GAS 網址
-const LIFF_ID = 'YOUR_LIFF_ID'; // 更新此處為您的 LIFF ID
+// UPDATED: 使用與 1 版部署一致的網址
+const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwX2PQ5Ta0yDo0ZYY5jHIP2F-jJ6V-qCzO5o1lPRLOSYVqz3BII2J42IZpTkRi4YYi9NQ/exec';
+const LIFF_ID = '2009511611-ArfdbQzS'; // 此處請更新為您的 LIFF ID
 
 let allCustomers = [];
 let currentProfile = null;
@@ -13,6 +14,7 @@ let currentProfile = null;
 document.addEventListener('DOMContentLoaded', async () => {
     initTabs();
     initEventListeners();
+    initResizableColumns();
     await initLiff();
     fetchCustomers();
 });
@@ -62,13 +64,19 @@ function initEventListeners() {
 
     // Add UI
     document.getElementById('addCustomerBtn').addEventListener('click', () => {
-        openModal('新增客戶');
+        openModal('新增客戶資料');
     });
 
     // Form Submit
     document.getElementById('customerForm').addEventListener('submit', (e) => {
         e.preventDefault();
         saveCustomer();
+    });
+
+    // Delete Button in Modal
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+        const rowIndex = document.getElementById('rowIndex').value;
+        if (rowIndex) deleteCustomer(parseInt(rowIndex));
     });
 
     // Search
@@ -78,24 +86,64 @@ function initEventListeners() {
 }
 
 // ==========================================
-// API Operations
+// Spreadsheet Interaction Logic
 // ==========================================
-async function fetchCustomers() {
-    if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL === 'YOUR_GAS_WEB_APP_URL') {
-        renderMockData();
+function renderCustomers(data) {
+    const tbody = document.getElementById('customerTableBody');
+    tbody.innerHTML = '';
+    document.getElementById('tableLoading').style.display = 'none';
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:#999;">查無資料</td></tr>';
         return;
     }
 
+    data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.dataset.rowIndex = item.rowIndex;
+        
+        // Define column keys in order
+        const columns = ['companyName', 'taxId', 'contact', 'nickname', 'phone', 'email', 'address', 'invoiceInfo'];
+        
+        columns.forEach(col => {
+            const td = document.createElement('td');
+            td.innerText = item[col] || '';
+            tr.appendChild(td);
+        });
+
+        // Event: Double Click to Edit
+        tr.addEventListener('dblclick', () => {
+            editCustomer(item.rowIndex);
+        });
+
+        // Event: Single Click to Highlight
+        tr.addEventListener('click', () => {
+            document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+        });
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ==========================================
+// API Operations
+// ==========================================
+async function fetchCustomers() {
+    document.getElementById('tableLoading').style.display = 'block';
+    
     try {
-        const res = await fetch(`${GAS_WEB_APP_URL}?action=get_customers`);
+        const url = `${GAS_WEB_APP_URL}?action=get_customers`;
+        const res = await fetch(url);
         const json = await res.json();
+        
         if (json.success) {
             allCustomers = json.data;
             renderCustomers(allCustomers);
         }
     } catch (err) {
+        document.getElementById('tableLoading').innerHTML = '<span style="color:red;">連線失敗，請檢查 GAS 部署權限</span>';
         console.error('Fetch Error:', err);
-        Swal.fire('錯誤', '無法載入資料', 'error');
     }
 }
 
@@ -126,21 +174,21 @@ async function saveCustomer() {
         const json = await res.json();
 
         if (json.success) {
-            Swal.fire('成功', '資料已儲存', 'success');
+            Swal.fire({ icon: 'success', title: '成功', text: '資料已同步至試算表', timer: 1500 });
             closeModal();
             fetchCustomers();
         } else {
             Swal.fire('失敗', json.error || '儲存失敗', 'error');
         }
     } catch (err) {
-        Swal.fire('錯誤', '網路連線異常', 'error');
+        Swal.fire('錯誤', '連線異常，請確認 GAS 是否正確部署為 Web App', 'error');
     }
 }
 
 async function deleteCustomer(rowIndex) {
     const result = await Swal.fire({
-        title: '確認刪除？',
-        text: '刪除後將無法還原！',
+        title: '確定刪除？',
+        text: '警告：此操作將從雲端試算表中移除該筆資料！',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
@@ -157,7 +205,8 @@ async function deleteCustomer(rowIndex) {
             });
             const json = await res.json();
             if (json.success) {
-                Swal.fire('已刪除', '', 'success');
+                Swal.fire({ icon: 'success', title: '已刪除', timer: 1000 });
+                closeModal();
                 fetchCustomers();
             }
         } catch (err) {
@@ -166,52 +215,26 @@ async function deleteCustomer(rowIndex) {
     }
 }
 
-// ==========================================
-// UI Rendering
-// ==========================================
-function renderCustomers(data) {
-    const list = document.getElementById('customerList');
-    list.innerHTML = '';
-
-    if (data.length === 0) {
-        list.innerHTML = '<div class="loading-state"><span>查無符合的資料</span></div>';
-        return;
-    }
-
-    data.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'customer-card';
-        card.innerHTML = `
-            ${item.nickname ? `<span class="nickname">${item.nickname}</span>` : ''}
-            <h3>${item.companyName}</h3>
-            <p><strong>統編:</strong> ${item.taxId || 'N/A'}</p>
-            <p><strong>聯絡人:</strong> ${item.contact || 'N/A'}</p>
-            <p><strong>電話:</strong> ${item.phone || 'N/A'}</p>
-            <div class="actions">
-                <button class="action-btn edit" onclick="event.stopPropagation(); editCustomer(${item.rowIndex})">編輯</button>
-                <button class="action-btn delete" onclick="event.stopPropagation(); deleteCustomer(${item.rowIndex})">刪除</button>
-            </div>
-        `;
-        card.addEventListener('click', () => editCustomer(item.rowIndex));
-        list.appendChild(card);
-    });
-}
-
 function filterCustomers(query) {
     const q = query.toLowerCase();
     const filtered = allCustomers.filter(c => 
-        c.companyName?.toLowerCase().includes(q) || 
-        c.taxId?.toLowerCase().includes(q) || 
-        c.contact?.toLowerCase().includes(q)
+        (c.companyName || '').toLowerCase().includes(q) || 
+        (c.taxId || '').toLowerCase().includes(q) || 
+        (c.contact || '').toLowerCase().includes(q) ||
+        (c.nickname || '').toLowerCase().includes(q)
     );
     renderCustomers(filtered);
 }
 
+// ==========================================
+// Modal Control
+// ==========================================
 function openModal(title, data = null) {
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalOverlay').classList.add('active');
     document.getElementById('customerForm').reset();
     document.getElementById('rowIndex').value = '';
+    document.getElementById('deleteBtn').style.display = 'none';
 
     if (data) {
         document.getElementById('rowIndex').value = data.rowIndex;
@@ -223,6 +246,7 @@ function openModal(title, data = null) {
         document.getElementById('email').value = data.email;
         document.getElementById('address').value = data.address;
         document.getElementById('invoiceInfo').value = data.invoiceInfo;
+        document.getElementById('deleteBtn').style.display = 'block';
     }
 }
 
@@ -238,12 +262,51 @@ function editCustomer(rowIndex) {
 }
 
 // ==========================================
-// Mock Data (For local preview)
+// Column Resizing Logic (Persistence)
 // ==========================================
-function renderMockData() {
-    allCustomers = [
-        { rowIndex: 2, companyName: '範例股份有限公司', taxId: '12345678', contact: '張經理', nickname: '範例', phone: '02-1234-5678' },
-        { rowIndex: 3, companyName: '模擬工程行', taxId: '87654321', contact: '王老闆', nickname: '模擬', phone: '0912-345-678' }
-    ];
-    renderCustomers(allCustomers);
+function initResizableColumns() {
+    const table = document.getElementById('customerTable');
+    const cols = table.querySelectorAll('th');
+    
+    // Load saved widths
+    const savedWidths = JSON.parse(localStorage.getItem('studioPro_colWidths')) || {};
+
+    cols.forEach((col, index) => {
+        const colId = col.dataset.col;
+        if (savedWidths[colId]) {
+            col.style.width = savedWidths[colId] + 'px';
+        }
+
+        const resizer = col.querySelector('.resizer');
+        if (!resizer) return;
+
+        resizer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const startX = e.pageX;
+            const startWidth = col.offsetWidth;
+            
+            document.body.classList.add('resizing');
+
+            const onMouseMove = (moveEvent) => {
+                const currentWidth = startWidth + (moveEvent.pageX - startX);
+                if (currentWidth > 50) {
+                    col.style.width = currentWidth + 'px';
+                }
+            };
+
+            const onMouseUp = () => {
+                document.body.classList.remove('resizing');
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                
+                // Save to localStorage
+                const currentWidths = JSON.parse(localStorage.getItem('studioPro_colWidths')) || {};
+                currentWidths[colId] = col.offsetWidth;
+                localStorage.setItem('studioPro_colWidths', JSON.stringify(currentWidths));
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    });
 }
