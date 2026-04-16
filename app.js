@@ -232,6 +232,13 @@ function initTabs() {
             t.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
+            
+            // Toggle global action bar visibility
+            const actionBox = document.getElementById('customerActions');
+            if (actionBox) {
+                actionBox.style.display = (tabId === 'customers') ? 'flex' : 'none';
+            }
+            
             if (tabId === 'admin') fetchMembers();
         };
     });
@@ -321,7 +328,9 @@ function openCustomerModal(title, data = null) {
         if (document.getElementById('taxId')) document.getElementById('taxId').value = data.taxId || '';
         if (document.getElementById('nickname')) document.getElementById('nickname').value = data.nickname || '';
         if (document.getElementById('contact')) document.getElementById('contact').value = data.contact || '';
-        if (document.getElementById('phone')) document.getElementById('phone').value = data.phone || '';
+        let phone = data.phone || '';
+        if (phone.startsWith("'")) phone = phone.slice(1);
+        if (document.getElementById('phone')) document.getElementById('phone').value = phone;
         if (document.getElementById('email')) document.getElementById('email').value = data.email || '';
         if (document.getElementById('address')) document.getElementById('address').value = data.address || '';
         if (document.getElementById('invoiceInfo')) document.getElementById('invoiceInfo').checked = (data.invoiceInfo === 'v' || data.invoiceInfo === 'V');
@@ -337,7 +346,7 @@ async function saveCustomer() {
         taxId: document.getElementById('taxId').value,
         nickname: document.getElementById('nickname').value,
         contact: document.getElementById('contact').value,
-        phone: document.getElementById('phone').value,
+        phone: document.getElementById('phone').value.startsWith("'") ? document.getElementById('phone').value : "'" + document.getElementById('phone').value,
         email: document.getElementById('email').value,
         address: document.getElementById('address').value,
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : ''
@@ -419,7 +428,9 @@ function openProfileModal() {
     document.getElementById('profUser').value = currentUser.username;
     document.getElementById('profNick').value = currentUser.nickname || '';
     document.getElementById('profEmail').value = currentUser.email || '';
-    document.getElementById('profPhone').value = currentUser.phone || '';
+    let phone = currentUser.phone || '';
+    if (phone.startsWith("'")) phone = phone.slice(1);
+    document.getElementById('profPhone').value = phone;
     
     // Reset password fields
     const p1 = document.getElementById('profPass1');
@@ -456,7 +467,7 @@ async function handleProfileUpdateSubmit(e) {
         username: currentUser.username, 
         nickname: document.getElementById('profNick').value, 
         email: document.getElementById('profEmail').value, 
-        phone: document.getElementById('profPhone').value,
+        phone: document.getElementById('profPhone').value.startsWith("'") ? document.getElementById('profPhone').value : "'" + document.getElementById('profPhone').value,
         newPassword: pass1 || null
     };
 

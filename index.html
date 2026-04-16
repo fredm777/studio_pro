@@ -16,7 +16,7 @@
             <!-- Login -->
             <div id="loginStage" class="auth-stage active">
                 <div class="auth-header" style="margin-bottom: 1.5rem;">
-                    <div class="logo-big" style="background:none; box-shadow:none; color:var(--primary); font-size:1.25rem; padding:0; margin-bottom:0.5rem;">Studio Pro</div>
+                    <div class="logo-big">Studio Pro</div>
                 </div>
                 <form id="loginForm">
                     <div class="form-group"><label>帳號</label><input type="text" id="loginUser" required></div>
@@ -38,8 +38,9 @@
             <!-- Register -->
             <div id="registerStage" class="auth-stage">
                 <div class="auth-header" style="margin-bottom: 1.5rem;">
-                    <div class="logo-big" style="background:none; box-shadow:none; color:var(--primary); font-size:1.25rem; padding:0; margin-bottom:0.5rem;">Studio Pro</div>
+                    <div class="logo-big">Studio Pro</div>
                     <p style="font-weight:700; color:var(--text-dark); font-size:0.875rem;">建立帳號</p>
+                    <p style="color:var(--text-muted); font-size:0.8125rem;">加入會員以開啟專業服務</p>
                 </div>
                 <form id="registerForm">
                     <div class="form-group"><label>帳號</label><input type="text" id="regUser" required></div>
@@ -59,7 +60,7 @@
             <!-- Forgot Password -->
             <div id="forgotStage" class="auth-stage">
                 <div class="auth-header" style="margin-bottom: 1.5rem;">
-                    <div class="logo-big" style="background:none; box-shadow:none; color:var(--primary); font-size:1.25rem; padding:0; margin-bottom:0.5rem;">Studio Pro</div>
+                    <div class="logo-big">Studio Pro</div>
                     <p style="font-weight:700; color:var(--text-dark); font-size:0.875rem;">忘記密碼</p>
                 </div>
                 <form id="forgotForm">
@@ -96,29 +97,27 @@
                     <div class="user-info" id="userInfoTrigger">
                         <span id="displayUser"></span>
                     </div>
-                    <button id="logoutBtn" class="logout-btn">安全登出</button>
+                    <button id="logoutBtn" class="logout-btn">登出</button>
                 </div>
             </div>
         </header>
 
-        <nav class="tabs">
-            <button class="tab-link active" data-tab="customers">客戶管理</button>
-            <button id="adminTabBtn" class="tab-link hidden" data-tab="admin">系統管理</button>
-        </nav>
+        <div class="sub-nav-bar">
+            <nav class="tabs" style="margin:0; border:none; position:static;">
+                <button class="tab-link active" data-tab="customers">客戶資料庫</button>
+                <button id="adminTabBtn" class="tab-link hidden" data-tab="admin">權限管理</button>
+            </nav>
+            
+            <div id="customerActions" class="search-wrapper" style="margin:0; border:none; position:static; display:flex;">
+                <input type="text" id="searchInput" placeholder="透過公司名稱或統編搜尋..." 
+                       style="width:300px; padding:0.6rem 1rem; border-radius:10px; border:1px solid var(--border);">
+                <button id="addCustomerBtn" class="primary-btn" style="width: auto; padding: 0.6rem 1.5rem; margin-left:0.75rem;">+ 新增資料</button>
+            </div>
+        </div>
 
         <main>
             <section id="customers" class="tab-content active">
-                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2>資料庫概覽</h2>
-                    <button id="addCustomerBtn" class="primary-btn" style="width: auto; padding: 0.75rem 2rem;">+ 新增資料</button>
-                </div>
-                
-                <div class="search-wrapper">
-                    <input type="text" id="searchInput" placeholder="透過公司名稱或統編搜尋..." 
-                           style="width:100%; max-width:400px; padding:0.75rem 1.25rem; border-radius:12px; border:1px solid var(--border);">
-                </div>
-
-                <div class="grid-container">
+                <div class="grid-container" style="margin-top:0;">
                     <table>
                         <thead>
                             <tr>
@@ -150,7 +149,6 @@
             </section>
 
             <section id="admin" class="tab-content">
-                <div class="section-header"><h2>權限與密鑰管理</h2></div>
                 <div class="grid-container">
                     <table>
                         <thead>
@@ -174,35 +172,42 @@
         <div class="modal-card">
             <h3>修改個人資料</h3>
             
-            <div style="background: var(--bg); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
+            <div style="background: var(--bg-main); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
                 <div>
-                    <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">LINE 快速登入</div>
+                    <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-dark);">LINE 快速登入</div>
                     <div id="lineStatusText" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">讀取中...</div>
                 </div>
                 <button type="button" id="bindLineBtn" class="primary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; background: #06C755;">綁定帳號</button>
             </div>
 
             <form id="profileForm">
-                <div class="form-group"><label>帳號</label><input type="text" id="profUser" readonly style="background: var(--bg); color: var(--text-muted);"></div>
-                <div class="form-group"><label>暱稱</label><input type="text" id="profNick" placeholder="暱稱"></div>
-                <div class="form-group"><label>Email</label><input type="email" id="profEmail" placeholder="Email"></div>
-                <div class="form-group"><label>手機號碼</label><input type="text" id="profPhone" placeholder="手機號碼"></div>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;"><label>帳號</label><input type="text" id="profUser" readonly style="background: #f8fafc; color: var(--text-muted);"></div>
+                    <div class="form-group" style="flex: 1;"><label>暱稱</label><input type="text" id="profNick" placeholder="暱稱"></div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;"><label>Email</label><input type="email" id="profEmail" placeholder="Email"></div>
+                    <div class="form-group" style="flex: 1;"><label>手機號碼</label><input type="text" id="profPhone" placeholder="手機號碼"></div>
+                </div>
                 
                 <div style="border-top: 1px solid var(--border); margin: 1.5rem 0; padding-top: 1rem;">
                     <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; color: var(--text-dark);">修改密碼</div>
-                    <div class="form-group" style="margin-bottom:0.75rem;">
-                        <div class="password-wrapper">
-                            <input type="password" id="profPass1" placeholder="輸入新密碼">
-                            <span class="toggle-password" onclick="togglePassword('profPass1')"><i data-lucide="eye"></i></span>
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <div class="password-wrapper">
+                                <input type="password" id="profPass1" placeholder="輸入新密碼">
+                                <span class="toggle-password" onclick="togglePassword('profPass1')"><i data-lucide="eye"></i></span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <input type="password" id="profPass2" placeholder="再次輸入以確認">
+                        <div class="form-group" style="flex: 1;">
+                            <input type="password" id="profPass2" placeholder="再次輸入以確認">
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit" class="save-btn">儲存更新</button>
-                <button type="button" onclick="closeProfileModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消並關閉</button>
+                <button type="submit" class="save-btn">儲存</button>
+                <button type="button" onclick="closeProfileModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
             </form>
         </div>
     </div>
