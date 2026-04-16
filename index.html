@@ -83,9 +83,7 @@
                 <div class="user-controls">
                     <div class="user-info" id="userInfoTrigger">
                         <span id="displayUser"></span>
-                        <div id="lineStatus"></div>
                     </div>
-                    <button id="bindLineBtn" class="logout-btn" style="background:var(--primary); color:white; border:none;">綁定 LINE</button>
                     <button id="logoutBtn" class="logout-btn">安全登出</button>
                 </div>
             </div>
@@ -125,6 +123,22 @@
                         <tbody id="customerTableBody"></tbody>
                     </table>
                     <div id="tableLoading" style="padding:4rem; text-align:center; color:var(--text-muted); font-weight:600;">正在與資料庫建立連線...</div>
+                    <div id="paginationContainer" style="display: none; justify-content: space-between; align-items: center; padding: 1rem;">
+                        <div style="display:flex; align-items:center;">
+                            <label style="color: var(--text-muted); font-size: 0.9rem; margin-right: 0.5rem;">每頁顯示：</label>
+                            <select id="itemsPerPageSelector" style="padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size:0.9rem;">
+                                <option value="10">10 筆</option>
+                                <option value="20" selected>20 筆</option>
+                                <option value="50">50 筆</option>
+                                <option value="100">100 筆</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <button id="prevPageBtn" class="logout-btn" style="padding: 0.3rem 0.8rem; height: auto; margin:0;">上一頁</button>
+                            <span id="pageInfo" style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;">第 1 / 1 頁</span>
+                            <button id="nextPageBtn" class="logout-btn" style="padding: 0.3rem 0.8rem; height: auto; margin:0;">下一頁</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -152,7 +166,23 @@
     <div id="profileModal" class="modal-overlay">
         <div class="modal-card">
             <h3>修改個人資料</h3>
-            <form id="profileForm"><div class="form-group"><input type="text" id="profUser" readonly></div><div class="form-group"><input type="text" id="profNick" placeholder="暱稱"></div><div class="form-group"><input type="email" id="profEmail" placeholder="Email"></div><div class="form-group"><input type="text" id="profPhone" placeholder="手機號碼"></div><button type="submit" class="save-btn">儲存更新</button><button type="button" onclick="closeProfileModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer;">取消並關閉</button></form>
+            
+            <div style="background: var(--bg); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
+                <div>
+                    <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">LINE 快速登入</div>
+                    <div id="lineStatusText" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">讀取中...</div>
+                </div>
+                <button type="button" id="bindLineBtn" class="primary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; background: #06C755;">綁定帳號</button>
+            </div>
+
+            <form id="profileForm">
+                <div class="form-group"><input type="text" id="profUser" readonly style="background: var(--bg); color: var(--text-muted);"></div>
+                <div class="form-group"><input type="text" id="profNick" placeholder="暱稱"></div>
+                <div class="form-group"><input type="email" id="profEmail" placeholder="Email"></div>
+                <div class="form-group"><input type="text" id="profPhone" placeholder="手機號碼"></div>
+                <button type="submit" class="save-btn">儲存更新</button>
+                <button type="button" onclick="closeProfileModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消並關閉</button>
+            </form>
         </div>
     </div>
 

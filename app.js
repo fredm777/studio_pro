@@ -4,6 +4,10 @@ const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwX9xG_snc8EmBt
 const LIFF_ID = '2009659478-RZ3Q85ZU'; 
 
 let allCustomers = [];
+let currentFilteredCustomers = [];
+let currentPage = 1;
+let itemsPerPage = 20;
+
 let allMembers = [];
 let currentUser = null;
 let registeredUsername = ''; 
@@ -27,10 +31,7 @@ function enterApp() {
     document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('app').classList.remove('hidden');
     document.getElementById('displayUser').innerText = currentUser.nickname || currentUser.username;
-    if (currentUser.lineId) {
-        document.getElementById('bindLineBtn').classList.add('hidden');
-        document.getElementById('lineStatus').innerText = '✅ LINE';
-    }
+    
     if (currentUser.level === '管理員') document.getElementById('adminTabBtn').classList.remove('hidden');
     fetchCustomers();
 }
@@ -165,6 +166,31 @@ function initEventListeners() {
     document.getElementById('memberForm').onsubmit = handleMemberUpdateSubmit;
     document.getElementById('searchInput').oninput = (e) => filterCustomers(e.target.value);
     document.getElementById('closeModal').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
+    
+    const prevBtn = document.getElementById('prevPageBtn');
+    if (prevBtn) prevBtn.onclick = () => changePage(-1);
+    
+    const nextBtn = document.getElementById('nextPageBtn');
+    if (nextBtn) nextBtn.onclick = () => changePage(1);
+    
+    const sel = document.getElementById('itemsPerPageSelector');
+    if (sel) sel.onchange = (e) => {
+        itemsPerPage = parseInt(e.target.value);
+        currentPage = 1;
+        renderCustomers();
+    };
+
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+            e.target.classList.remove('active');
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+        }
+    });
 }
 
 function initTabs() {
@@ -192,19 +218,54 @@ async function fetchCustomers() {
         });
         const text = await res.text();
         const json = JSON.parse(text);
-        if (json.success) { allCustomers = json.data; renderCustomers(allCustomers); }
+        if (json.success) { 
+            allCustomers = json.data; 
+            currentFilteredCustomers = allCustomers;
+            currentPage = 1;
+            renderCustomers(); 
+        }
     } catch (err) { console.error(err); }
 }
 
-function renderCustomers(data) {
+window.changePage = (dir) => {
+    currentPage += dir;
+    renderCustomers();
+};
+
+function renderCustomers() {
     const tbody = document.getElementById('customerTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
+    
     const loading = document.getElementById('tableLoading');
+    const pagCont = document.getElementById('paginationContainer');
     if (loading) loading.style.display = 'none';
-    data.forEach(item => {
+    if (pagCont) pagCont.style.display = 'flex';
+    
+    const totalItems = currentFilteredCustomers.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    
+    if (pageInfo) pageInfo.innerText = `第 ${currentPage} / ${totalPages} 頁 (共 ${totalItems} 筆)`;
+    if (prevBtn) { prevBtn.disabled = (currentPage === 1); prevBtn.style.opacity = (currentPage === 1) ? '0.3' : '1'; }
+    if (nextBtn) { nextBtn.disabled = (currentPage === totalPages); nextBtn.style.opacity = (currentPage === totalPages) ? '0.3' : '1'; }
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedData = currentFilteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+    
+    if (paginatedData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem;">沒有符合的資料</td></tr>`;
+        return;
+    }
+
+    paginatedData.forEach(item => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${item.companyName}</td><td>${item.taxId}</td><td>${item.contact}</td><td>${item.nickname}</td><td>${item.phone}</td><td>${item.email}</td><td>${item.address}</td><td>${item.invoiceInfo}</td>`;
+        tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.contact || ''}</td><td>${item.nickname || ''}</td><td>${item.phone || ''}</td><td>${item.email || ''}</td><td>${item.address || ''}</td><td>${item.invoiceInfo || ''}</td>`;
         tr.ondblclick = () => openCustomerModal('編輯', item);
         tbody.appendChild(tr);
     });
@@ -280,8 +341,22 @@ async function handleMemberUpdateSubmit(e) {
 function openProfileModal() {
     document.getElementById('profileModal').classList.add('active');
     document.getElementById('profUser').value = currentUser.username;
-    document.getElementById('profNick').value = currentUser.nickname;
-    document.getElementById('profEmail').value = currentUser.email;
+    document.getElementById('profNick').value = currentUser.nickname || '';
+    document.getElementById('profEmail').value = currentUser.email || '';
+    document.getElementById('profPhone').value = currentUser.phone || '';
+    
+    const bindBtn = document.getElementById('bindLineBtn');
+    const statusText = document.getElementById('lineStatusText');
+    
+    if (currentUser.lineId) {
+        statusText.innerHTML = '✅ 已綁定 LINE 帳號';
+        statusText.style.color = '#06C755';
+        bindBtn.style.display = 'none';
+    } else {
+        statusText.innerHTML = '⚠️ 尚未綁定';
+        statusText.style.color = 'var(--text-muted)';
+        bindBtn.style.display = 'block';
+    }
 }
 window.closeProfileModal = () => document.getElementById('profileModal').classList.remove('active');
 
@@ -296,8 +371,16 @@ async function handleProfileUpdateSubmit(e) {
 }
 
 function filterCustomers(val) {
-    const filtered = allCustomers.filter(c => c.companyName.includes(val) || c.taxId.includes(val) || (c.nickname && c.nickname.includes(val)));
-    renderCustomers(filtered);
+    const query = String(val).toLowerCase();
+    currentFilteredCustomers = allCustomers.filter(c => 
+        String(c.companyName || '').toLowerCase().includes(query) || 
+        String(c.taxId || '').includes(query) || 
+        String(c.nickname || '').toLowerCase().includes(query) ||
+        String(c.contact || '').toLowerCase().includes(query) ||
+        String(c.phone || '').includes(query)
+    );
+    currentPage = 1;
+    renderCustomers();
 }
 
 function logout() { localStorage.removeItem('st_pro_session'); location.reload(); }
@@ -329,8 +412,21 @@ async function handleLiffBindingRedirect() {
 }
 
 async function bindLine(id) {
-    await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId: id }) });
-    currentUser.lineId = id;
-    localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
-    location.reload();
+    try {
+        Swal.fire({ title: '綁定中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId: id }) });
+        const json = await res.json();
+        if (json.success) {
+            currentUser.lineId = id;
+            localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
+            document.getElementById('lineStatusText').innerHTML = '✅ 已綁定 LINE 帳號';
+            document.getElementById('lineStatusText').style.color = '#06C755';
+            document.getElementById('bindLineBtn').style.display = 'none';
+            Swal.fire('綁定成功', '您之後可以使用 LINE 快速登入！', 'success');
+        } else {
+            Swal.fire('綁定失敗', '無法完成綁定，請稍後再試。', 'error');
+        }
+    } catch (e) {
+        Swal.fire('連線錯誤', e.toString(), 'error');
+    }
 }
