@@ -3,7 +3,7 @@
 // ==========================================
 // UPDATED: 使用與 1 版部署一致的網址
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxfvu8qYgpozQhijB0H8ekAutmZjXBHIU7wYwxS6C0fD6clAVsNfMaBO0AsUSVGFwInPQ/exec';
-const LIFF_ID = '2009511611-ArfdbQzS'; // 此處請更新為您的 LIFF ID
+const LIFF_ID = '2009659478-RZ3Q85ZU'; // 此處請更新為您的 LIFF ID
 
 let allCustomers = [];
 let currentProfile = null;
