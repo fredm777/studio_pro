@@ -51,9 +51,10 @@ async function handleLoginForm(e) {
     e.preventDefault();
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
-    Swal.fire({ title: '登入中...', didOpen: () => Swal.showLoading() });
+    console.log(">> handleLoginForm called", { username, password });
     
     try {
+        console.log(">> Fetching login...");
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
@@ -61,19 +62,23 @@ async function handleLoginForm(e) {
             body: JSON.stringify({ action: 'login', username, password })
         });
         
+        console.log(">> Fetch completed with status:", res.status);
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-        const json = await res.json();
+        const text = await res.text();
+        console.log(">> Raw Response Payload:", text);
+        
+        const json = JSON.parse(text);
         
         if (json.success) {
             currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
-            Swal.close();
         } else {
-            Swal.fire('失敗', json.error || '帳號密碼錯誤', 'error');
+            alert('登入失敗: ' + (json.error || '帳號或密碼錯誤'));
         }
     } catch (err) {
-        Swal.fire('連線失敗', '系統目前正在初始化後端權限，請確認您已在 GAS 執行過 initSheets。', 'error');
+        console.error(">> Login Error Caught:", err);
+        alert('連線失敗: ' + err.toString() + '\n請檢查 Console 了解詳情');
     }
 }
 
@@ -83,26 +88,39 @@ async function handleRegister(e) {
     const password = document.getElementById('regPass').value;
     const nickname = document.getElementById('regNick').value;
     const email = document.getElementById('regEmail').value;
-    Swal.fire({ title: '註冊中...', didOpen: () => Swal.showLoading() });
+    console.log(">> handleRegister called", { username: registeredUsername, email });
+    
     try {
+        console.log(">> Fetching register...");
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'register', username: registeredUsername, password, nickname, email })
         });
-        const json = await res.json();
+        
+        console.log(">> Fetch completed with status:", res.status);
+        const text = await res.text();
+        console.log(">> Raw Response Payload:", text);
+        const json = JSON.parse(text);
+        
         if (json.success) {
-            Swal.fire('成功', '若您尚未驗證，請輸入預設 6 位數代碼', 'success');
+            alert('註冊成功！若您尚未驗證，即將前往驗證畫面（或直接登入）。');
             switchAuthStage('verify');
-        } else { Swal.fire('失敗', json.error, 'error'); }
-    } catch (err) { Swal.fire('錯誤', '無法連線至系統', 'error'); }
+        } else { 
+            alert('註冊失敗: ' + json.error); 
+        }
+    } catch (err) { 
+        console.error(">> Register Error Caught:", err);
+        alert('註冊連線錯誤: ' + err.toString()); 
+    }
 }
 
 async function handleVerify(e) {
     e.preventDefault();
     const code = document.getElementById('vCodeInput').value;
-    Swal.fire({ title: '驗證中...', didOpen: () => Swal.showLoading() });
+    console.log(">> handleVerify called", { code });
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -110,10 +128,20 @@ async function handleVerify(e) {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'verify_code', username: registeredUsername, code })
         });
-        const json = await res.json();
-        if (json.success) { Swal.fire('驗證成功', '請重新登入', 'success'); switchAuthStage('login'); }
-        else { Swal.fire('錯誤', json.error || '驗證碼錯誤', 'error'); }
-    } catch (err) { Swal.fire('失敗', '驗證連線失敗', 'error'); }
+        const text = await res.text();
+        console.log(">> Raw Response Payload:", text);
+        const json = JSON.parse(text);
+        
+        if (json.success) { 
+            alert('驗證成功！請重新登入系統。'); 
+            switchAuthStage('login'); 
+        } else { 
+            alert('驗證失敗: ' + (json.error || '驗證碼無效')); 
+        }
+    } catch (err) { 
+        console.error(">> Verify Error:", err);
+        alert('驗證發生錯誤: ' + err.toString()); 
+    }
 }
 
 function initEventListeners() {
