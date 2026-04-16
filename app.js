@@ -176,8 +176,14 @@ async function fetchCustomers() {
     const loading = document.getElementById('tableLoading');
     if (loading) loading.style.display = 'block';
     try {
-        const res = await fetch(`${GAS_WEB_APP_URL}?action=get_customers`);
-        const json = await res.json();
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'get_customers' })
+        });
+        const text = await res.text();
+        const json = JSON.parse(text);
         if (json.success) { allCustomers = json.data; renderCustomers(allCustomers); }
     } catch (err) { console.error(err); }
 }
