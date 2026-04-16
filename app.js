@@ -26,6 +26,18 @@ const Toast = Swal.mixin({
     }
 });
 
+let navHintTimer = null;
+function showNavHint(msg) {
+    const hintEl = document.getElementById('navHint');
+    if (!hintEl) return;
+    hintEl.innerText = msg;
+    hintEl.classList.add('active');
+    if (navHintTimer) clearTimeout(navHintTimer);
+    navHintTimer = setTimeout(() => {
+        hintEl.classList.remove('active');
+    }, 4000);
+}
+
 // --- Performance & Sync Helpers ---
 function setSyncStatus(active) {
     const bar = document.getElementById('syncProgressBar');
@@ -233,7 +245,7 @@ async function handleRegister(e) {
         const json = await res.json();
         
         if (json.success) {
-            Toast.fire({ title: '帳號建立成功', text: '請完成 E-mail 驗證', icon: 'success' });
+            showNavHint('帳號建立成功，請完成驗證');
             verifyContext = 'register';
             switchAuthStage('verify');
         } else { 
@@ -329,7 +341,7 @@ async function handleVerify(e) {
                     passErr.classList.add('active');
                 }
             } else {
-                Toast.fire({ title: '驗證成功', icon: 'success' });
+                showNavHint('驗證成功');
                 switchAuthStage('login');
             }
         } else {
@@ -705,7 +717,7 @@ async function saveCustomer() {
         });
         const json = await res.json();
         if (json.success) { 
-            Toast.fire({ title: '資料已安全存入', icon: 'success' }); 
+            showNavHint('資料已安全存入'); 
             const modal = document.getElementById('modalOverlay');
             if (modal) modal.classList.remove('active');
             fetchCustomers(); // Refresh to get actual server state/IDs
@@ -748,7 +760,7 @@ async function handleForgotSubmit(e) {
         });
         const json = await res.json();
         if (json.success) {
-            Toast.fire({ title: '驗證碼已寄出', text: '請查收您的電子郵件', icon: 'success' });
+            showNavHint('驗證碼已寄出');
             registeredUsername = json.username;
             verifyContext = 'forgot';
             switchAuthStage('verify');
@@ -839,7 +851,7 @@ async function handleMemberUpdateSubmit(e) {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
         if (json.success) { 
-            Toast.fire({ title: '權限已成功更新', icon: 'success' }); 
+            showNavHint('權限已成功更新'); 
             closeMemberModal(); 
             fetchMembers(); 
         } else {
@@ -944,7 +956,7 @@ async function handleProfileUpdateSubmit(e) {
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser)); 
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = currentUser.nickname || currentUser.username;
-            Toast.fire({ title: '資料已更新', icon: 'success' }); 
+            showNavHint('個人資料已更新'); 
             closeProfileModal(); 
         } else {
             if (passErr) {
@@ -1099,7 +1111,7 @@ async function handleSystemLineLogin(id) {
             currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
-            Toast.fire({ title: 'LINE 登入成功', icon: 'success' });
+            setTimeout(() => showNavHint('登入成功'), 600);
         } else {
             console.warn(">> Line Login Failed:", json.error);
             if (errorEl) {
@@ -1139,7 +1151,7 @@ async function bindLine(id) {
                 document.getElementById('lineStatusText').style.color = '#06C755';
                 document.getElementById('bindLineBtn').style.display = 'none';
             }
-            Toast.fire({ title: '綁定成功', text: '您可以使用 LINE 快速登入了', icon: 'success' });
+            showNavHint('LINE 帳號綁定成功');
         } else {
             if (passErr) {
                 passErr.innerText = json.error || '綁定失敗';
