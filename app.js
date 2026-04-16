@@ -356,6 +356,21 @@ function initEventListeners() {
             document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
         }
     });
+
+    // Password Visibility Logic: Show eye icon only when there is content
+    document.querySelectorAll('.password-wrapper').forEach(wrapper => {
+        const input = wrapper.querySelector('input');
+        const toggle = wrapper.querySelector('.toggle-password');
+        if (input && toggle) {
+            // Initial check in case of browser auto-fill
+            if (input.value.length > 0) toggle.classList.add('visible');
+            
+            input.addEventListener('input', () => {
+                if (input.value.length > 0) toggle.classList.add('visible');
+                else toggle.classList.remove('visible');
+            });
+        }
+    });
 }
 
 function initTabs() {
@@ -791,11 +806,16 @@ function logout() {
 
 window.togglePassword = (id) => {
     const el = document.getElementById(id);
-    const icon = el.nextElementSibling.querySelector('i');
+    if (!el) return;
     const isPass = el.type === 'password';
     el.type = isPass ? 'text' : 'password';
-    icon.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
-    lucide.createIcons();
+    
+    // Switch icon via data-lucide attribute
+    const toggle = el.parentElement.querySelector('.toggle-password i');
+    if (toggle) {
+        toggle.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
+        if (window.lucide) lucide.createIcons();
+    }
 };
 
 async function startLiffBinding() {
