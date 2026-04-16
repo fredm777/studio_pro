@@ -169,7 +169,11 @@ function initEventListeners() {
     document.getElementById('userInfoTrigger').onclick = openProfileModal;
     document.getElementById('profileForm').onsubmit = handleProfileUpdateSubmit;
     document.getElementById('memberForm').onsubmit = handleMemberUpdateSubmit;
-    document.getElementById('searchInput').oninput = (e) => filterCustomers(e.target.value);
+    document.getElementById('searchInput').oninput = (e) => {
+        const tab = document.querySelector('.tab-link.active').dataset.tab;
+        if (tab === 'customers') filterCustomers(e.target.value);
+        else filterMembers(e.target.value);
+    };
     document.getElementById('closeModal').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
     
     const forgotForm = document.getElementById('forgotForm');
@@ -233,13 +237,16 @@ function initTabs() {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            // Toggle global action bar visibility
-            const actionBox = document.getElementById('customerActions');
-            if (actionBox) {
-                actionBox.style.display = (tabId === 'customers') ? 'flex' : 'none';
-            }
+            // Contextual Button Toggle (Keep search visible)
+            const addBtn = document.getElementById('addCustomerBtn');
+            if (addBtn) addBtn.style.display = (tabId === 'customers') ? 'block' : 'none';
+            
+            // Clear search when switching
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
             
             if (tabId === 'admin') fetchMembers();
+            else renderCustomers(); // reset to full list for customers
         };
     });
 }
@@ -387,21 +394,35 @@ async function handleForgotSubmit(e) {
 }
 
 async function fetchMembers() {
-    const tbody = document.getElementById('memberTableBody');
-    if (!tbody) return;
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'get_all_members', username: currentUser.username }) });
         const json = await res.json();
         if (json.success) {
             allMembers = json.data;
-            tbody.innerHTML = '';
-            allMembers.forEach(m => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${m.username}</td><td>${m.nickname}</td><td>${m.level}</td><td>${m.email}</td><td><button class="primary-btn" style="width:auto; padding:4px 12px;" onclick="openMemberModal(${m.rowIndex})">設定</button></td>`;
-                tbody.appendChild(tr);
-            });
+            renderMembers(allMembers);
         }
     } catch (e) { console.error(e); }
+}
+
+function renderMembers(list) {
+    const tbody = document.getElementById('memberTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    list.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${m.username}</td><td>${m.nickname}</td><td>${m.level}</td><td>${m.email}</td><td><button class="primary-btn" style="width:auto; padding:4px 12px;" onclick="openMemberModal(${m.rowIndex})">設定</button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function filterMembers(query) {
+    const q = query.toLowerCase();
+    const filtered = allMembers.filter(m => 
+        String(m.username || '').toLowerCase().includes(q) ||
+        String(m.nickname || '').toLowerCase().includes(q) ||
+        String(m.email || '').toLowerCase().includes(q)
+    );
+    renderMembers(filtered);
 }
 
 window.openMemberModal = (idx) => {
