@@ -450,6 +450,14 @@ function initEventListeners() {
 
     // Click outside to close modals
     const modalOverlays = ['modalOverlay', 'profileModal', 'memberModal'];
+    
+    window.closeAllModals = () => {
+        modalOverlays.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+        });
+    };
+
     modalOverlays.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -683,6 +691,7 @@ function renderCustomers() {
 }
 
 window.openCustomerModal = (title, data = null) => {
+    closeAllModals();
     if (!currentUser) {
         console.warn(">> openCustomerModal inhibited: currentUser is NULL");
         return Toast.fire({ icon: 'warning', title: '請先登入' });
@@ -875,6 +884,7 @@ function filterMembers(query) {
 }
 
 window.openMemberModal = (idx) => {
+    closeAllModals();
     if (!currentUser) return;
     const m = allMembers.find(x => x.rowIndex == idx);
     if (!m) return console.error("Member not found for row index:", idx);
@@ -933,6 +943,7 @@ async function handleMemberUpdateSubmit(e) {
 }
 
 function openProfileModal() {
+    closeAllModals();
     document.getElementById('profileModal').classList.add('active');
     document.getElementById('profUser').value = currentUser.username;
     document.getElementById('profNick').value = currentUser.nickname || '';
