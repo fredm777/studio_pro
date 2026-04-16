@@ -1,4 +1,4 @@
-// Studio Pro Dashboard Logic v1.8 (ULTIMATE STABLE)
+// Studio Pro Dashboard Logic v1.9 (RELEASE)
 // ==========================================
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwX9xG_snc8EmBttBBOW3M8bNOUxZojeXjfag22pGgGnb5EcfgphhJ3klR8JPv8cAObFQ/exec';
 const LIFF_ID = '2009659478-RZ3Q85ZU'; 
@@ -9,7 +9,7 @@ let currentUser = null;
 let registeredUsername = ''; 
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log(">> System Init: v1.8 Starting...");
+    console.log(">> System Init: v1.9 Release Starting...");
     try { initEventListeners(); } catch(e) { console.error("Event Init Error:", e); }
     try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
     if (window.lucide) { lucide.createIcons(); }
@@ -49,14 +49,11 @@ window.switchAuthStage = (stage) => {
 
 async function handleLoginForm(e) {
     e.preventDefault();
-    console.log(">> [Login] Attempt started...");
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
     Swal.fire({ title: '登入中...', didOpen: () => Swal.showLoading() });
     
     try {
-        console.log(">> [Login] Fetching GAS URL...");
-        // v1.8 FIX: 使用 text/plain 避免 OPTIONS 預檢，確保 GAS 相容性
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
@@ -66,7 +63,6 @@ async function handleLoginForm(e) {
         
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const json = await res.json();
-        console.log(">> [Login] Response Received:", json);
         
         if (json.success) {
             currentUser = json.user;
@@ -77,12 +73,11 @@ async function handleLoginForm(e) {
             Swal.fire('失敗', json.error || '帳號密碼錯誤', 'error');
         }
     } catch (err) {
-        console.error("!! [Login] Network Error:", err);
-        Swal.fire('連線失敗', '系統偵測到連線被攔截。請確認 GAS 權限已設為「所有人 (Anyone)」。\n\n錯誤資訊: ' + err.message, 'error');
+        Swal.fire('連線失敗', '系統目前正在初始化後端權限，請確認您已在 GAS 執行過 initSheets。', 'error');
     }
 }
 
-async function handleRegisterForm(e) {
+async function handleRegister(e) {
     e.preventDefault();
     registeredUsername = document.getElementById('regUser').value;
     const password = document.getElementById('regPass').value;
@@ -98,13 +93,13 @@ async function handleRegisterForm(e) {
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire('成功', '請至信箱收取驗證碼', 'success');
+            Swal.fire('成功', '若您尚未驗證，請輸入預設 6 位數代碼', 'success');
             switchAuthStage('verify');
         } else { Swal.fire('失敗', json.error, 'error'); }
     } catch (err) { Swal.fire('錯誤', '無法連線至系統', 'error'); }
 }
 
-async function handleVerifyForm(e) {
+async function handleVerify(e) {
     e.preventDefault();
     const code = document.getElementById('vCodeInput').value;
     Swal.fire({ title: '驗證中...', didOpen: () => Swal.showLoading() });
@@ -117,15 +112,14 @@ async function handleVerifyForm(e) {
         });
         const json = await res.json();
         if (json.success) { Swal.fire('驗證成功', '請重新登入', 'success'); switchAuthStage('login'); }
-        else { Swal.fire('錯誤', json.error, 'error'); }
-    } catch (err) { Swal.fire('失敗', '驗證失敗', 'error'); }
+        else { Swal.fire('錯誤', json.error || '驗證碼錯誤', 'error'); }
+    } catch (err) { Swal.fire('失敗', '驗證連線失敗', 'error'); }
 }
 
-// ... 剩餘 UI 輔助函數保持不變 ...
 function initEventListeners() {
     document.getElementById('loginForm').onsubmit = handleLoginForm;
-    document.getElementById('registerForm').onsubmit = handleRegisterForm;
-    document.getElementById('verifyForm').onsubmit = handleVerifyForm;
+    document.getElementById('registerForm').onsubmit = handleRegister;
+    document.getElementById('verifyForm').onsubmit = handleVerify;
     document.getElementById('logoutBtn').onclick = logout;
     document.getElementById('bindLineBtn').onclick = startLiffBinding;
     document.getElementById('addCustomerBtn').onclick = () => openCustomerModal('新增客戶');
