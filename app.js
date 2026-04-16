@@ -51,10 +51,15 @@ async function handleLoginForm(e) {
     e.preventDefault();
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
-    console.log(">> handleLoginForm called", { username, password });
     
+    Swal.fire({
+        title: '登入中...',
+        text: '正在與伺服器建立安全連線',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
     try {
-        console.log(">> Fetching login...");
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
@@ -62,23 +67,21 @@ async function handleLoginForm(e) {
             body: JSON.stringify({ action: 'login', username, password })
         });
         
-        console.log(">> Fetch completed with status:", res.status);
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const text = await res.text();
-        console.log(">> Raw Response Payload:", text);
-        
         const json = JSON.parse(text);
         
         if (json.success) {
+            Swal.close();
             currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
         } else {
-            alert('登入失敗: ' + (json.error || '帳號或密碼錯誤'));
+            Swal.fire('登入失敗', json.error || '帳號或密碼錯誤', 'error');
         }
     } catch (err) {
         console.error(">> Login Error Caught:", err);
-        alert('連線失敗: ' + err.toString() + '\n請檢查 Console 了解詳情');
+        Swal.fire('連線失敗', '無法連接到伺服器: ' + err.toString(), 'error');
     }
 }
 
@@ -119,7 +122,12 @@ async function handleRegister(e) {
 async function handleVerify(e) {
     e.preventDefault();
     const code = document.getElementById('vCodeInput').value;
-    console.log(">> handleVerify called", { code });
+    
+    Swal.fire({
+        title: '驗證中...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
     
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -129,18 +137,18 @@ async function handleVerify(e) {
             body: JSON.stringify({ action: 'verify_code', username: registeredUsername, code })
         });
         const text = await res.text();
-        console.log(">> Raw Response Payload:", text);
         const json = JSON.parse(text);
         
-        if (json.success) { 
-            alert('驗證成功！請重新登入系統。'); 
-            switchAuthStage('login'); 
-        } else { 
-            alert('驗證失敗: ' + (json.error || '驗證碼無效')); 
+        if (json.success) {
+            Swal.fire('驗證成功！', '您的帳號已開通，請登入。', 'success').then(() => {
+                switchAuthStage('login');
+            });
+        } else {
+            Swal.fire('驗證失敗', json.error || '驗證碼無效', 'error');
         }
     } catch (err) { 
         console.error(">> Verify Error:", err);
-        alert('驗證發生錯誤: ' + err.toString()); 
+        Swal.fire('連線錯誤', err.message, 'error');
     }
 }
 
