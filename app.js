@@ -849,10 +849,10 @@ async function handleLiffRedirect() {
             if (session) {
                 // Context: Binding (User is already logged in to the system)
                 currentUser = JSON.parse(session);
-                bindLine(p.userId);
+                await bindLine(p.userId);
             } else {
                 // Context: Login (User is not logged in)
-                handleSystemLineLogin(p.userId);
+                await handleSystemLineLogin(p.userId);
             }
             
             const url = window.location.href.split('?')[0];
@@ -886,20 +886,30 @@ async function handleSystemLineLogin(id) {
             Toast.fire({ title: 'LINE 登入成功', icon: 'success' });
         } else {
             console.warn(">> Line Login Failed:", json.error);
-            Swal.fire({
-                title: '尚未綁定 LINE',
-                text: json.error || "尚未找到您的帳號綁定資訊。",
-                icon: 'warning',
+            // Hide sync status first to avoid UI overlap
+            setSyncStatus(false);
+            
+            const result = await Swal.fire({
+                title: 'LINE 尚未綁定',
+                html: `<div style="text-align:left; font-size:0.95rem; line-height:1.6; color:var(--text-main);">
+                        ${json.error || "系統中尚未找到您的 LINE 帳號資料。"}<br><br>
+                        <b>您可以：</b><br>
+                        1. 點擊下方按鈕立即註冊新帳號<br>
+                        2. 回到登入畫面，使用一般帳密登入後進行綁定
+                       </div>`,
+                icon: 'info',
                 showCancelButton: true,
-                confirmButtonText: '立即註冊',
+                confirmButtonText: '前往註冊',
                 cancelButtonText: '返回登入',
                 confirmButtonColor: '#06C755',
-                cancelButtonColor: '#f1f5f9'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    switchAuthStage('register');
-                }
+                cancelButtonColor: '#64748b'
             });
+
+            if (result.isConfirmed) {
+                switchAuthStage('register');
+            } else {
+                showAuth();
+            }
         }
     } catch (e) {
         console.error(">> handleSystemLineLogin Error:", e);
