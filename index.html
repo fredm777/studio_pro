@@ -30,7 +30,7 @@
                             <span class="toggle-password" onclick="togglePassword('loginPass')"><i data-lucide="eye"></i></span>
                         </div>
                     </div>
-                    <button type="submit" class="primary-btn">登入系統</button>
+                    <button type="submit" class="primary-btn">登入</button>
                     <div class="auth-footer">還沒有帳號？ <a href="#" onclick="switchAuthStage('register')">點此註冊</a></div>
                 </form>
             </div>
@@ -51,7 +51,7 @@
                             <span class="toggle-password" onclick="togglePassword('regPass')"><i data-lucide="eye"></i></span>
                         </div>
                     </div>
-                    <button type="submit" class="primary-btn">立即註冊</button>
+                    <button type="submit" class="primary-btn">註冊</button>
                     <div class="auth-footer">已有帳號？ <a href="#" onclick="switchAuthStage('login')">返回登入</a></div>
                 </form>
             </div>
@@ -91,7 +91,7 @@
     <div id="app" class="hidden">
         <header>
             <div class="header-content">
-                <div class="brand"><span class="logo-icon">S</span><h1>Studio Pro</h1></div>
+                <div class="brand"><h1>Studio Pro</h1></div>
                 <div class="user-controls">
                     <div class="user-info" id="userInfoTrigger">
                         <span id="displayUser"></span>
@@ -108,12 +108,12 @@
 
         <main>
             <section id="customers" class="tab-content active">
-                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2>資料庫概覽</h2>
                     <button id="addCustomerBtn" class="primary-btn" style="width: auto; padding: 0.75rem 2rem;">+ 新增資料</button>
                 </div>
                 
-                <div style="margin-bottom:1.5rem;">
+                <div class="search-wrapper">
                     <input type="text" id="searchInput" placeholder="透過公司名稱或統編搜尋..." 
                            style="width:100%; max-width:400px; padding:0.75rem 1.25rem; border-radius:12px; border:1px solid var(--border);">
                 </div>
@@ -189,15 +189,15 @@
                 <div class="form-group"><label>手機號碼</label><input type="text" id="profPhone" placeholder="手機號碼"></div>
                 
                 <div style="border-top: 1px solid var(--border); margin: 1.5rem 0; padding-top: 1rem;">
-                    <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; color: var(--text-dark);">安全性：更換新密碼</div>
+                    <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; color: var(--text-dark);">修改密碼</div>
                     <div class="form-group" style="margin-bottom:0.75rem;">
                         <div class="password-wrapper">
-                            <input type="password" id="profPass1" placeholder="留空則不修改密碼">
+                            <input type="password" id="profPass1" placeholder="輸入新密碼">
                             <span class="toggle-password" onclick="togglePassword('profPass1')"><i data-lucide="eye"></i></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="password" id="profPass2" placeholder="請再次輸入新密碼以確認">
+                        <input type="password" id="profPass2" placeholder="再次輸入以確認">
                     </div>
                 </div>
 

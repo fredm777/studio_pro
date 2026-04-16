@@ -6,7 +6,7 @@ const LIFF_ID = '2009659478-RZ3Q85ZU';
 let allCustomers = [];
 let currentFilteredCustomers = [];
 let currentPage = 1;
-let itemsPerPage = 20;
+let itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 20;
 
 let allMembers = [];
 let currentUser = null;
@@ -28,12 +28,16 @@ function checkAuth() {
 }
 
 function enterApp() {
-    document.getElementById('authOverlay').style.display = 'none';
-    document.getElementById('app').classList.remove('hidden');
+    const authOverlay = document.getElementById('authOverlay');
+    const appEl = document.getElementById('app');
     const displayEl = document.getElementById('displayUser');
+    const adminBtn = document.getElementById('adminTabBtn');
+
+    if (authOverlay) authOverlay.style.display = 'none';
+    if (appEl) appEl.classList.remove('hidden');
     if (displayEl) displayEl.innerText = (currentUser.nickname || currentUser.username);
+    if (adminBtn && currentUser.level === '管理員') adminBtn.classList.remove('hidden');
     
-    if (currentUser.level === '管理員') document.getElementById('adminTabBtn').classList.remove('hidden');
     fetchCustomers();
 }
 
@@ -173,8 +177,10 @@ function initEventListeners() {
 
     const itemsInput = document.getElementById('itemsPerPageInput');
     if (itemsInput) {
-        itemsInput.onchange = (e) => {
+        itemsInput.value = itemsPerPage;
+        itemsInput.oninput = (e) => {
             itemsPerPage = parseInt(e.target.value) || 20;
+            localStorage.setItem('st_pro_items_per_page', itemsPerPage);
             currentPage = 1;
             renderCustomers();
         };
@@ -186,6 +192,7 @@ function initEventListeners() {
             if (val > 200) val = 200;
             itemsInput.value = val;
             itemsPerPage = val;
+            localStorage.setItem('st_pro_items_per_page', itemsPerPage);
             currentPage = 1;
             renderCustomers();
         };
@@ -289,7 +296,8 @@ function renderCustomers() {
 
     paginatedData.forEach(item => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.contact || ''}</td><td>${item.nickname || ''}</td><td>${item.phone || ''}</td><td>${item.email || ''}</td><td>${item.address || ''}</td><td>${item.invoiceInfo || ''}</td>`;
+        // Correct Column Order: Company, TaxId, Nickname, Contact, Phone, Email, Address, Invoice
+        tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.nickname || ''}</td><td>${item.contact || ''}</td><td>${item.phone || ''}</td><td>${item.email || ''}</td><td>${item.address || ''}</td><td>${item.invoiceInfo || ''}</td>`;
         tr.ondblclick = () => openCustomerModal('編輯', item);
         tbody.appendChild(tr);
     });
@@ -297,19 +305,26 @@ function renderCustomers() {
 
 function openCustomerModal(title, data = null) {
     if (currentUser.level === '訪客') return Swal.fire('提示', '訪客無法編輯', 'info');
-    document.getElementById('modalTitle').innerText = title;
-    document.getElementById('modalOverlay').classList.add('active');
-    document.getElementById('customerForm').reset();
-    document.getElementById('rowIndex').value = data ? data.rowIndex : '';
+    const titleEl = document.getElementById('modalTitle');
+    const overlay = document.getElementById('modalOverlay');
+    const form = document.getElementById('customerForm');
+    
+    if (titleEl) titleEl.innerText = title;
+    if (overlay) overlay.classList.add('active');
+    if (form) form.reset();
+    
+    const rowIdxEl = document.getElementById('rowIndex');
+    if (rowIdxEl) rowIdxEl.value = data ? data.rowIndex : '';
+    
     if (data) {
-        document.getElementById('companyName').value = data.companyName || '';
-        document.getElementById('taxId').value = data.taxId || '';
-        document.getElementById('nickname').value = data.nickname || '';
-        document.getElementById('contact').value = data.contact || '';
-        document.getElementById('phone').value = data.phone || '';
-        document.getElementById('email').value = data.email || '';
-        document.getElementById('address').value = data.address || '';
-        document.getElementById('invoiceInfo').checked = (data.invoiceInfo === 'v' || data.invoiceInfo === 'V');
+        if (document.getElementById('companyName')) document.getElementById('companyName').value = data.companyName || '';
+        if (document.getElementById('taxId')) document.getElementById('taxId').value = data.taxId || '';
+        if (document.getElementById('nickname')) document.getElementById('nickname').value = data.nickname || '';
+        if (document.getElementById('contact')) document.getElementById('contact').value = data.contact || '';
+        if (document.getElementById('phone')) document.getElementById('phone').value = data.phone || '';
+        if (document.getElementById('email')) document.getElementById('email').value = data.email || '';
+        if (document.getElementById('address')) document.getElementById('address').value = data.address || '';
+        if (document.getElementById('invoiceInfo')) document.getElementById('invoiceInfo').checked = (data.invoiceInfo === 'v' || data.invoiceInfo === 'V');
     }
 }
 
@@ -416,7 +431,7 @@ function openProfileModal() {
     const statusText = document.getElementById('lineStatusText');
     
     if (currentUser.lineId) {
-        statusText.innerHTML = '✅ 已綁定 LINE 帳號';
+        statusText.innerHTML = '已綁定';
         statusText.style.color = '#06C755';
         bindBtn.style.display = 'none';
     } else {
@@ -511,7 +526,7 @@ async function bindLine(id) {
         if (json.success) {
             currentUser.lineId = id;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
-            document.getElementById('lineStatusText').innerHTML = '✅ 已綁定 LINE 帳號';
+            document.getElementById('lineStatusText').innerHTML = '已綁定';
             document.getElementById('lineStatusText').style.color = '#06C755';
             document.getElementById('bindLineBtn').style.display = 'none';
             Swal.fire('綁定成功', '您之後可以使用 LINE 快速登入！', 'success');
