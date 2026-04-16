@@ -12,6 +12,39 @@ let allMembers = [];
 let currentUser = null;
 let registeredUsername = ''; 
 
+// --- Toast Mixin for Non-blocking Notifications ---
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
+// --- Performance & Sync Helpers ---
+function setSyncStatus(active) {
+    const bar = document.getElementById('syncProgressBar');
+    const badge = document.getElementById('syncBadge');
+    if (active) {
+        bar.style.width = '30%';
+        bar.classList.add('active');
+        badge.classList.add('active');
+        // Simulate progress
+        setTimeout(() => { if(bar.classList.contains('active')) bar.style.width = '70%'; }, 500);
+    } else {
+        bar.style.width = '100%';
+        setTimeout(() => {
+            bar.classList.remove('active');
+            badge.classList.remove('active');
+            bar.style.width = '0%';
+        }, 300);
+    }
+}
+
 // --- Hybrid Caching Helpers ---
 function getCache(key) {
     const cached = localStorage.getItem(`st_pro_cache_${key}`);
@@ -26,10 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
     if (window.lucide) { lucide.createIcons(); }
     
-    // Safety check for Protocol
-    if (window.location.protocol === 'file:') {
-        Swal.fire({ title: '環境限制提醒', text: 'LIFF (LINE 登入) 不支援以本地檔案 (file://) 方式開啟。', icon: 'warning' });
-    }
 
     // New Combined Init Flow
     const initApp = async () => {
@@ -58,6 +87,13 @@ function checkAuth() {
 function enterApp() {
     const authOverlay = document.getElementById('authOverlay');
     const appEl = document.getElementById('app');
+    
+    // Smooth transition
+    if (authOverlay) authOverlay.classList.add('fade-out');
+    if (appEl) {
+        appEl.classList.remove('hidden');
+        appEl.classList.add('fade-in');
+    }
     const displayEl = document.getElementById('displayUser');
     const adminBtn = document.getElementById('adminTabBtn');
     const customersBtn = document.getElementById('customersTabBtn');
@@ -95,8 +131,14 @@ function enterApp() {
 }
 
 function showAuth() {
-    document.getElementById('authOverlay').style.display = 'flex';
-    document.getElementById('app').classList.add('hidden');
+    const authOverlay = document.getElementById('authOverlay');
+    const appEl = document.getElementById('app');
+    
+    if (authOverlay) {
+        authOverlay.classList.remove('fade-out');
+        authOverlay.style.display = 'flex';
+    }
+    if (appEl) appEl.classList.add('hidden');
     switchAuthStage('login');
 }
 
@@ -108,15 +150,12 @@ window.switchAuthStage = (stage) => {
 
 async function handleLoginForm(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
     
-    Swal.fire({
-        title: '登入中...',
-        text: '正在與伺服器建立安全連線',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
 
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -126,35 +165,36 @@ async function handleLoginForm(e) {
             body: JSON.stringify({ action: 'login', username, password })
         });
         
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-        const text = await res.text();
-        const json = JSON.parse(text);
+        const json = await res.json();
         
         if (json.success) {
-            Swal.close();
             currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
         } else {
-            Swal.fire({ title: '登入失敗', text: json.error || '帳號或密碼錯誤', icon: 'error', confirmButtonText: '重新嘗試' });
+            Toast.fire({ title: '登入失敗', text: json.error || '帳號或密碼錯誤', icon: 'error' });
         }
     } catch (err) {
         console.error(">> Login Error Caught:", err);
-        Swal.fire({ title: '連線失敗', text: '無法連接到伺服器: ' + err.toString(), icon: 'error', confirmButtonText: '知道了' });
+        Toast.fire({ title: '連線失敗', text: '請檢查網路連線', icon: 'error' });
+    } finally {
+        if (btn) btn.classList.remove('btn-loading');
+        setSyncStatus(false);
     }
 }
 
 async function handleRegister(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     registeredUsername = document.getElementById('regUser').value;
     const password = document.getElementById('regPass').value;
     const email = document.getElementById('regEmail').value;
-    // Nickname defaults to username during registration
     const nickname = registeredUsername; 
-    console.log(">> handleRegister called", { username: registeredUsername, email });
+    
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
     
     try {
-        console.log(">> Fetching register...");
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
@@ -162,39 +202,59 @@ async function handleRegister(e) {
             body: JSON.stringify({ action: 'register', username: registeredUsername, password, nickname, email })
         });
         
-        console.log(">> Fetch completed with status:", res.status);
-        const text = await res.text();
-        console.log(">> Raw Response Payload:", text);
-        const json = JSON.parse(text);
+        const json = await res.json();
         
         if (json.success) {
-            Swal.fire({ 
-                title: '歡迎加入 Studio Pro', 
-                text: '帳號建立成功！即將前往驗證畫面以開通權限。', 
-                icon: 'success', 
-                confirmButtonText: '前往驗證', 
-                confirmButtonColor: '#06C755' 
-            }).then(() => {
-                switchAuthStage('verify');
-            });
+            Toast.fire({ title: '帳號建立成功', text: '請完成 E-mail 驗證', icon: 'success' });
+            switchAuthStage('verify');
         } else { 
-            Swal.fire({ title: '註冊失敗', text: '伺服器回報：' + json.error, icon: 'error' }); 
+            Toast.fire({ title: '註冊失敗', text: json.error, icon: 'error' }); 
         }
     } catch (err) { 
-        console.error(">> Register Error Caught:", err);
-        Swal.fire({ title: '連線錯誤', text: '無法連動註冊服務，請檢查網路狀態。', icon: 'error' }); 
+        Toast.fire({ title: '連線錯誤', icon: 'error' }); 
+    } finally {
+        if (btn) btn.classList.remove('btn-loading');
+        setSyncStatus(false);
     }
+}
+
+async function checkAvailability(type, value) {
+    if (!value) return;
+    const errorEl = document.getElementById(type === 'username' ? 'regUserError' : 'regEmailError');
+    if (!errorEl) return;
+
+    try {
+        const body = { action: 'check_availability' };
+        if (type === 'username') body.username = value;
+        else body.email = value;
+
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        
+        if (json.success) {
+            const available = type === 'username' ? json.usernameAvailable : json.emailAvailable;
+            if (!available) {
+                errorEl.innerText = `⚠️ 此${type === 'username' ? '帳號' : 'E-mail'}已被使用`;
+                errorEl.classList.add('active');
+            } else {
+                errorEl.classList.remove('active');
+            }
+        }
+    } catch (e) { console.error("Validation Error:", e); }
 }
 
 async function handleVerify(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const code = document.getElementById('vCodeInput').value;
     
-    Swal.fire({
-        title: '驗證中...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
     
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -203,25 +263,33 @@ async function handleVerify(e) {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'verify_code', username: registeredUsername, code })
         });
-        const text = await res.text();
-        const json = JSON.parse(text);
+        const json = await res.json();
         
         if (json.success) {
-            Swal.fire({ title: '驗證成功！', text: '您的帳號已順利開通，歡迎登入。', icon: 'success', confirmButtonText: '前往登入' }).then(() => {
-                switchAuthStage('login');
-            });
+            Toast.fire({ title: '驗證成功', icon: 'success' });
+            switchAuthStage('login');
         } else {
-            Swal.fire({ title: '驗證失敗', text: json.error || '驗證碼無效', icon: 'error' });
+            Toast.fire({ title: '驗證失敗', text: json.error || '驗證碼無效', icon: 'error' });
         }
     } catch (err) { 
-        console.error(">> Verify Error:", err);
-        Swal.fire({ title: '連線錯誤', text: err.message, icon: 'error' });
+        Toast.fire({ title: '連線錯誤', text: '請稍後再試', icon: 'error' });
+    } finally {
+        if (btn) btn.classList.remove('btn-loading');
+        setSyncStatus(false);
     }
 }
 
 function initEventListeners() {
     document.getElementById('loginForm').onsubmit = handleLoginForm;
     document.getElementById('registerForm').onsubmit = handleRegister;
+    
+    // Live Validation for Registration
+    const regUserInput = document.getElementById('regUser');
+    const regEmailInput = document.getElementById('regEmail');
+    
+    if (regUserInput) regUserInput.onblur = () => checkAvailability('username', regUserInput.value);
+    if (regEmailInput) regEmailInput.onblur = () => checkAvailability('email', regEmailInput.value);
+
     document.getElementById('verifyForm').onsubmit = handleVerify;
     document.getElementById('logoutBtn').onclick = logout;
     document.getElementById('bindLineBtn').onclick = startLiffBinding;
@@ -380,10 +448,7 @@ function initResizableTable() {
 }
 
 async function fetchCustomers() {
-    const loading = document.getElementById('tableLoading');
-    // Only show loading if no cache
-    if (loading && allCustomers.length === 0) loading.style.display = 'block';
-    
+    setSyncStatus(true);
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -391,8 +456,7 @@ async function fetchCustomers() {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'get_customers' })
         });
-        const text = await res.text();
-        const json = JSON.parse(text);
+        const json = await res.json();
         if (json.success) { 
             const hasChanged = JSON.stringify(allCustomers) !== JSON.stringify(json.data);
             if (hasChanged) {
@@ -401,10 +465,12 @@ async function fetchCustomers() {
                 currentFilteredCustomers = allCustomers;
                 renderCustomers(); 
             }
-            if (loading) loading.style.display = 'none';
         }
     } catch (err) { 
         console.error("Fetch Error:", err);
+    } finally {
+        setSyncStatus(false);
+        const loading = document.getElementById('tableLoading');
         if (loading) loading.style.display = 'none';
     }
 }
@@ -495,24 +561,57 @@ async function saveCustomer() {
         address: document.getElementById('address').value,
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : ''
     };
+
+    // --- Optimistic UI Update ---
+    const originalData = JSON.parse(JSON.stringify(allCustomers));
+    const modal = document.getElementById('modalOverlay');
+    if (modal) modal.classList.remove('active');
+    
+    if (rIndex) {
+        const idx = allCustomers.findIndex(c => c.rowIndex == rIndex);
+        if (idx !== -1) allCustomers[idx] = { ...allCustomers[idx], ...body };
+    } else {
+        // Temporary row index for new items (will be overwritten by fetch)
+        allCustomers.unshift({ ...body, rowIndex: -1 });
+    }
+    
+    currentFilteredCustomers = allCustomers;
+    renderCustomers();
+    setSyncStatus(true);
+    Toast.fire({ title: '正在同步資料', icon: 'info', timer: 1000 });
+
     try {
-        Swal.fire({ title: '儲存中...', text: '正在將資料存入資料庫', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+        const res = await fetch(GAS_WEB_APP_URL, { 
+            method: 'POST', mode: 'cors', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify(body) 
+        });
         const json = await res.json();
         if (json.success) { 
-            Swal.fire({ title: '保存成功', icon: 'success', timer: 1500, showConfirmButton: false }); 
-            document.getElementById('modalOverlay').classList.remove('active'); 
-            fetchCustomers(); 
+            Toast.fire({ title: '資料已安全存入', icon: 'success' }); 
+            fetchCustomers(); // Refresh to get actual server state/IDs
         } else {
-            Swal.fire({ title: '操作失敗', text: json.error || '資料儲存過程發生錯誤', icon: 'error' });
+            throw new Error(json.error);
         }
-    } catch (e) { Swal.fire({ title: '連線失敗', text: '無法連動後端系統', icon: 'error' }); }
+    } catch (e) { 
+        // Revert UI
+        allCustomers = originalData;
+        currentFilteredCustomers = allCustomers;
+        renderCustomers();
+        Toast.fire({ title: '同步失敗', text: '資料已還原，請重新嘗試。', icon: 'error' }); 
+    } finally {
+        setSyncStatus(false);
+    }
 }
 
 async function handleForgotSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const email = document.getElementById('forgotEmail').value;
-    Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -520,14 +619,17 @@ async function handleForgotSubmit(e) {
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire({ title: '驗證碼已寄出', text: '請查看您的信箱並輸入 6 位數驗證碼。', icon: 'success' }).then(() => {
-                registeredUsername = json.username;
-                switchAuthStage('verify');
-            });
+            Toast.fire({ title: '驗證碼已寄出', text: '請查收您的電子郵件', icon: 'success' });
+            registeredUsername = json.username;
+            switchAuthStage('verify');
         } else {
-            Swal.fire({ title: '發送失敗', text: json.error || '找不到此 Email 帳號', icon: 'error' });
+            Toast.fire({ title: '發送失敗', text: json.error, icon: 'error' });
         }
-    } catch (err) { Swal.fire({ title: '連線錯誤', text: err.toString(), icon: 'error' }); }
+    } catch (err) { Toast.fire({ title: '連線錯誤', icon: 'error' }); }
+    finally {
+        if (btn) btn.classList.remove('btn-loading');
+        setSyncStatus(false);
+    }
 }
 
 async function fetchMembers() {
@@ -575,14 +677,24 @@ window.closeMemberModal = () => document.getElementById('memberModal').classList
 
 async function handleMemberUpdateSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const body = { action: 'update_member_status', adminUser: currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
+    
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
+    
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         if ((await res.json()).success) { 
-            Swal.fire({ title: '權限已更新', icon: 'success', timer: 1500, showConfirmButton: false }); 
-            closeMemberModal(); fetchMembers(); 
+            Toast.fire({ title: '權限已成功更新', icon: 'success' }); 
+            closeMemberModal(); 
+            fetchMembers(); 
         }
-    } catch (e) { Swal.fire({ title: '更新失敗', icon: 'error' }); }
+    } catch (e) { Toast.fire({ title: '更新失敗', icon: 'error' }); }
+    finally {
+        if (btn) btn.classList.remove('btn-loading');
+        setSyncStatus(false);
+    }
 }
 
 function openProfileModal() {
@@ -617,11 +729,12 @@ window.closeProfileModal = () => document.getElementById('profileModal').classLi
 
 async function handleProfileUpdateSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const pass1 = document.getElementById('profPass1').value;
     const pass2 = document.getElementById('profPass2').value;
     
     if (pass1 && pass1 !== pass2) {
-        return Swal.fire('錯誤', '兩次輸入的新密碼不一致', 'error');
+        return Toast.fire('錯誤', '兩次密碼不一致', 'error');
     }
 
     const body = { 
@@ -633,8 +746,10 @@ async function handleProfileUpdateSubmit(e) {
         newPassword: pass1 || null
     };
 
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
+
     try {
-        Swal.fire({ title: '更新中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
         if (json.success) { 
@@ -642,12 +757,16 @@ async function handleProfileUpdateSubmit(e) {
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser)); 
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = currentUser.nickname || currentUser.username;
-            Swal.fire({ title: '更新成功', text: '個人資料已妥善儲存' + (pass1 ? ' (含新密碼)' : ''), icon: 'success' }); 
+            Toast.fire({ title: '資料已更新', icon: 'success' }); 
             closeProfileModal(); 
         } else {
-            Swal.fire({ title: '更新失敗', text: json.error || '請確認輸入資料是否正確', icon: 'error' });
+            Toast.fire({ title: '更新失敗', text: json.error, icon: 'error' });
         }
-    } catch (e) { Swal.fire({ title: '連線失敗', text: '暫時無法連接至伺服器', icon: 'error' }); }
+    } catch (e) { Toast.fire({ title: '連線失敗', icon: 'error' }); }
+    finally {
+        if (btn) btn.classList.remove('btn-loading');
+        setSyncStatus(false);
+    }
 }
 
 function filterCustomers(val) {
@@ -663,7 +782,12 @@ function filterCustomers(val) {
     renderCustomers();
 }
 
-function logout() { localStorage.removeItem('st_pro_session'); location.reload(); }
+function logout() { 
+    localStorage.removeItem('st_pro_session'); 
+    currentUser = null;
+    showAuth();
+    Toast.fire({ title: '期待下次與您見面', icon: 'success', timer: 1500 });
+}
 
 window.togglePassword = (id) => {
     const el = document.getElementById(id);
@@ -681,21 +805,33 @@ async function startLiffBinding() {
 }
 
 async function loginViaLine() {
+    const btn = document.getElementById('lineLoginBtn');
+    if (btn) btn.classList.add('btn-loading');
+    
     try {
         if (typeof liff === 'undefined') {
-            throw new Error("LINE SDK (LIFF) 未成功載入。請檢查網路連線或 index.html 的 Script 標籤。");
+            throw new Error("LINE SDK (LIFF) 未成功載入。請檢查網路連線。");
         }
         await liff.init({ liffId: LIFF_ID });
         console.log(">> LIFF Init Success");
+        
         if (!liff.isLoggedIn()) {
             liff.login();
         } else { 
             const p = await liff.getProfile(); 
-            handleSystemLineLogin(p.userId); 
+            console.log(">> LIFF Profile Success:", p.userId);
+            await handleSystemLineLogin(p.userId); 
         }
     } catch (e) {
         console.error(">> LIFF Login Error:", e);
-        Swal.fire('LINE 登入錯誤', e.toString() + (window.location.protocol === 'file:' ? "\n\n(注意: LIFF 不支援本地檔案 file://)" : ""), 'error');
+        Swal.fire({
+            title: 'LINE 登入錯誤',
+            text: e.toString(),
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    } finally {
+        if (btn) btn.classList.remove('btn-loading');
     }
 }
 
@@ -730,28 +866,35 @@ async function handleLiffRedirect() {
 }
 
 async function handleSystemLineLogin(id) {
+    setSyncStatus(true);
+    console.log(">> HandleSystemLineLogin called for:", id);
     try {
-        Swal.fire({ title: 'LINE 登入中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const res = await fetch(GAS_WEB_APP_URL, { 
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
             body: JSON.stringify({ action: 'line_login', lineId: id }) 
         });
+        
+        if (!res.ok) throw new Error("伺服器連線狀態異常: " + res.status);
+        
         const json = await res.json();
+        console.log(">> Line Login Response:", json);
         
         if (json.success) {
             currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
-            Swal.close();
+            Toast.fire({ title: 'LINE 登入成功', icon: 'success' });
         } else {
+            console.warn(">> Line Login Failed:", json.error);
             Swal.fire({
                 title: '尚未綁定 LINE',
-                text: json.error,
+                text: json.error || "尚未找到您的帳號綁定資訊。",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '立即註冊',
                 cancelButtonText: '返回登入',
-                confirmButtonColor: '#06C755'
+                confirmButtonColor: '#06C755',
+                cancelButtonColor: '#f1f5f9'
             }).then((result) => {
                 if (result.isConfirmed) {
                     switchAuthStage('register');
@@ -759,13 +902,20 @@ async function handleSystemLineLogin(id) {
             });
         }
     } catch (e) {
-        Swal.fire({ title: '連線錯誤', text: '系統暫時無法連動 LINE 登入服務：' + e.toString(), icon: 'error' });
+        console.error(">> handleSystemLineLogin Error:", e);
+        Swal.fire({
+            title: '登入失敗',
+            text: '系統暫時無法連動 LINE 服務：' + e.toString(),
+            icon: 'error'
+        });
+    } finally {
+        setSyncStatus(false);
     }
 }
 
 async function bindLine(id) {
+    setSyncStatus(true);
     try {
-        Swal.fire({ title: '綁定中...', text: '正在將您的社會帳號與系統連動', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId: id }) });
         const json = await res.json();
         if (json.success) {
@@ -776,11 +926,13 @@ async function bindLine(id) {
                 document.getElementById('lineStatusText').style.color = '#06C755';
                 document.getElementById('bindLineBtn').style.display = 'none';
             }
-            Swal.fire({ title: '綁定成功', text: '您之後可以使用 LINE 快速登入系統了！', icon: 'success' });
+            Toast.fire({ title: '綁定成功', text: '您可以使用 LINE 快速登入了', icon: 'success' });
         } else {
-            Swal.fire({ title: '綁定失敗', text: '無法完成帳號連動，請稍後再試。', icon: 'error' });
+            Toast.fire({ title: '綁定失敗', icon: 'error' });
         }
     } catch (e) {
-        Swal.fire({ title: '連線錯誤', text: '綁定作業連線超時：' + e.toString(), icon: 'error' });
+        Toast.fire({ title: '連線錯誤', icon: 'error' });
+    } finally {
+        setSyncStatus(false);
     }
 }
