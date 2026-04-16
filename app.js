@@ -262,6 +262,13 @@ async function checkAvailability(type, value) {
     const errorEl = document.getElementById(type === 'username' ? 'regUserError' : 'regEmailError');
     if (!errorEl) return;
 
+    // Simple Email Check
+    if (type === 'email' && !value.includes('@')) {
+        errorEl.innerText = '⚠️ 請輸入有效的電子郵件地址';
+        errorEl.classList.add('active');
+        return;
+    }
+
     try {
         const body = { action: 'check_availability' };
         if (type === 'username') body.username = value;
@@ -347,20 +354,24 @@ async function handleVerify(e) {
 }
 
 function initEventListeners() {
-    document.getElementById('loginForm').onsubmit = handleLoginForm;
-    document.getElementById('registerForm').onsubmit = handleRegister;
+    const safeBind = (id, event, handler) => {
+        const el = document.getElementById(id);
+        if (el) el[event] = handler;
+    };
+
+    safeBind('loginForm', 'onsubmit', handleLoginForm);
+    safeBind('registerForm', 'onsubmit', handleRegister);
     
     // Live Validation for Registration
     const regUserInput = document.getElementById('regUser');
     const regEmailInput = document.getElementById('regEmail');
-    
     if (regUserInput) regUserInput.onblur = () => checkAvailability('username', regUserInput.value);
     if (regEmailInput) regEmailInput.onblur = () => checkAvailability('email', regEmailInput.value);
 
-    document.getElementById('verifyForm').onsubmit = handleVerify;
-    document.getElementById('logoutBtn').onclick = logout;
-    document.getElementById('bindLineBtn').onclick = startLiffBinding;
-    document.getElementById('lineLoginBtn').onclick = loginViaLine;
+    safeBind('verifyForm', 'onsubmit', handleVerify);
+    safeBind('logoutBtn', 'onclick', logout);
+    safeBind('bindLineBtn', 'onclick', startLiffBinding);
+    safeBind('lineLoginBtn', 'onclick', loginViaLine);
 
     const socialToggle = document.getElementById('socialToggle');
     if (socialToggle) {
@@ -371,20 +382,32 @@ function initEventListeners() {
             }
         };
     }
-    document.getElementById('addCustomerBtn').onclick = () => openCustomerModal('新增客戶');
-    document.getElementById('customerForm').onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
-    document.getElementById('userInfoTrigger').onclick = openProfileModal;
-    document.getElementById('profileForm').onsubmit = handleProfileUpdateSubmit;
-    document.getElementById('memberForm').onsubmit = handleMemberUpdateSubmit;
-    document.getElementById('searchInput').oninput = (e) => {
-        const tab = document.querySelector('.tab-link.active').dataset.tab;
-        if (tab === 'customers') filterCustomers(e.target.value);
-        else filterMembers(e.target.value);
-    };
-    document.getElementById('closeModal').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
     
-    const forgotForm = document.getElementById('forgotForm');
-    if (forgotForm) forgotForm.onsubmit = handleForgotSubmit;
+    safeBind('addCustomerBtn', 'onclick', () => openCustomerModal('新增客戶'));
+    const custForm = document.getElementById('customerForm');
+    if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
+    
+    safeBind('userInfoTrigger', 'onclick', openProfileModal);
+    safeBind('profileForm', 'onsubmit', handleProfileUpdateSubmit);
+    safeBind('memberForm', 'onsubmit', handleMemberUpdateSubmit);
+    
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.oninput = (e) => {
+            const activeTab = document.querySelector('.tab-link.active');
+            if (!activeTab) return;
+            const tab = activeTab.dataset.tab;
+            if (tab === 'customers') filterCustomers(e.target.value);
+            else filterMembers(e.target.value);
+        };
+    }
+    
+    safeBind('closeModal', 'onclick', () => {
+        const modal = document.getElementById('modalOverlay');
+        if (modal) modal.classList.remove('active');
+    });
+    
+    safeBind('forgotForm', 'onsubmit', handleForgotSubmit);
 
     const itemsInput = document.getElementById('itemsPerPageInput');
     if (itemsInput) {
@@ -409,11 +432,8 @@ function initEventListeners() {
         };
     }
 
-    const prevBtn = document.getElementById('prevPageBtn');
-    if (prevBtn) prevBtn.onclick = () => changePage(-1);
-    
-    const nextBtn = document.getElementById('nextPageBtn');
-    if (nextBtn) nextBtn.onclick = () => changePage(1);
+    safeBind('prevPageBtn', 'onclick', () => changePage(-1));
+    safeBind('nextPageBtn', 'onclick', () => changePage(1));
     
     const sel = document.getElementById('itemsPerPageSelector');
     if (sel) sel.onchange = (e) => {
@@ -434,14 +454,12 @@ function initEventListeners() {
         }
     });
 
-    // Password Visibility Logic: Show eye icon only when there is content
+    // Password Visibility Logic
     document.querySelectorAll('.password-wrapper').forEach(wrapper => {
         const input = wrapper.querySelector('input');
         const toggle = wrapper.querySelector('.toggle-password');
         if (input && toggle) {
-            // Initial check in case of browser auto-fill
             if (input.value.length > 0) toggle.classList.add('visible');
-            
             input.addEventListener('input', () => {
                 if (input.value.length > 0) toggle.classList.add('visible');
                 else toggle.classList.remove('visible');
@@ -612,7 +630,8 @@ function renderCustomers() {
     });
 }
 
-function openCustomerModal(title, data = null) {
+window.openCustomerModal = (title, data = null) => {
+    if (!currentUser) return;
     if (currentUser.level === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
     const titleEl = document.getElementById('modalTitle');
     const overlay = document.getElementById('modalOverlay');
@@ -788,12 +807,15 @@ function filterMembers(query) {
 }
 
 window.openMemberModal = (idx) => {
-    const m = allMembers.find(x => x.rowIndex === idx);
+    if (!currentUser) return;
+    const m = allMembers.find(x => x.rowIndex == idx);
+    if (!m) return console.error("Member not found for row index:", idx);
+    
     document.getElementById('memberModal').classList.add('active');
     document.getElementById('memberTargetRow').value = idx;
-    document.getElementById('memberUser').value = m.username;
-    document.getElementById('memberLevel').value = m.level;
-    document.getElementById('memberStatus').value = m.status;
+    document.getElementById('memberUser').value = m.username || '';
+    document.getElementById('memberLevel').value = m.level || '客戶';
+    document.getElementById('memberStatus').value = m.status || 'active';
 
     // Clear error
     const memErr = document.getElementById('memberError');
