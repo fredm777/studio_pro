@@ -62,15 +62,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // New Combined Init Flow
     const initApp = async () => {
+        setSyncStatus(true);
         const hasLiffParams = window.location.search.includes('liffClientId') || window.location.search.includes('code') || window.location.search.includes('liff.state');
+        
         if (hasLiffParams) {
+            console.log(">> LINE Redirect detected, awaiting processing...");
             await handleLiffRedirect();
         }
         
-        // If LIFF didn't log us in, or we are not in redirect flow, check general session
-        if (!currentUser) {
+        // Final state check: If we don't have a user and aren't already switching stages (e.g. to Register), show auth
+        if (!currentUser && document.querySelectorAll('.auth-stage.active').length === 0) {
             checkAuth();
         }
+        setSyncStatus(false);
     };
 
     initApp();
@@ -294,6 +298,16 @@ function initEventListeners() {
     document.getElementById('logoutBtn').onclick = logout;
     document.getElementById('bindLineBtn').onclick = startLiffBinding;
     document.getElementById('lineLoginBtn').onclick = loginViaLine;
+
+    const socialToggle = document.getElementById('socialToggle');
+    if (socialToggle) {
+        socialToggle.onclick = () => {
+            const options = document.getElementById('socialOptions');
+            if (options) {
+                options.style.display = options.style.display === 'none' ? 'block' : 'none';
+            }
+        };
+    }
     document.getElementById('addCustomerBtn').onclick = () => openCustomerModal('新增客戶');
     document.getElementById('customerForm').onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
     document.getElementById('userInfoTrigger').onclick = openProfileModal;
@@ -880,8 +894,12 @@ async function handleLiffRedirect() {
         }
     } catch (e) {
         console.error(">> Redirect Error:", e);
-        // Usually happens if origin is not allowed or ID is wrong
-        Swal.fire('LINE 導向初始化失敗', e.toString() + "\n\n請檢查 LINE Console 中的 Endpoint URL 是否與目前網址一致。", 'error');
+        await Swal.fire({
+            title: 'LINE 導向初始化失敗',
+            text: e.toString() + "\n\n請檢查 LINE Console 中的 Endpoint URL 是否與目前網址一致。",
+            icon: 'error'
+        });
+        showAuth();
     }
 }
 
@@ -933,11 +951,13 @@ async function handleSystemLineLogin(id) {
         }
     } catch (e) {
         console.error(">> handleSystemLineLogin Error:", e);
-        Swal.fire({
+        setSyncStatus(false);
+        await Swal.fire({
             title: '登入失敗',
             text: '系統暫時無法連動 LINE 服務：' + e.toString(),
             icon: 'error'
         });
+        showAuth();
     } finally {
         setSyncStatus(false);
     }
