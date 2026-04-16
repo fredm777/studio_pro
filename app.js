@@ -749,7 +749,7 @@ function openProfileModal() {
         statusText.style.color = '#06C755';
         bindBtn.style.display = 'none';
     } else {
-        statusText.innerHTML = '⚠️ 尚未綁定';
+        statusText.innerHTML = '尚未綁定';
         statusText.style.color = 'var(--text-muted)';
         bindBtn.style.display = 'block';
     }
@@ -924,25 +924,19 @@ async function handleSystemLineLogin(id) {
             Toast.fire({ title: 'LINE 登入成功', icon: 'success' });
         } else {
             console.warn(">> Line Login Failed:", json.error);
-            // Hide sync status first to avoid UI overlap
             setSyncStatus(false);
             
-            const result = await Swal.fire({
-                title: 'LINE 尚未綁定',
-                text: '請先登入後進行綁定',
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: '前往註冊',
-                cancelButtonText: '返回登入',
-                confirmButtonColor: '#06C755',
-                cancelButtonColor: '#64748b'
-            });
-
-            if (result.isConfirmed) {
-                switchAuthStage('register');
-            } else {
-                showAuth();
+            const errorEl = document.getElementById('lineAuthError');
+            if (errorEl) {
+                errorEl.innerText = "LINE 尚未綁定，請先登入後進行綁定";
+                errorEl.classList.add('active');
+                
+                // Expand social options so the error message is visible
+                const options = document.getElementById('socialOptions');
+                if (options) options.style.display = 'block';
             }
+            
+            showAuth();
         }
     } catch (e) {
         console.error(">> handleSystemLineLogin Error:", e);
