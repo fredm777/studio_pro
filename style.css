@@ -67,12 +67,12 @@ body {
 #authOverlay::before { 
     background: var(--primary); 
     top: -10%; left: -10%; 
-    animation: float 18s ease-in-out infinite;
+    animation: float 11s ease-in-out infinite;
 }
 #authOverlay::after { 
     background: #60a5fa; 
     bottom: -10%; right: -10%; 
-    animation: float 25s ease-in-out infinite;
+    animation: float 16s ease-in-out infinite;
 }
 
 @keyframes float {

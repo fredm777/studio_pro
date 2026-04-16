@@ -929,12 +929,7 @@ async function handleSystemLineLogin(id) {
             
             const result = await Swal.fire({
                 title: 'LINE 尚未綁定',
-                html: `<div style="text-align:left; font-size:0.95rem; line-height:1.6; color:var(--text-main);">
-                        ${json.error || "系統中尚未找到您的 LINE 帳號資料。"}<br><br>
-                        <b>您可以：</b><br>
-                        1. 點擊下方按鈕立即註冊新帳號<br>
-                        2. 回到登入畫面，使用一般帳密登入後進行綁定
-                       </div>`,
+                text: '請先登入後進行綁定',
                 icon: 'info',
                 showCancelButton: true,
                 confirmButtonText: '前往註冊',
