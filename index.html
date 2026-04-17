@@ -356,6 +356,9 @@
                             .text-center { text-align: center; } .text-right { text-align: right; } .bg-light { background-color: #f3f3f3; } .fw-bold { font-weight: bold; }
                             .remove-btn-dense { cursor: pointer; color: #ef4444; font-weight: bold; opacity: 0.5; padding: 0 5px; }
                             .remove-btn-dense:hover { opacity: 1; }
+                            th { position: relative; }
+                            .resizer { position: absolute; right: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize; user-select: none; z-index: 10; transition: background 0.2s;}
+                            .resizer:hover, .resizing .resizer { background-color: rgba(37, 99, 235, 0.5); }
                             </style>
 
                             <div class="quote-sheet-wrapper">
@@ -438,75 +441,86 @@
                                     </tfoot>
                                 </table>
 
-                                <!-- Summary Footer (Right side) -->
-                                <table class="quote-sheet-table">
-                                    <colgroup><col width="65%"><col width="22%"><col width="13%"></colgroup>
-                                    <tbody>
-                                        <tr>
-                                            <td rowspan="3" style="padding: 0; vertical-align: top;">
-                                                <table class="quote-sheet-table" style="border:none;">
-                                                    <colgroup><col width="20%"><col width="80%"></colgroup>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td colspan="2" class="bg-light text-center fw-bold">作業流程</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bg-light text-center">訂購單</td>
-                                                            <td>報價單承蒙客戶閣下認可簽署後，視同正式合約，不另開立訂購單</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bg-light text-center">訂金</td>
-                                                            <td>總額50%，即進入專案作業流程</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bg-light text-center" style="vertical-align: top;">匯款帳號</td>
-                                                            <td>
-                                                                <textarea id="qProcessContent" rows="3" style="resize:vertical;"></textarea>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bg-light text-center">初稿</td>
-                                                            <td><input id="qDays" placeholder="3 至 5 個工作天，提供客戶初稿"></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bg-light text-center">備註</td>
-                                                            <td><input id="qRemark" placeholder="2次免費整體調整，超出次數或於定稿後提出則酌收費用"></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bg-light text-center">交付內容</td>
-                                                            <td>定稿後，支付尾款，並將成品交付、開立電子發票</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                            <td class="bg-light text-center fw-bold">稅前合計</td>
-                                            <td class="text-right"><span id="qSubtotal">0</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="bg-light text-center fw-bold">5%營業稅</td>
-                                            <td class="text-right"><span id="qTax">0</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="bg-light text-center fw-bold">總額</td>
-                                            <td class="text-right fw-bold" style="font-size: 1.1em;"><span id="qTotal">0</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <!-- Summary Footer (Split) -->
+                                <div style="display: grid; grid-template-columns: 65% minmax(0, 1fr); gap: 15px; margin-bottom: 15px;">
+                                    <table class="quote-sheet-table" style="margin-bottom: 0;">
+                                        <colgroup><col width="20%"><col width="80%"></colgroup>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="2" class="bg-light text-center fw-bold">作業流程</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center">訂購單</td>
+                                                <td>報價單承蒙客戶閣下認可簽署後，視同正式合約，不另開立訂購單</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center">訂金</td>
+                                                <td>總額50%，即進入專案作業流程</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center" style="vertical-align: top;">匯款帳號</td>
+                                                <td>
+                                                    <textarea id="qProcessContent" rows="3" style="resize:vertical;"></textarea>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center">初稿</td>
+                                                <td><input id="qDays" placeholder="3 至 5 個工作天，提供客戶初稿"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center">備註</td>
+                                                <td><input id="qRemark" placeholder="2次免費整體調整，超出次數或於定稿後提出則酌收費用"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center">交付內容</td>
+                                                <td>定稿後，支付尾款，並將成品交付、開立電子發票</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
-                                <!-- Stamp / Signature block -->
-                                <table class="quote-sheet-table">
-                                    <colgroup><col width="10%"><col width="30%"><col width="60%"></colgroup>
-                                    <tbody>
-                                        <tr>
-                                            <td class="bg-light text-center" style="writing-mode: vertical-rl; text-orientation: upright; height: 120px; letter-spacing: 5px;">客戶代表簽章</td>
-                                            <td></td>
-                                            <td style="text-align:right; padding-right: 2rem; position:relative;">
-                                                <div style="display:inline-block; text-align:left; position:absolute; left:20px; top: 10px; writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 5px;" class="bg-light fw-bold">報價簽章</div>
-                                                <img src="https://i.imgur.com/kO1eE5Q.png" alt="Stamp Placeholder" class="stamp-image" style="max-height: 150px;">
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                    <table class="quote-sheet-table" style="margin-bottom: 0;">
+                                        <colgroup><col width="60%"><col width="40%"></colgroup>
+                                        <tbody>
+                                            <tr>
+                                                <td class="bg-light text-center fw-bold" style="height: 33.33%;">稅前合計</td>
+                                                <td class="text-right"><span id="qSubtotal">0</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center fw-bold" style="height: 33.33%;">5%營業稅</td>
+                                                <td class="text-right"><span id="qTax">0</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center fw-bold" style="height: 33.33%;">總額</td>
+                                                <td class="text-right fw-bold" style="font-size: 1.1em;"><span id="qTotal">0</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Stamp / Signature block (Split) -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <table class="quote-sheet-table" style="margin-bottom: 0;">
+                                        <colgroup><col width="20%"><col width="80%"></colgroup>
+                                        <tbody>
+                                            <tr>
+                                                <td class="bg-light text-center" style="writing-mode: vertical-rl; text-orientation: upright; height: 160px; letter-spacing: 5px;">客戶代表簽章</td>
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <table class="quote-sheet-table" style="margin-bottom: 0;">
+                                        <colgroup><col width="20%"><col width="80%"></colgroup>
+                                        <tbody>
+                                            <tr>
+                                                <td class="bg-light text-center" style="writing-mode: vertical-rl; text-orientation: upright; height: 160px; letter-spacing: 5px;">報價簽章</td>
+                                                <td style="text-align: right; padding-right: 2rem;">
+                                                    <img src="/Users/chienwei/Downloads/發票章.svg" alt="Company Stamp" class="stamp-image" style="max-height: 140px; transform: rotate(-5deg);">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             <div id="quotationError" class="auth-error-inline"></div>
