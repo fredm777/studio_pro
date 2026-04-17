@@ -118,6 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initApp();
     initResizableTable();
+    initBackgroundParallax();
+    setTimeout(checkModalIntegrity, 2000);
 });
 
 function checkAuth() {
@@ -233,16 +235,20 @@ async function handleLoginForm(e) {
 
     // --- System Settings Management ---
 
-function switchAdminSubTab(target) {
+window.switchAdminSubTab = function(target) {
     document.querySelectorAll('.admin-sub-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('#admin .sub-nav-content .tab-link').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('#admin .sub-nav .tab-link').forEach(l => l.classList.remove('active'));
     
     if (target === 'members') {
-        document.getElementById('adminListView').classList.add('active');
-        document.getElementById('adminMembersTab').classList.add('active');
+        const listEl = document.getElementById('adminListView');
+        const tabEl = document.getElementById('adminMembersTab');
+        if (listEl) listEl.classList.add('active');
+        if (tabEl) tabEl.classList.add('active');
     } else if (target === 'settings') {
-        document.getElementById('adminSettingsView').classList.add('active');
-        document.getElementById('adminSettingsTab').classList.add('active');
+        const settingsEl = document.getElementById('adminSettingsView');
+        const tabEl = document.getElementById('adminSettingsTab');
+        if (settingsEl) settingsEl.classList.add('active');
+        if (tabEl) tabEl.classList.add('active');
         fetchSettings();
     }
 }
@@ -307,8 +313,11 @@ async function handleSettingsSubmit(e) {
 // --- Project & Quotation Logic ---
 
 let allProjects = [];
+let currentFilteredProjects = [];
+let projectPage = 1;
+let projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 20;
 
-async function fetchProjects() {
+window.fetchProjects = async function() {
     setSyncStatus(true);
     const loading = document.getElementById('projectLoading');
     if (loading) loading.style.display = 'block';
@@ -323,6 +332,8 @@ async function fetchProjects() {
         const json = await res.json();
         if (json.success) {
             allProjects = json.projects;
+            currentFilteredProjects = [...allProjects];
+            projectPage = 1;
             renderProjects();
         }
     } catch (err) { console.error("Fetch Projects Error:", err); }
@@ -337,12 +348,31 @@ function renderProjects() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    if (allProjects.length === 0) {
+    const loading = document.getElementById('projectLoading');
+    if (loading) loading.style.display = 'none';
+
+    if (currentFilteredProjects.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem;">尚未建立專案，點擊下方按鈕開始</td></tr>`;
+        const pag = document.getElementById('projectPaginationContainer');
+        if (pag) pag.style.display = 'none';
         return;
     }
 
-    allProjects.forEach(proj => {
+    // Pagination Slicing
+    const totalPages = Math.ceil(currentFilteredProjects.length / projectItemsPerPage);
+    if (projectPage > totalPages) projectPage = totalPages || 1;
+    
+    const start = (projectPage - 1) * projectItemsPerPage;
+    const end = start + projectItemsPerPage;
+    const pagedEntries = currentFilteredProjects.slice(start, end);
+
+    // Update UI info
+    const pag = document.getElementById('projectPaginationContainer');
+    if (pag) pag.style.display = (currentFilteredProjects.length > 0) ? 'flex' : 'none';
+    const info = document.getElementById('projPageInfo');
+    if (info) info.innerText = `第 ${projectPage} / ${totalPages || 1} 頁 (共 ${currentFilteredProjects.length} 筆)`;
+
+    pagedEntries.forEach(proj => {
         // Find customer nickname
         const cust = allCustomers.find(c => c.customerId === proj.customerId);
         const custDisp = cust ? (cust.nickname || cust.companyName) : proj.customerId;
@@ -362,7 +392,7 @@ function renderProjects() {
     });
 }
 
-function showQuotationEditor(title, data = null) {
+window.showQuotationEditor = function(title, data = null) {
     switchSubView('projects', 'edit');
     const form = document.getElementById('quotationForm');
     form.reset();
@@ -511,7 +541,7 @@ function initQuotationAutocomplete() {
     });
 }
 
-function selectCustomerById(cid) {
+window.selectCustomerById = function(cid) {
     const cust = allCustomers.find(c => c.customerId === cid);
     if (!cust) return;
 
@@ -582,6 +612,18 @@ async function handleQuotationSubmit(e) {
         setSyncStatus(false);
     }
 }
+
+async function handleLogin(e) {
+    if (e) e.preventDefault();
+    const btn = e.target ? e.target.querySelector('button[type="submit"]') : null;
+    const username = document.getElementById('user').value || '';
+    const password = document.getElementById('pass').value || '';
+    
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
+    
+    const loginErr = document.getElementById('loginMainError');
+    if (loginErr) { loginErr.innerText = ''; loginErr.classList.remove('active'); }
 
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -816,6 +858,7 @@ function initEventListeners() {
             if (!activeTab) return;
             const tab = activeTab.dataset.tab;
             if (tab === 'customers') filterCustomers(e.target.value);
+            else if (tab === 'projects') filterProjects(e.target.value);
             else filterMembers(e.target.value);
         };
     }
@@ -832,11 +875,13 @@ function initEventListeners() {
     
     safeBind('forgotForm', 'onsubmit', handleForgotSubmit);
 
+    // Customer Pagination
     const itemsInput = document.getElementById('itemsPerPageInput');
     if (itemsInput) {
         itemsInput.value = itemsPerPage;
         itemsInput.oninput = (e) => {
-            itemsPerPage = parseInt(e.target.value) || 20;
+            const val = parseInt(e.target.value) || 20;
+            itemsPerPage = val;
             localStorage.setItem('st_pro_items_per_page', itemsPerPage);
             currentPage = 1;
             renderCustomers();
@@ -855,8 +900,35 @@ function initEventListeners() {
         };
     }
 
+    // Project Pagination
+    const projItemsInput = document.getElementById('projItemsPerPageInput');
+    if (projItemsInput) {
+        projItemsInput.value = projectItemsPerPage;
+        projItemsInput.oninput = (e) => {
+            const val = parseInt(e.target.value) || 20;
+            projectItemsPerPage = val;
+            localStorage.setItem('st_pro_project_items_per_page', projectItemsPerPage);
+            projectPage = 1;
+            renderProjects();
+        };
+        projItemsInput.onwheel = (e) => {
+            e.preventDefault();
+            let val = parseInt(projItemsInput.value) || 20;
+            if (e.deltaY < 0) val += 5; else val -= 5;
+            if (val < 1) val = 1;
+            if (val > 200) val = 200;
+            projItemsInput.value = val;
+            projectItemsPerPage = val;
+            localStorage.setItem('st_pro_project_items_per_page', projectItemsPerPage);
+            projectPage = 1;
+            renderProjects();
+        };
+    }
+
     safeBind('prevPageBtn', 'onclick', () => changePage(-1));
     safeBind('nextPageBtn', 'onclick', () => changePage(1));
+    safeBind('projPrevPageBtn', 'onclick', () => changePage(-1));
+    safeBind('projNextPageBtn', 'onclick', () => changePage(1));
     
     const sel = document.getElementById('itemsPerPageSelector');
     if (sel) sel.onchange = (e) => {
@@ -873,7 +945,22 @@ function initEventListeners() {
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+            // 1. Close Modals
+            const activeModals = document.querySelectorAll('.modal-overlay.active');
+            if (activeModals.length > 0) {
+                activeModals.forEach(m => m.classList.remove('active'));
+                return;
+            }
+
+            // 2. Back to List if in Edit mode
+            const activeTab = document.querySelector('.tab-link.active');
+            if (activeTab) {
+                const tabId = activeTab.dataset.tab;
+                const editView = document.getElementById(`${tabId}EditView`);
+                if (editView && editView.classList.contains('active')) {
+                    switchSubView(tabId, 'list');
+                }
+            }
         }
     });
 
@@ -993,7 +1080,7 @@ function initResizableTable() {
     });
 }
 
-async function fetchCustomers() {
+window.fetchCustomers = async function() {
     setSyncStatus(true);
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -1024,8 +1111,23 @@ async function fetchCustomers() {
 }
 
 window.changePage = (dir) => {
-    currentPage += dir;
-    renderCustomers();
+    const activeTab = document.querySelector('.tab-link.active');
+    if (!activeTab) return;
+    const tab = activeTab.dataset.tab;
+
+    if (tab === 'customers') {
+        const totalPages = Math.ceil(currentFilteredCustomers.length / itemsPerPage);
+        currentPage += dir;
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages || 1;
+        renderCustomers();
+    } else if (tab === 'projects') {
+        const totalPages = Math.ceil(currentFilteredProjects.length / projectItemsPerPage);
+        projectPage += dir;
+        if (projectPage < 1) projectPage = 1;
+        if (projectPage > totalPages) projectPage = totalPages || 1;
+        renderProjects();
+    }
 };
 
 function renderCustomers() {
@@ -1072,7 +1174,7 @@ function renderCustomers() {
     if (window.lucide) lucide.createIcons();
 }
 
-function switchSubView(tabId, viewType) {
+window.switchSubView = function(tabId, viewType) {
     const section = document.getElementById(tabId);
     if (!section) return;
 
@@ -1140,7 +1242,7 @@ window.showCustomerEditor = (title, data = null) => {
     if (window.lucide) lucide.createIcons();
 }
 
-async function saveCustomer() {
+window.saveCustomer = async function() {
     const rIndex = document.getElementById('rowIndex').value;
     const body = {
         action: rIndex ? 'update_customer' : 'add_customer',
@@ -1372,7 +1474,7 @@ async function handleMemberUpdateSubmit(e) {
     }
 }
 
-function openProfileModal() {
+window.openProfileModal = function() {
     console.log(">> openProfileModal Triggered.");
     window.closeAllModals();
     if (!currentUser) return console.warn(">> openProfileModal blocked: no currentUser.");
@@ -1418,7 +1520,7 @@ function openProfileModal() {
 }
 window.closeProfileModal = () => document.getElementById('profileModal').classList.remove('active');
 
-async function handleProfileUpdateSubmit(e) {
+window.handleProfileUpdateSubmit = async function(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const pass1 = document.getElementById('profPass1').value;
@@ -1485,7 +1587,7 @@ async function handleProfileUpdateSubmit(e) {
     }
 }
 
-function filterCustomers(val) {
+window.filterCustomers = function(val) {
     const query = String(val).toLowerCase();
     currentFilteredCustomers = allCustomers.filter(c => {
         // Global keyword scan across all fields (address, contact, email, etc.)
@@ -1497,7 +1599,23 @@ function filterCustomers(val) {
     renderCustomers();
 }
 
-function logout() { 
+window.filterProjects = function(val) {
+    const query = String(val).toLowerCase();
+    currentFilteredProjects = allProjects.filter(p => {
+        // Find customer nickname for joint search
+        const cust = allCustomers.find(c => c.customerId === p.customerId);
+        const custName = cust ? (cust.nickname || cust.companyName) : (p.customerId || '');
+        
+        return (p.projectName || '').toLowerCase().includes(query) ||
+               custName.toLowerCase().includes(query) ||
+               (p.pic || '').toLowerCase().includes(query) ||
+               (p.projectId || '').toLowerCase().includes(query);
+    });
+    projectPage = 1;
+    renderProjects();
+};
+
+window.logout = function() { 
     localStorage.removeItem('st_pro_session'); 
     currentUser = null;
     showAuth();
@@ -1732,10 +1850,4 @@ function checkModalIntegrity() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-    initBackgroundParallax();
-    
-    // Check integrity after a short delay to account for dynamic SDK injections
-    setTimeout(checkModalIntegrity, 2000);
-});
+// --- End of Script ---
