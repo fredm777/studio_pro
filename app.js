@@ -38,9 +38,12 @@ function showNavHint(msg) {
     }, 4000);
 }
 
-// --- Modal Management Helpers Removed per user request ---
-
 // --- Performance & Sync Helpers ---
+
+window.closeAllModals = () => {
+    console.log(">> Closing all active modals...");
+    document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+};
 
 function setSyncStatus(active) {
     const bar = document.getElementById('syncProgressBar');
@@ -229,6 +232,7 @@ async function handleLoginForm(e) {
             currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
+            Swal.fire({ icon: 'success', title: '登入成功', text: `歡迎回來, ${currentUser.nickname || currentUser.username}`, timer: 1500, showConfirmButton: false });
         } else {
             if (loginErr) {
                 loginErr.innerText = json.error || '帳號或密碼錯誤';
@@ -277,7 +281,7 @@ async function handleRegister(e) {
         const json = await res.json();
         
         if (json.success) {
-            showNavHint('帳號建立成功，請完成驗證');
+            Swal.fire({ icon: 'success', title: '註冊成功', text: '帳號建立成功，請完成驗證', timer: 2000, showConfirmButton: false });
             verifyContext = 'register';
             switchAuthStage('verify');
         } else { 
@@ -373,7 +377,7 @@ async function handleVerify(e) {
                     passErr.classList.add('active');
                 }
             } else {
-                showNavHint('驗證成功');
+                Swal.fire({ icon: 'success', title: '驗證成功', timer: 1500, showConfirmButton: false });
                 switchAuthStage('login');
             }
         } else {
@@ -427,7 +431,7 @@ function initEventListeners() {
         };
     }
     
-    safeBind('addCustomerBtn', 'onclick', () => openCustomerModal('新增客戶'));
+    safeBind('addCustomerBtn', 'onclick', () => showCustomerEditor('新增客戶資料'));
     const custForm = document.getElementById('customerForm');
     if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
     
@@ -446,23 +450,15 @@ function initEventListeners() {
         };
     }
     
-    safeBind('closeModal', 'onclick', () => {
-        const modal = document.getElementById('modalOverlay');
-        if (modal) modal.classList.remove('active');
-    });
+    // Note: ModalOverlay specific listeners removed as it's now a sub-view
 
-    // Click outside to close modals
-    const modalOverlays = ['modalOverlay', 'profileModal', 'memberModal'];
-
-    modalOverlays.forEach(id => {
-
-        const el = document.getElementById(id);
-        if (el) {
-            el.onclick = (e) => {
-                if (e.target === el) el.classList.remove('active');
-            };
-        }
-    });
+    // Profile Modal outside-click
+    const pModal = document.getElementById('profileModal');
+    if (pModal) {
+        pModal.onclick = (e) => {
+            if (e.target === pModal) closeProfileModal();
+        };
+    }
     
     safeBind('forgotForm', 'onsubmit', handleForgotSubmit);
 
@@ -532,7 +528,12 @@ function initTabs() {
             document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
             t.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+            const section = document.getElementById(tabId);
+            if (section) {
+                section.classList.add('active');
+                // Always reset to list view when switching main tabs
+                switchSubView(tabId, 'list');
+            }
             
             // Contextual Button Toggle (Keep search visible)
             const addBtn = document.getElementById('addCustomerBtn');
@@ -680,28 +681,58 @@ function renderCustomers() {
 
     paginatedData.forEach(item => {
         const tr = document.createElement('tr');
-        // Correct Column Order: Company, TaxId, Nickname, Contact, Phone, Email, Address, Invoice
-        tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.nickname || ''}</td><td>${item.contact || ''}</td><td>${item.phone || ''}</td><td>${item.email || ''}</td><td>${item.address || ''}</td><td>${item.invoiceInfo || ''}</td>`;
-        tr.ondblclick = () => openCustomerModal('資料明細', item);
+        const isInvoice = (item.invoiceInfo === 'v' || item.invoiceInfo === 'V');
+        const invoiceHtml = isInvoice ? '<span class="invoice-badge"><i data-lucide="check"></i></span>' : '';
+        
+        tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.nickname || ''}</td><td>${item.contact || ''}</td><td>${item.phone || ''}</td><td>${item.email || ''}</td><td>${item.address || ''}</td><td style="text-align:center;">${invoiceHtml}</td>`;
+        tr.ondblclick = () => showCustomerEditor('客戶明細與編輯', item);
         tbody.appendChild(tr);
     });
+    
+    if (window.lucide) lucide.createIcons();
 }
 
-window.openCustomerModal = (title, data = null) => {
+function switchSubView(tabId, viewType) {
+    const section = document.getElementById(tabId);
+    if (!section) return;
+
+    // viewType: 'list' or 'edit'
+    const listView = section.querySelector('.sub-view-stack[id$="ListView"]');
+    const editView = section.querySelector('.sub-view-stack[id$="EditView"]');
+
+    if (viewType === 'list') {
+        if (editView) editView.classList.remove('active');
+        setTimeout(() => {
+            if (listView) listView.classList.add('active');
+        }, editView ? 50 : 0); // Minimal delay for transition feel
+    } else {
+        if (listView) listView.classList.remove('active');
+        setTimeout(() => {
+            if (editView) editView.classList.add('active');
+        }, listView ? 50 : 0);
+    }
+    
+    // Auto-scroll to top of view
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.showCustomerEditor = (title, data = null) => {
+    console.log(">> showCustomerEditor Triggered:", { title, hasData: !!data });
 
     if (!currentUser) {
-        console.warn(">> openCustomerModal inhibited: currentUser is NULL");
         return Toast.fire({ icon: 'warning', title: '請先登入' });
     }
     const userRole = (currentUser.level || '').trim();
-    if (userRole === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
+    if (userRole === '客戶') {
+        return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
+    }
     
-    const titleEl = document.getElementById('modalTitle');
-    const overlay = document.getElementById('modalOverlay');
+    const titleEl = document.getElementById('viewTitleCustomer');
     const form = document.getElementById('customerForm');
     
     if (titleEl) titleEl.innerText = title;
-    if (overlay) overlay.classList.add('active');
+    switchSubView('customers', 'edit');
+    
     if (form) form.reset();
     
     // Clear error
@@ -723,6 +754,9 @@ window.openCustomerModal = (title, data = null) => {
         if (document.getElementById('address')) document.getElementById('address').value = data.address || '';
         if (document.getElementById('invoiceInfo')) document.getElementById('invoiceInfo').checked = (data.invoiceInfo === 'v' || data.invoiceInfo === 'V');
     }
+    
+    // Re-create lucide icons in case new ones were added
+    if (window.lucide) lucide.createIcons();
 }
 
 async function saveCustomer() {
@@ -768,9 +802,16 @@ async function saveCustomer() {
         });
         const json = await res.json();
         if (json.success) { 
-            showNavHint('資料已安全存入'); 
-            const modal = document.getElementById('modalOverlay');
-            if (modal) modal.classList.remove('active');
+            Swal.fire({ 
+                icon: 'success', 
+                title: '已儲存', 
+                timer: 1000, 
+                showConfirmButton: false,
+                background: '#fff',
+                iconColor: '#05c46b',
+                padding: '2rem'
+            });
+            switchSubView('customers', 'list');
             fetchCustomers(); // Refresh to get actual server state/IDs
         } else {
             throw new Error(json.error);
@@ -811,7 +852,7 @@ async function handleForgotSubmit(e) {
         });
         const json = await res.json();
         if (json.success) {
-            showNavHint('驗證碼已寄出');
+            Swal.fire({ icon: 'success', title: '驗證碼已寄出', text: '請檢查您的電子郵件', timer: 2000, showConfirmButton: false });
             registeredUsername = json.username;
             verifyContext = 'forgot';
             switchAuthStage('verify');
@@ -867,7 +908,7 @@ function renderMembers(list) {
     tbody.innerHTML = '';
     list.forEach(m => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${m.username}</td><td>${m.nickname}</td><td>${m.level}</td><td>${m.email}</td><td><button class="primary-btn" style="width:auto; padding:4px 12px;" onclick="openMemberModal(${m.rowIndex})">設定</button></td>`;
+        tr.innerHTML = `<td>${m.username}</td><td>${m.nickname}</td><td>${m.level}</td><td>${m.email}</td><td><button class="primary-btn" style="width:auto; padding:4px 12px;" onclick="showMemberEditor(${m.rowIndex})">設定</button></td>`;
         tbody.appendChild(tr);
     });
 }
@@ -882,13 +923,15 @@ function filterMembers(query) {
     renderMembers(filtered);
 }
 
-window.openMemberModal = (idx) => {
+window.showMemberEditor = (idx) => {
+    console.log(">> showMemberEditor Triggered for Index:", idx);
 
     if (!currentUser) return;
     const m = allMembers.find(x => x.rowIndex == idx);
     if (!m) return console.error("Member not found for row index:", idx);
     
-    document.getElementById('memberModal').classList.add('active');
+    switchSubView('admin', 'edit');
+
     document.getElementById('memberTargetRow').value = idx;
     document.getElementById('memberUser').value = m.username || '';
     document.getElementById('memberLevel').value = m.level || '客戶';
@@ -897,8 +940,9 @@ window.openMemberModal = (idx) => {
     // Clear error
     const memErr = document.getElementById('memberError');
     if (memErr) { memErr.innerText = ''; memErr.classList.remove('active'); }
+    
+    if (window.lucide) lucide.createIcons();
 };
-window.closeMemberModal = () => document.getElementById('memberModal').classList.remove('active');
 
 async function handleMemberUpdateSubmit(e) {
     e.preventDefault();
@@ -916,8 +960,8 @@ async function handleMemberUpdateSubmit(e) {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
         if (json.success) { 
-            showNavHint('權限已成功更新'); 
-            closeMemberModal(); 
+            Swal.fire({ icon: 'success', title: '權限已更新', timer: 1500, showConfirmButton: false });
+            switchSubView('admin', 'list'); 
             fetchMembers(); 
         } else {
             if (memErr) {
@@ -942,11 +986,19 @@ async function handleMemberUpdateSubmit(e) {
 }
 
 function openProfileModal() {
+    console.log(">> openProfileModal Triggered.");
+    window.closeAllModals();
+    if (!currentUser) return console.warn(">> openProfileModal blocked: no currentUser.");
 
-    document.getElementById('profileModal').classList.add('active');
-    document.getElementById('profUser').value = currentUser.username;
-    document.getElementById('profNick').value = currentUser.nickname || '';
-    document.getElementById('profEmail').value = currentUser.email || '';
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.add('active');
+        console.log(">> Added 'active' class to profileModal.");
+    }
+    
+    if (document.getElementById('profUser')) document.getElementById('profUser').value = currentUser.username;
+    if (document.getElementById('profNick')) document.getElementById('profNick').value = currentUser.nickname || '';
+    if (document.getElementById('profEmail')) document.getElementById('profEmail').value = currentUser.email || '';
     let phone = String(currentUser.phone || '');
     if (phone.startsWith("'")) phone = phone.slice(1);
     document.getElementById('profPhone').value = phone;
@@ -1022,7 +1074,7 @@ async function handleProfileUpdateSubmit(e) {
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser)); 
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = currentUser.nickname || currentUser.username;
-            showNavHint('個人資料已更新'); 
+            Swal.fire({ icon: 'success', title: '資料已更新', timer: 1500, showConfirmButton: false });
             closeProfileModal(); 
         } else {
             if (passErr) {
@@ -1177,7 +1229,9 @@ async function handleSystemLineLogin(id) {
             currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
             enterApp();
-            setTimeout(() => showNavHint('登入成功'), 600);
+            setTimeout(() => {
+                Swal.fire({ icon: 'success', title: 'LINE 登入成功', timer: 1500, showConfirmButton: false });
+            }, 600);
         } else {
             console.warn(">> Line Login Failed:", json.error);
             showAuth("LINE 尚未綁定，請先一般登入後進行綁定");
@@ -1207,14 +1261,20 @@ async function bindLine(id) {
                 document.getElementById('lineStatusText').style.color = '#06C755';
                 document.getElementById('bindLineBtn').style.display = 'none';
             }
-            showNavHint('LINE 帳號綁定成功');
+            Swal.fire({ icon: 'success', title: 'LINE 綁定成功', timer: 1500, showConfirmButton: false });
         } else {
+            console.warn(">> Bind LINE Failed:", json.error);
             if (passErr) {
                 passErr.innerText = json.error || '綁定失敗';
                 passErr.classList.add('active');
-            } else {
-                Toast.fire({ title: '綁定失敗', icon: 'error' });
             }
+            Swal.fire({ 
+                icon: 'warning', 
+                title: '綁定失敗', 
+                text: json.error || '此 LINE 帳號可能已被其他帳號綁定',
+                confirmButtonText: '知道了',
+                confirmButtonColor: '#06C755'
+            });
         }
     } catch (e) {
         if (passErr) {
@@ -1227,3 +1287,45 @@ async function bindLine(id) {
         setSyncStatus(false);
     }
 }
+
+// --- Premium Interactions & Stability ---
+
+function initBackgroundParallax() {
+    const overlay = document.getElementById('authOverlay');
+    if (!overlay) return;
+    
+    console.log(">> Initializing Premium Parallax Background...");
+    
+    overlay.addEventListener('mousemove', (e) => {
+        const { clientX: x, clientY: y } = e;
+        const { innerWidth: w, innerHeight: h } = window;
+        
+        // Calculate normalized position (-1 to 1)
+        const nx = (x / w) * 2 - 1;
+        const ny = (y / h) * 2 - 1;
+        
+        // Update CSS variables for smooth movement
+        overlay.style.setProperty('--mx', nx.toFixed(3));
+        overlay.style.setProperty('--my', ny.toFixed(3));
+    });
+}
+
+function checkModalIntegrity() {
+    // Only profileModal remains as a permanent modal in DOM
+    const criticalModals = ['profileModal'];
+    const missing = criticalModals.filter(id => !document.getElementById(id));
+    
+    if (missing.length > 0) {
+        console.error(">> [DOM CRITICAL ERROR] Modals missing from DOM:", missing);
+    } else {
+        console.log(">> Modal Integrity Check: Profile modal present.");
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+    initBackgroundParallax();
+    
+    // Check integrity after a short delay to account for dynamic SDK injections
+    setTimeout(checkModalIntegrity, 2000);
+});

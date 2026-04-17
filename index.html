@@ -126,7 +126,6 @@
 
         <div class="sub-nav-bar">
             <div class="sub-nav-content">
-                <div id="navHint" class="nav-hint"></div>
                 <nav class="tabs">
                     <button id="customersTabBtn" class="tab-link active" data-tab="customers">客戶資料庫</button>
                     <button id="projectsTabBtn" class="tab-link" data-tab="projects">專案管理</button>
@@ -142,52 +141,140 @@
         </div>
 
         <main>
-            <section id="customers" class="tab-content active">
-                <div class="grid-container" style="margin-top:0;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>客戶名稱</th>
-                                <th>統編</th>
-                                <th>客戶簡稱</th>
-                                <th>聯絡人</th>
-                                <th>聯絡電話</th>
-                                <th>電子信箱</th>
-                                <th>地址</th>
-                                <th>電子發票</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerTableBody"></tbody>
-                    </table>
-                    <div id="tableLoading" style="padding:4rem; text-align:center; color:var(--text-muted); font-weight:600;">正在與資料庫建立連線...</div>
-                    <div id="paginationContainer" style="display: none; justify-content: space-between; align-items: center; padding: 1rem;">
-                        <div style="display:flex; align-items:center;">
-                            <label style="color: var(--text-muted); font-size: 0.9rem; margin-right: 0.5rem;">每頁顯示：</label>
-                            <input type="number" id="itemsPerPageInput" value="20" min="1" max="200" style="width: 70px; padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size:0.9rem;">
+            <section id="customers" class="tab-content active sub-view-container">
+                <!-- List View -->
+                <div id="customersListView" class="sub-view-stack active">
+                    <div class="grid-container" style="margin-top:0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>客戶名稱</th>
+                                    <th>統編</th>
+                                    <th>客戶簡稱</th>
+                                    <th>聯絡人</th>
+                                    <th>聯絡電話</th>
+                                    <th>電子信箱</th>
+                                    <th>地址</th>
+                                    <th>電子發票</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerTableBody"></tbody>
+                        </table>
+                        <div id="tableLoading" style="padding:4rem; text-align:center; color:var(--text-muted); font-weight:600;">正在與資料庫建立連線...</div>
+                        <div id="paginationContainer" style="display: none; justify-content: space-between; align-items: center; padding: 1rem;">
+                            <div style="display:flex; align-items:center;">
+                                <label style="color: var(--text-muted); font-size: 0.9rem; margin-right: 0.5rem;">每頁顯示：</label>
+                                <input type="number" id="itemsPerPageInput" value="20" min="1" max="200" style="width: 70px; padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size:0.9rem;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <button id="prevPageBtn" class="logout-btn" style="padding: 0.3rem 0.8rem; height: auto; margin:0;">上一頁</button>
+                                <span id="pageInfo" style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;">第 1 / 1 頁</span>
+                                <button id="nextPageBtn" class="logout-btn" style="padding: 0.3rem 0.8rem; height: auto; margin:0;">下一頁</button>
+                            </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button id="prevPageBtn" class="logout-btn" style="padding: 0.3rem 0.8rem; height: auto; margin:0;">上一頁</button>
-                            <span id="pageInfo" style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;">第 1 / 1 頁</span>
-                            <button id="nextPageBtn" class="logout-btn" style="padding: 0.3rem 0.8rem; height: auto; margin:0;">下一頁</button>
-                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit/Add View -->
+                <div id="customersEditView" class="sub-view-stack">
+                    <div class="view-header">
+                        <button class="back-btn" onclick="switchSubView('customers', 'list')">
+                            <i data-lucide="chevron-left"></i> 返回列表
+                        </button>
+                        <h2 id="viewTitleCustomer">客戶詳細資料</h2>
+                    </div>
+                    
+                    <div class="edit-card">
+                        <form id="customerForm">
+                            <input type="hidden" id="rowIndex">
+                            <div style="display: flex; gap: 1.5rem; margin-bottom: 0.5rem;">
+                                <div class="form-group" style="flex: 1;"><label>客戶名稱</label><input id="companyName" required placeholder="例如：飛翔技術有限公司"></div>
+                                <div class="form-group" style="flex: 1;"><label>統編</label><input id="taxId" placeholder="8位數字"></div>
+                            </div>
+                            <div style="display: flex; gap: 1.5rem; margin-bottom: 0.5rem;">
+                                <div class="form-group" style="flex: 1;"><label>客戶簡稱</label><input id="nickname" placeholder="內部報表使用"></div>
+                                <div class="form-group" style="flex: 1;"><label>聯絡人</label><input id="contact" placeholder="負責窗口姓名"></div>
+                            </div>
+                            <div style="display: flex; gap: 1.5rem; margin-bottom: 0.5rem;">
+                                <div class="form-group" style="flex: 1;"><label>聯絡電話</label><input id="phone" placeholder="電話或手機"></div>
+                                <div class="form-group" style="flex: 1;"><label>電子信箱</label><input id="email" type="email" placeholder="receiving@example.com"></div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1.5rem;"><label>地址</label><input id="address" style="width: 100%;" placeholder="發票寄送地址"></div>
+                            
+                            <div style="background: #f8fafc; padding: 1.25rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--border);">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <input type="checkbox" id="invoiceInfo" style="width: 20px; height: 20px; cursor: pointer;">
+                                    <label for="invoiceInfo" style="margin: 0; cursor: pointer; color: var(--text-dark); font-weight: 600; text-transform: none;">關網電子發票資料建立</label>
+                                </p>
+                            </div>
+
+                            <div id="customerError" class="auth-error-inline" style="margin-bottom: 1.5rem;"></div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="submit" class="save-btn" style="flex: 2;">儲存變更</button>
+                                <button type="button" class="back-btn" onclick="switchSubView('customers', 'list')" style="flex: 1; justify-content: center;">取消</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </section>
 
-            <section id="admin" class="tab-content">
-                <div class="grid-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>系統帳號</th>
-                                <th>使用者暱稱</th>
-                                <th>目前的級別</th>
-                                <th>郵件地址</th>
-                                <th>管理操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="memberTableBody"></tbody>
-                    </table>
+            <section id="admin" class="tab-content sub-view-container">
+                <!-- Member List View -->
+                <div id="adminListView" class="sub-view-stack active">
+                    <div class="grid-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>系統帳號</th>
+                                    <th>使用者暱稱</th>
+                                    <th>目前的級別</th>
+                                    <th>郵件地址</th>
+                                    <th>管理操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memberTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Member Edit View -->
+                <div id="adminEditView" class="sub-view-stack">
+                    <div class="view-header">
+                        <button class="back-btn" onclick="switchSubView('admin', 'list')">
+                            <i data-lucide="chevron-left"></i> 返回成員列表
+                        </button>
+                        <h2>成員權限設定</h2>
+                    </div>
+
+                    <div class="edit-card" style="max-width: 500px;">
+                        <form id="memberForm">
+                            <input type="hidden" id="memberTargetRow">
+                            <div class="form-group">
+                                <label>使用者帳號</label>
+                                <input id="memberUser" readonly style="background:#f8fafc; color: var(--text-muted);">
+                            </div>
+                            <div class="form-group">
+                                <label>權限等級</label>
+                                <select id="memberLevel">
+                                    <option value="管理者">管理者</option>
+                                    <option value="操作人員">操作人員</option>
+                                    <option value="客戶">客戶</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 2rem;">
+                                <label>帳號狀態</label>
+                                <select id="memberStatus">
+                                    <option value="active">啟用中 (Active)</option>
+                                    <option value="blocked">暫時停權 (Blocked)</option>
+                                </select>
+                            </div>
+                            <div id="memberError" class="auth-error-inline" style="margin-bottom: 1.5rem;"></div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="submit" class="save-btn">儲存權限設定</button>
+                                <button type="button" class="back-btn" onclick="switchSubView('admin', 'list')" style="justify-content: center;">取消</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </section>
 
@@ -253,63 +340,6 @@
         </div>
     </div>
 
-    <div id="modalOverlay" class="modal-overlay">
-        <div class="modal-card" style="max-width: 500px; width: 90%;">
-            <h3 id="modalTitle">資料明細</h3>
-            <form id="customerForm">
-                <input type="hidden" id="rowIndex">
-                <div style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;"><label>客戶名稱</label><input id="companyName" required></div>
-                    <div class="form-group" style="flex: 1;"><label>統編</label><input id="taxId"></div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;"><label>客戶簡稱</label><input id="nickname"></div>
-                    <div class="form-group" style="flex: 1;"><label>聯絡人</label><input id="contact"></div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;"><label>聯絡電話</label><input id="phone"></div>
-                    <div class="form-group" style="flex: 1;"><label>電子信箱</label><input id="email"></div>
-                </div>
-                <div class="form-group"><label>地址</label><input id="address" style="width: 100%;"></div>
-                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
-                    <input type="checkbox" id="invoiceInfo" style="width: auto; margin:0; cursor: pointer;">
-                    <label for="invoiceInfo" style="margin: 0; cursor: pointer; color: var(--text-main);">關網電子發票資料建立</label>
-                </div>
-                <div id="customerError" class="auth-error-inline" style="margin-bottom: 1.5rem; margin-top: -0.5rem;"></div>
-                <button type="submit" class="save-btn">儲存</button>
-                <button type="button" id="closeModal" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="memberModal" class="modal-overlay">
-        <div class="modal-card">
-            <h3>調整成員級別</h3>
-            <form id="memberForm">
-                <input type="hidden" id="memberTargetRow">
-                <div class="form-group"><input id="memberUser" readonly style="background:#f8fafc;"></div>
-                <div class="form-group">
-                    <label>權限等級</label>
-                    <select id="memberLevel">
-                        <option value="管理者">管理者</option>
-                        <option value="操作人員">操作人員</option>
-                        <option value="客戶">客戶</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>帳號狀態</label>
-                    <select id="memberStatus">
-                        <option value="active">啟用中</option>
-                        <option value="blocked">暫時停權</option>
-                    </select>
-                </div>
-                <div id="memberError" class="auth-error-inline" style="margin-bottom: 1.5rem; margin-top: -0.5rem;"></div>
-                <button type="submit" class="save-btn">儲存</button>
-                <button type="button" onclick="closeMemberModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
-            </form>
-        </div>
-    </div>
-
-    <script src="app.js?v=1.9.1"></script>
+    <script src="app.js?v=2.0.0"></script>
 </body>
 </html>
