@@ -1487,13 +1487,12 @@ async function handleProfileUpdateSubmit(e) {
 
 function filterCustomers(val) {
     const query = String(val).toLowerCase();
-    currentFilteredCustomers = allCustomers.filter(c => 
-        String(c.companyName || '').toLowerCase().includes(query) || 
-        String(c.taxId || '').includes(query) || 
-        String(c.nickname || '').toLowerCase().includes(query) ||
-        String(c.contact || '').toLowerCase().includes(query) ||
-        String(c.phone || '').includes(query)
-    );
+    currentFilteredCustomers = allCustomers.filter(c => {
+        // Global keyword scan across all fields (address, contact, email, etc.)
+        return Object.values(c).some(fieldVal => 
+            String(fieldVal || '').toLowerCase().includes(query)
+        );
+    });
     currentPage = 1;
     renderCustomers();
 }
