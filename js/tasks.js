@@ -96,7 +96,11 @@ function renderTasksList(draggable = false) {
         // Lookup customer nickname for display
         const project = (window.allProjects || []).find(p => p.projectId === t.projectId);
         const customer = project ? (window.allCustomers || []).find(c => c.customerId === project.customerId) : null;
-        const custName = customer ? (customer.nickname || customer.companyName) : '未知';
+        
+        // Use a better fallback if data is still syncing
+        const custName = customer ? (customer.nickname || customer.companyName) : 
+                       (window.allProjects && window.allProjects.length > 0 ? '未知' : '載入中...');
+        
         const displayTaskName = `${custName}_${t.taskName || ''}`;
         
         const gripStyle = 'color: var(--text-muted); cursor: grab;';
@@ -105,7 +109,7 @@ function renderTasksList(draggable = false) {
         const completedBtnStyle = t.isCompleted ? 'color: #06C755;' : 'color: var(--text-muted);';
         
         li.innerHTML = `
-            <i data-lucide="grip-vertical" class="drag-handle" style="${gripStyle}"></i>
+            <i data-lucide="grip-vertical" class="drag-handle" style="${gripStyle}" title="拖曳改變排序"></i>
             <button type="button" onclick="toggleTaskCompletion(${t.rowIndex})" style="background:none; border:none; padding:0; display:flex; align-items:center; cursor:pointer; ${completedBtnStyle}">
                 <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
             </button>
