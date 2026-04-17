@@ -4,21 +4,29 @@ window.allTasks = window.allTasks || [];
 window.currentFilteredTasks = window.currentFilteredTasks || [];
 
 window.fetchTasks = async function() {
-    console.log(">> Fetching Tasks...");
+    // 1. Load from cache first for instant UI
+    const cached = getCache('tasks');
+    if (cached) {
+        window.allTasks = cached;
+        renderTasksList();
+    }
+
     setSyncStatus(true);
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST', mode: 'cors',
+            method: 'POST',
+            mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_tasks' })
+            body: JSON.stringify({ action: 'get_all_tasks' })
         });
         const json = await res.json();
         if (json.success) {
-            window.allTasks = json.tasks || [];
+            window.allTasks = json.data || [];
+            setCache('tasks', window.allTasks);
             if (typeof window.updateTaskProjectFilter === 'function') window.updateTaskProjectFilter();
             if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
         }
-    } catch (e) { 
+    } catch(e) { 
         console.error("Fetch Tasks Error:", e);
         if (window.logError) window.logError("FetchTasks", e);
     } finally { setSyncStatus(false); }
@@ -85,6 +93,12 @@ function renderTasksList(draggable = false) {
         li.dataset.rowIndex = t.rowIndex;
         li.dataset.taskId = t.taskId;
         
+        // Lookup customer nickname for display
+        const project = (window.allProjects || []).find(p => p.projectId === t.projectId);
+        const customer = project ? (window.allCustomers || []).find(c => c.customerId === project.customerId) : null;
+        const custName = customer ? (customer.nickname || customer.companyName) : '未知';
+        const displayTaskName = `${custName}_${t.taskName || ''}`;
+        
         const gripStyle = 'color: var(--text-muted); cursor: grab;';
         const checkIcon = t.isCompleted ? 'check-square' : 'square';
         const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted);' : 'color: var(--text-main); font-weight: 500;';
@@ -95,7 +109,7 @@ function renderTasksList(draggable = false) {
             <button type="button" onclick="toggleTaskCompletion(${t.rowIndex})" style="background:none; border:none; padding:0; display:flex; align-items:center; cursor:pointer; ${completedBtnStyle}">
                 <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
             </button>
-            <div style="flex: 1; ${textStyle}">${t.taskName || ''} <span style="font-size: 0.75rem; color: #a0aec0; margin-left: 8px;">(${t.projectId})</span></div>
+            <div style="flex: 1; ${textStyle}">${displayTaskName}</div>
             <button type="button" class="remove-btn-dense" onclick="deleteTask(${t.rowIndex})" title="刪除"><i data-lucide="trash-2"></i></button>
         `;
         list.appendChild(li);
@@ -123,13 +137,13 @@ function initDragAndDrop(listElement) {
         item.addEventListener('dragover', e => e.preventDefault());
         item.addEventListener('dragenter', function(e) {
             e.preventDefault();
-            this.style.background = '#f8fafc';
+            this.classList.add('drag-over-marker');
         });
         item.addEventListener('dragleave', function() {
-            this.style.background = 'white';
+            this.classList.remove('drag-over-marker');
         });
         item.addEventListener('drop', function(e) {
-            this.style.background = 'white';
+            this.classList.remove('drag-over-marker');
             if (this !== draggedItem) {
                 let allItems = Array.from(listElement.querySelectorAll('.task-item'));
                 let draggedIdx = allItems.indexOf(draggedItem);

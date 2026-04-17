@@ -3,6 +3,14 @@ window.projectPage = 1;
 window.projectItemsPerPage = 10;
 
 window.fetchProjects = async function() {
+    // 1. Load from cache first for instant UI
+    const cached = getCache('projects');
+    if (cached) {
+        window.allProjects = cached;
+        window.currentFilteredProjects = [...window.allProjects];
+        renderProjects();
+    }
+
     setSyncStatus(true);
     const loading = document.getElementById('projectLoading');
     if (loading) loading.style.display = 'block';
@@ -17,6 +25,7 @@ window.fetchProjects = async function() {
         const json = await res.json();
         if (json.success) {
             window.allProjects = json.projects || [];
+            setCache('projects', window.allProjects);
             window.currentFilteredProjects = [...window.allProjects];
             window.projectPage = 1;
             renderProjects();
@@ -94,7 +103,8 @@ window.showQuotationEditor = function(title, data = null) {
         document.getElementById('projId').value = data.projectId || '';
         document.getElementById('qProjName').value = data.projectName || '';
         document.getElementById('qPic').value = data.pic || '';
-        document.getElementById('qDate').value = data.date ? new Date(data.date).toISOString().split('T')[0] : '';
+        // Load date safely as a string to avoid timezone shifting
+        document.getElementById('qDate').value = data.date || '';
         
         // Granular workflow inputs
         if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = data.days || '';
@@ -430,7 +440,11 @@ window.filterProjects = function(val) {
         return (p.projectName || '').toLowerCase().includes(query) ||
                custName.toLowerCase().includes(query) ||
                (p.pic || '').toLowerCase().includes(query) ||
-               (p.projectId || '').toLowerCase().includes(query);
+               (p.projectId || '').toLowerCase().includes(query) ||
+               (cust ? (cust.companyName || '').toLowerCase().includes(query) : false) ||
+               (cust ? (cust.phone || '').toLowerCase().includes(query) : false) ||
+               (cust ? (cust.taxId || '').toLowerCase().includes(query) : false) ||
+               (cust ? (cust.address || '').toLowerCase().includes(query) : false);
     });
     projectPage = 1;
     renderProjects();

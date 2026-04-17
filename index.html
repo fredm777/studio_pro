@@ -271,27 +271,24 @@
             </section>
 
             <section id="permissions" class="tab-content sub-view-container">
-                <!-- Member Management Sub-tab -->
-                <div id="permissionsListView" class="admin-sub-tab active">
-                    <div id="adminMembersPanel">
-                        <div id="adminMembersList" class="sub-view-stack active">
-                            <div class="grid-container" style="margin-top:0;">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>系統帳號</th>
-                                            <th>使用者暱稱</th>
-                                            <th>目前的級別</th>
-                                            <th>郵件地址</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="memberTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                <!-- Member Management Sub-view: List -->
+                <div id="permissionsListView" class="sub-view-stack active">
+                    <div class="grid-container" style="margin-top:0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>系統帳號</th>
+                                    <th>使用者暱稱</th>
+                                    <th>目前的級別</th>
+                                    <th>郵件地址</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memberTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
                 
+                <!-- Member Management Sub-view: Edit -->
                 <div id="permissionsEditView" class="sub-view-stack">
                     <div class="view-header">
                         <button class="back-btn" onclick="switchSubView('permissions', 'list')">
@@ -369,23 +366,23 @@
                                     </h4>
                                     <div class="form-group">
                                         <label>訂購單</label>
-                                        <textarea id="setWfOrder" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="報價單承蒙認可簽署後..."></textarea>
+                                        <textarea id="setWfOrder" rows="2" placeholder="報價單承蒙認可簽署後..."></textarea>
                                     </div>
                                     <div class="form-group" style="margin-top: 0.75rem;">
                                         <label>訂金</label>
-                                        <textarea id="setWfDeposit" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="總額50%，即進入專案作業流程..."></textarea>
+                                        <textarea id="setWfDeposit" rows="2" placeholder="總額50%，即進入專案作業流程..."></textarea>
                                     </div>
                                     <div class="form-group" style="margin-top: 0.75rem;">
                                         <label>初稿</label>
-                                        <input id="setWfDraft" style="font-size: 0.85rem; padding: 0.5rem;" placeholder="3 至 5 個工作天，提供客戶初稿">
+                                        <input id="setWfDraft" placeholder="3 至 5 個工作天，提供客戶初稿">
                                     </div>
                                     <div class="form-group" style="margin-top: 0.75rem;">
                                         <label>修改次數</label>
-                                        <textarea id="setWfEdit" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="2次免費整體調整..."></textarea>
+                                        <textarea id="setWfEdit" rows="2" placeholder="2次免費整體調整..."></textarea>
                                     </div>
                                     <div class="form-group" style="margin-top: 0.75rem;">
                                         <label>交付內容</label>
-                                        <textarea id="setWfDelivery" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="定稿後，支付尾款..."></textarea>
+                                        <textarea id="setWfDelivery" rows="2" placeholder="定稿後，支付尾款..."></textarea>
                                     </div>
                                 </div>
                             </div>
