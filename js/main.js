@@ -17,14 +17,16 @@ function initEventListeners() {
     safeBind('logoutBtn', 'onclick', logout);
     safeBind('bindLineBtn', 'onclick', startLiffBinding);
     safeBind('lineLoginBtn', 'onclick', loginViaLine);
-    safeBind('bindGoogleBtn', 'onclick', bindGoogle);
+    safeBind('googleLoginBtn', 'onclick', window.loginViaGoogle);
+    safeBind('bindGoogleBtn', 'onclick', window.bindGoogle);
 
     const socialToggle = document.getElementById('socialToggle');
     if (socialToggle) {
         socialToggle.onclick = () => {
             const options = document.getElementById('socialOptions');
             if (options) {
-                options.style.display = options.style.display === 'none' ? 'block' : 'none';
+                const isHidden = !options.style.display || options.style.display === 'none';
+                options.style.display = isHidden ? 'flex' : 'none';
             }
         };
     }

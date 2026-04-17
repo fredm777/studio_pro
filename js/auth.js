@@ -352,3 +352,22 @@ window.bindGoogle = async function() {
         }
     });
 }
+
+window.bindGoogle = bindGoogle;
+
+async function loginViaGoogle() {
+    console.log(">> loginViaGoogle Triggered");
+    Swal.fire({
+        title: 'Google 登入',
+        text: 'Google 登入功能正在串接中，請先使用帳號密碼登入或使用 LINE 登入。',
+        icon: 'info',
+        confirmButtonText: '了解',
+        confirmButtonColor: 'var(--primary)',
+        customClass: {
+            popup: 'swal2-popup',
+            title: 'swal2-title'
+        }
+    });
+}
+
+window.loginViaGoogle = loginViaGoogle;

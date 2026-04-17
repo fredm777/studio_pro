@@ -146,7 +146,7 @@ function renderTasksList(draggable = false) {
             const displayTaskName = `${custName}_${t.taskName || ''}`;
             const displayTime = t.taskDate ? `<span style="font-size: 0.75rem; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${t.taskDate} ${t.taskTime || ''}</span>` : '';
             
-            const checkIcon = t.isCompleted ? 'check-square' : 'square';
+            const checkIcon = t.isCompleted ? 'circle-check' : 'circle';
             const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted); opacity: 0.7;' : 'color: var(--text-main); font-weight: 500;';
             const completedBtnStyle = t.isCompleted ? 'color: #06C755;' : 'color: var(--text-muted);';
             
@@ -307,12 +307,13 @@ window.showTaskEditorPage = function(task = null) {
 
     if (task) {
         // Edit Mode
+        console.log(">> Populating Task Editor with:", task);
         title.innerText = '編輯任務';
         document.getElementById('taskRowIndex').value = task.rowIndex;
         document.getElementById('taskIdField').value = task.taskId;
-        document.getElementById('taskIsCompleted').value = task.isCompleted;
+        document.getElementById('taskIsCompleted').value = String(task.isCompleted);
         document.getElementById('taskOrderWeight').value = task.orderWeight;
-        document.getElementById('taskName').value = task.taskName;
+        document.getElementById('taskName').value = task.taskName || '';
         document.getElementById('taskDate').value = task.taskDate || '';
         document.getElementById('taskTime').value = task.taskTime || '';
         pSelect.value = task.projectId;

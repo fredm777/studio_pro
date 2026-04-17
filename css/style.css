@@ -1149,31 +1149,47 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     color: var(--text-main);
 }
 
-/* --- Social Binding Buttons (Google Premium) --- */
-.google-bind-btn {
-    position: relative;
-    padding: 0.6rem 1.25rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-dark);
-    background: white;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* Gradient Border Trick */
-    border: 2px solid transparent;
-    background-image: linear-gradient(white, white), 
-                      linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
+.google-auth-btn {
+    width: 100%; 
+    padding: 0.75rem; 
+    border-radius: 12px;
+    background: white; 
+    color: #444; 
+    border: 1px solid #dadce0;
+    font-weight: 700;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 0.75rem;
+    cursor: pointer; 
+    transition: 0.2s; 
+    font-size: 0.9375rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.google-bind-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+.google-auth-btn:hover {
+    background: #f8fbff;
+    border-color: #4285F4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.1);
 }
 
-.google-bind-btn:active {
-    transform: translateY(0);
+/* Specific solid style for Binding */
+.google-primary-btn {
+    background: #4285F4 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    padding: 0.5rem 1rem !important;
+    height: 36px !important;
+    cursor: pointer !important;
+    transition: 0.2s !important;
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2) !important;
+}
+
+.google-primary-btn:hover {
+    background: #3367d6 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(66, 133, 244, 0.3) !important;
 }
