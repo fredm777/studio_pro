@@ -55,7 +55,7 @@ function renderProjects() {
 
     pagedEntries.forEach(proj => {
         // Find customer nickname
-        const cust = allCustomers.find(c => c.customerId === proj.customerId);
+        const cust = window.allCustomers.find(c => c.customerId === proj.customerId);
         const custDisp = cust ? (cust.nickname || cust.companyName) : proj.customerId;
         const dateStr = proj.date ? new Date(proj.date).toLocaleDateString() : '';
         const totalDisp = proj.total ? Number(proj.total).toLocaleString() : '0';
@@ -146,7 +146,8 @@ async function loadSettingsPreview() {
             if (s.standard_terms) {
                 processStr += `[作業及合約條款]\n${s.standard_terms}`;
             }
-            document.getElementById('qProcessContent').innerText = processStr;
+            const processBox = document.getElementById('qProcessContent');
+            if (processBox) processBox.value = processStr.trim();
         }
     } catch(e) {}
 }
@@ -156,13 +157,15 @@ function addQuotationRow(data = null) {
     const rowIdx = tbody.children.length + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td style="text-align:center;">${rowIdx}</td>
+        <td class="text-center">${rowIdx}</td>
         <td><input class="i-name" placeholder="項目名稱" value="${data ? data.name : ''}"></td>
-        <td><textarea class="i-content" placeholder="細項內容..." rows="1">${data ? data.content : ''}</textarea></td>
-        <td><input type="number" class="i-price" value="${data ? data.price : 0}" oninput="calcQuotation()"></td>
-        <td><input type="number" class="i-qty" value="${data ? data.qty : 1}" oninput="calcQuotation()"></td>
-        <td><input type="number" class="i-total readonly-field" readonly value="${data ? data.subtotal : 0}"></td>
-        <td style="text-align:center;"><div class="remove-row-btn" onclick="this.closest('tr').remove(); calcQuotation();">×</div></td>
+        <td><textarea class="i-content" placeholder="細項詳述..." rows="1" style="resize:vertical;">${data ? data.content : ''}</textarea></td>
+        <td><input type="number" class="i-price text-right" value="${data ? data.price : ''}" oninput="calcQuotation()"></td>
+        <td><input type="number" class="i-qty text-center" value="${data ? data.qty : 1}" oninput="calcQuotation()"></td>
+        <td style="position:relative;">
+            <input type="number" class="i-total text-right fw-bold" readonly tabindex="-1" value="${data ? data.subtotal : 0}">
+            <div class="remove-btn-dense" onclick="this.closest('tr').remove(); calcQuotation();" style="position:absolute; right:-25px; top:50%; transform:translateY(-50%); font-size:18px;" title="移除此列">&times;</div>
+        </td>
     `;
     tbody.appendChild(tr);
     calcQuotation();
@@ -198,7 +201,7 @@ function initQuotationAutocomplete() {
         const val = input.value.trim().toLowerCase();
         if (!val) { container.style.display = 'none'; return; }
         
-        const suggestions = allCustomers.filter(c => {
+        const suggestions = window.allCustomers.filter(c => {
             // Scan all fields for the keyword
             return Object.values(c).some(fieldVal => 
                 String(fieldVal || '').toLowerCase().includes(val)
@@ -223,7 +226,7 @@ function initQuotationAutocomplete() {
 }
 
 window.selectCustomerById = function(cid) {
-    const cust = allCustomers.find(c => c.customerId === cid);
+    const cust = window.allCustomers.find(c => c.customerId === cid);
     if (!cust) return;
 
     document.getElementById('qCustName').value = cust.companyName || '';
@@ -296,9 +299,9 @@ async function handleQuotationSubmit(e) {
 
 window.filterProjects = function(val) {
     const query = String(val).toLowerCase();
-    currentFilteredProjects = allProjects.filter(p => {
+    window.currentFilteredProjects = window.allProjects.filter(p => {
         // Find customer nickname for joint search
-        const cust = allCustomers.find(c => c.customerId === p.customerId);
+        const cust = window.allCustomers.find(c => c.customerId === p.customerId);
         const custName = cust ? (cust.nickname || cust.companyName) : (p.customerId || '');
         
         return (p.projectName || '').toLowerCase().includes(query) ||

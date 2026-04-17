@@ -79,10 +79,10 @@ async function handleSettingsSubmit(e) {
 
 // --- Project & Quotation Logic ---
 
-let allProjects = [];
-let currentFilteredProjects = [];
-let projectPage = 1;
-let projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 20;
+window.allProjects = [];
+window.currentFilteredProjects = [];
+window.projectPage = 1;
+window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 20;
 
 async function fetchMembers() {
     if (!currentUser || (currentUser.level || '').trim() !== '管理者') {

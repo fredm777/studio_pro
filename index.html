@@ -346,85 +346,173 @@
                             <input type="hidden" id="projRowIndex">
                             <input type="hidden" id="projId">
                             
-                            <!-- Header Info -->
-                            <div class="quotation-grid">
-                                <div class="q-section">
-                                    <div class="form-group">
-                                        <label>客戶搜尋 (名稱或統編)</label>
-                                        <div style="position:relative;">
-                                            <input id="qCustSearch" placeholder="輸入關鍵字..." autocomplete="off">
-                                            <div id="autocompleteSuggestions" class="suggestions-list"></div>
-                                        </div>
-                                    </div>
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                        <div class="form-group"><label>客戶名稱</label><input id="qCustName" readonly class="readonly-field"></div>
-                                        <div class="form-group"><label>統一編號</label><input id="qTaxId" readonly class="readonly-field"></div>
-                                    </div>
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                        <div class="form-group"><label>聯絡人</label><input id="qContact" readonly class="readonly-field"></div>
-                                        <div class="form-group"><label>聯絡電話</label><input id="qPhone" readonly class="readonly-field"></div>
-                                    </div>
-                                    <div class="form-group"><label>電子信箱</label><input id="qEmail" readonly class="readonly-field"></div>
-                                </div>
+                            <style>
+                            .quote-sheet-wrapper { background: #fff; border: 2px solid #000; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; color: #000; margin: 0 auto; font-size: 13px; margin-bottom: 2rem; position: relative; }
+                            .quote-sheet-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                            .quote-sheet-table th, .quote-sheet-table td { border: 1px solid #000; padding: 6px 8px; vertical-align: middle; }
+                            .quote-sheet-table th { background-color: #f3f3f3; font-weight: 600; text-align: center; }
+                            .quote-sheet-table input, .quote-sheet-table textarea { width: 100%; border: none; background: transparent; padding: 2px; margin: 0; font-size: inherit; font-family: inherit; color: inherit; outline: none; }
+                            .quote-sheet-table input:focus, .quote-sheet-table textarea:focus { background-color: #eef2ff; }
+                            .text-center { text-align: center; } .text-right { text-align: right; } .bg-light { background-color: #f3f3f3; } .fw-bold { font-weight: bold; }
+                            .remove-btn-dense { cursor: pointer; color: #ef4444; font-weight: bold; opacity: 0.5; padding: 0 5px; }
+                            .remove-btn-dense:hover { opacity: 1; }
+                            </style>
 
-                                <div class="q-section">
-                                    <div class="form-group"><label>專案名稱</label><input id="qProjName" required placeholder="例如：品牌形象視覺設計"></div>
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                        <div class="form-group"><label>承辦人員</label><input id="qPic" readonly class="readonly-field"></div>
-                                        <div class="form-group"><label>報價日期</label><input id="qDate" type="date"></div>
-                                    </div>
-                                    <div class="form-group" style="margin-top: 1rem; border-top: 1px dashed var(--border); padding-top: 1rem;">
-                                        <label>作業天數資訊</label>
-                                        <input id="qDays" placeholder="例如：3 至 5 個工作天">
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="quote-sheet-wrapper">
+                                <!-- Top Header Grid -->
+                                <table class="quote-sheet-table" style="border-bottom: 2px solid #000;">
+                                    <colgroup><col width="15%"><col width="35%"><col width="15%"><col width="35%"></colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td class="bg-light text-center">客戶名稱</td>
+                                            <td style="position:relative;">
+                                                <input id="qCustSearch" placeholder="選擇或輸入客戶..." autocomplete="off">
+                                                <div id="autocompleteSuggestions" class="suggestions-list" style="top: 100%; left: 0; right: 0; border-radius: 0; border-color:#000;"></div>
+                                                <input type="hidden" id="qCustName"> <!-- Kept for logic compat -->
+                                            </td>
+                                            <td class="bg-light text-center">公司名稱</td>
+                                            <td class="text-center">日日有桔設計工作室</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bg-light text-center">統一編號</td>
+                                            <td><input id="qTaxId" class="text-center" placeholder="客戶統編"></td>
+                                            <td class="bg-light text-center">統一編號</td>
+                                            <td class="text-center fw-bold">80076603</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bg-light text-center">聯絡人</td>
+                                            <td><input id="qContact" class="text-center" placeholder="客戶窗口"></td>
+                                            <td class="bg-light text-center">承辦人員</td>
+                                            <td><input id="qPic" class="text-center fw-bold" readonly tabindex="-1"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bg-light text-center">聯絡電話</td>
+                                            <td><input id="qPhone" class="text-center" placeholder="客戶電話"></td>
+                                            <td class="bg-light text-center">聯絡電話</td>
+                                            <td class="text-center">0911-773-181</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bg-light text-center">電子信箱</td>
+                                            <td><input id="qEmail" class="text-center" placeholder="客戶信箱"></td>
+                                            <td class="bg-light text-center">電子信箱</td>
+                                            <td class="text-center">jjukvs@gmail.com</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bg-light text-center">專案名稱</td>
+                                            <td><input id="qProjName" required placeholder="請輸入專案名稱" style="font-weight:bold;"></td>
+                                            <td class="bg-light text-center">報價日期</td>
+                                            <td><input id="qDate" type="date" class="text-center fw-bold"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
 
-                            <!-- Items Table -->
-                            <div class="items-table-wrapper" style="margin-top: 2rem;">
-                                <table class="items-table">
+                                <!-- Items Header -->
+                                <table class="quote-sheet-table" style="border-bottom: none;">
+                                    <colgroup>
+                                        <col width="8%">
+                                        <col width="22%">
+                                        <col width="35%">
+                                        <col width="12%">
+                                        <col width="10%">
+                                        <col width="13%">
+                                    </colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="width: 60px;">項次</th>
-                                            <th style="width: 200px;">項目</th>
+                                            <th>項次</th>
+                                            <th>項目</th>
                                             <th>內容</th>
-                                            <th style="width: 120px;">單價</th>
-                                            <th style="width: 80px;">數量</th>
-                                            <th style="width: 120px;">金額</th>
-                                            <th style="width: 50px;"></th>
+                                            <th>單價</th>
+                                            <th>數量</th>
+                                            <th>金額</th>
                                         </tr>
                                     </thead>
                                     <tbody id="quotationItemsBody">
-                                        <!-- Rows injected by JS -->
+                                        <!-- JS Injected Row Example -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="6" style="padding: 0; background: #fafafa;">
+                                                <button type="button" onclick="addQuotationRow()" style="width:100%; border:none; background:transparent; padding: 6px; cursor:pointer; color: #2563eb; font-weight:600;">+ 新增報價項目列</button>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+
+                                <!-- Summary Footer (Right side) -->
+                                <table class="quote-sheet-table" style="border-top: 2px solid #000;">
+                                    <colgroup><col width="65%"><col width="22%"><col width="13%"></colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan="3" style="padding: 0; vertical-align: top;">
+                                                <table class="quote-sheet-table" style="border:none;">
+                                                    <colgroup><col width="20%"><col width="80%"></colgroup>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="2" class="bg-light text-center fw-bold">作業流程</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light text-center">訂購單</td>
+                                                            <td>報價單承蒙客戶閣下認可簽署後，視同正式合約，不另開立訂購單</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light text-center">訂金</td>
+                                                            <td>總額50%，即進入專案作業流程</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light text-center" style="vertical-align: top;">匯款帳號</td>
+                                                            <td>
+                                                                <textarea id="qProcessContent" rows="3" style="resize:vertical;"></textarea>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light text-center">初稿</td>
+                                                            <td><input id="qDays" placeholder="3 至 5 個工作天，提供客戶初稿"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light text-center">備註</td>
+                                                            <td><input id="qRemark" placeholder="2次免費整體調整，超出次數或於定稿後提出則酌收費用"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light text-center">交付內容</td>
+                                                            <td>定稿後，支付尾款，並將成品交付、開立電子發票</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                            <td class="bg-light text-center fw-bold">稅前合計</td>
+                                            <td class="text-right"><span id="qSubtotal">0</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bg-light text-center fw-bold">5%營業稅</td>
+                                            <td class="text-right"><span id="qTax">0</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bg-light text-center fw-bold">總額</td>
+                                            <td class="text-right fw-bold" style="font-size: 1.1em;"><span id="qTotal">0</span></td>
+                                        </tr>
                                     </tbody>
                                 </table>
-                                <button type="button" class="logout-btn" style="margin-top: 1rem; width: auto; color: var(--primary);" onclick="addQuotationRow()">+ 新增細項</button>
+
+                                <!-- Stamp / Signature block -->
+                                <table class="quote-sheet-table">
+                                    <colgroup><col width="10%"><col width="30%"><col width="60%"></colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td class="bg-light text-center" style="writing-mode: vertical-rl; text-orientation: upright; height: 120px; letter-spacing: 5px;">客戶代表簽章</td>
+                                            <td></td>
+                                            <td style="text-align:right; padding-right: 2rem; position:relative;">
+                                                <div style="display:inline-block; text-align:left; position:absolute; left:20px; top: 10px; writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 5px;" class="bg-light fw-bold">報價簽章</div>
+                                                <img src="https://i.imgur.com/kO1eE5Q.png" alt="Stamp Placeholder" class="stamp-image" style="max-height: 150px;">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
 
-                            <!-- Summary & Process -->
-                            <div class="quotation-footer" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 2rem;">
-                                <div class="process-box">
-                                    <div class="process-title">作業流程與條款</div>
-                                    <div id="qProcessContent" style="font-size: 0.85rem; color: var(--text-main); white-space: pre-wrap; line-height: 1.6;">
-                                        <!-- Bank info and terms will be combined here -->
-                                    </div>
-                                    <div class="form-group" style="margin-top: 1rem;">
-                                        <label>專案特殊備註</label>
-                                        <textarea id="qRemark" placeholder="如有特殊修改次數或交付內容調整，請在此註明..."></textarea>
-                                    </div>
-                                </div>
-
-                                <div class="summary-box">
-                                    <div class="summary-row"><span>稅前合計</span><span id="qSubtotal">0</span></div>
-                                    <div class="summary-row"><span>5% 營業稅</span><span id="qTax">0</span></div>
-                                    <div class="summary-row total"><span>總額 (含稅)</span><span id="qTotal">0</span></div>
-                                </div>
-                            </div>
-
-                            <div id="quotationError" class="auth-error-inline" style="margin-top: 2rem;"></div>
-                            <div class="form-actions" style="margin-top: 3rem; display: flex; gap: 1rem;">
+                            <div id="quotationError" class="auth-error-inline"></div>
+                            <div class="form-actions" style="display: flex; gap: 1rem; max-width: 1000px; margin: 0 auto;">
                                 <button type="submit" class="save-btn" style="flex: 2;">儲存報價單</button>
-                                <button type="button" class="back-btn" onclick="switchSubView('projects', 'list')" style="flex: 1; justify-content: center;">取消</button>
+                                <button type="button" class="back-btn" onclick="switchSubView('projects', 'list')" style="flex: 1; justify-content: center;">取消 返回表單</button>
                             </div>
                         </form>
                     </div>

@@ -3,15 +3,15 @@
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwX9xG_snc8EmBttBBOW3M8bNOUxZojeXjfag22pGgGnb5EcfgphhJ3klR8JPv8cAObFQ/exec';
 const LIFF_ID = '2009659478-RZ3Q85ZU'; 
 
-let allCustomers = [];
-let currentFilteredCustomers = [];
-let currentPage = 1;
-let itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 20;
+window.allCustomers = [];
+window.currentFilteredCustomers = [];
+window.currentPage = 1;
+window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 20;
 
-let allMembers = [];
-let currentUser = null;
-let registeredUsername = ''; 
-let verifyContext = 'register'; 
+window.allMembers = [];
+window.currentUser = null;
+window.registeredUsername = ''; 
+window.verifyContext = 'register';
 
 // --- Toast Mixin for Non-blocking Notifications ---
 const Toast = Swal.mixin({

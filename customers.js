@@ -9,11 +9,11 @@ window.fetchCustomers = async function() {
         });
         const json = await res.json();
         if (json.success) { 
-            const hasChanged = JSON.stringify(allCustomers) !== JSON.stringify(json.data);
+            const hasChanged = JSON.stringify(window.allCustomers) !== JSON.stringify(json.data);
             if (hasChanged) {
-                allCustomers = json.data; 
-                setCache('customers', allCustomers);
-                currentFilteredCustomers = allCustomers;
+                window.allCustomers = json.data || []; 
+                setCache('customers', window.allCustomers);
+                window.currentFilteredCustomers = window.allCustomers;
                 renderCustomers(); 
             }
         }
@@ -177,21 +177,21 @@ window.saveCustomer = async function() {
     };
 
     // --- Optimistic UI Update ---
-    const originalData = JSON.parse(JSON.stringify(allCustomers));
+    const originalData = JSON.parse(JSON.stringify(window.allCustomers));
     
     // Clear error
     const custErr = document.getElementById('customerError');
     if (custErr) { custErr.innerText = ''; custErr.classList.remove('active'); }
     
     if (rIndex) {
-        const idx = allCustomers.findIndex(c => c.rowIndex == rIndex);
-        if (idx !== -1) allCustomers[idx] = { ...allCustomers[idx], ...body };
+        const idx = window.allCustomers.findIndex(c => c.rowIndex == rIndex);
+        if (idx !== -1) window.allCustomers[idx] = { ...window.allCustomers[idx], ...body };
     } else {
         // Temporary row index for new items (will be overwritten by fetch)
-        allCustomers.unshift({ ...body, rowIndex: -1 });
+        window.allCustomers.unshift({ ...body, rowIndex: -1 });
     }
     
-    currentFilteredCustomers = allCustomers;
+    window.currentFilteredCustomers = window.allCustomers;
     renderCustomers();
     setSyncStatus(true);
 
@@ -225,8 +225,8 @@ window.saveCustomer = async function() {
         }
     } catch (e) { 
         // Revert UI
-        allCustomers = originalData;
-        currentFilteredCustomers = allCustomers;
+        window.allCustomers = originalData;
+        window.currentFilteredCustomers = window.allCustomers;
         renderCustomers();
         
         if (custErr) {
@@ -242,7 +242,7 @@ window.saveCustomer = async function() {
 
 window.filterCustomers = function(val) {
     const query = String(val).toLowerCase();
-    currentFilteredCustomers = allCustomers.filter(c => {
+    window.currentFilteredCustomers = window.allCustomers.filter(c => {
         // Global keyword scan across all fields (address, contact, email, etc.)
         return Object.values(c).some(fieldVal => 
             String(fieldVal || '').toLowerCase().includes(query)
