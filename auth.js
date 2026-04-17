@@ -16,7 +16,9 @@ function enterApp() {
         appEl.classList.add('fade-in');
     }
     const displayEl = document.getElementById('displayUser');
-    const adminBtn = document.getElementById('adminTabBtn');
+    const settingsBtn = document.getElementById('settingsTabBtn');
+    const permissionsBtn = document.getElementById('permissionsTabBtn');
+    const tasksBtn = document.getElementById('tasksTabBtn');
     const customersBtn = document.getElementById('customersTabBtn');
     const projectsBtn = document.getElementById('projectsTabBtn');
     const customerActions = document.getElementById('customerActions');
@@ -34,15 +36,19 @@ function enterApp() {
     const userLevel = (currentUser.level || '').trim();
     console.log(">> Normalized User Level:", userLevel);
 
-    if (userLevel === '管理者') {
-        if (adminBtn) adminBtn.classList.remove('hidden');
+    if (userLevel === '管理者' || userLevel === '管理員') {
+        if (settingsBtn) settingsBtn.classList.remove('hidden');
+        if (permissionsBtn) permissionsBtn.classList.remove('hidden');
+        if (tasksBtn) tasksBtn.classList.remove('hidden');
         if (customersBtn) {
             customersBtn.classList.remove('hidden');
             customersBtn.click();
         }
         if (customerActions) customerActions.style.display = 'flex';
     } else if (userLevel === '操作人員') {
-        if (adminBtn) adminBtn.classList.add('hidden');
+        if (settingsBtn) settingsBtn.classList.add('hidden');
+        if (permissionsBtn) permissionsBtn.classList.add('hidden');
+        if (tasksBtn) tasksBtn.classList.remove('hidden');
         if (customersBtn) {
             customersBtn.classList.remove('hidden');
             customersBtn.click();
@@ -50,7 +56,9 @@ function enterApp() {
         if (customerActions) customerActions.style.display = 'flex';
     } else {
         // '客戶' or unknown
-        if (adminBtn) adminBtn.classList.add('hidden');
+        if (settingsBtn) settingsBtn.classList.add('hidden');
+        if (permissionsBtn) permissionsBtn.classList.add('hidden');
+        if (tasksBtn) tasksBtn.classList.add('hidden');
         if (customersBtn) {
             customersBtn.classList.remove('hidden'); // allow viewing but restricted actions
             customersBtn.click();

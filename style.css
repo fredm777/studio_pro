@@ -966,3 +966,61 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 .settings-section-title i {
     color: var(--primary);
 }
+
+/* --- Print CSS for PDF Generation --- */
+@media print {
+    @page { margin: 10mm; size: auto; }
+    
+    body * {
+        visibility: hidden;
+    }
+    
+    #quotePrintArea, #quotePrintArea * {
+        visibility: visible;
+    }
+    
+    #quotePrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .quotation-card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Reveal textareas fully and allow normal UI borders to print */
+    #quotePrintArea input, #quotePrintArea textarea {
+        background: transparent !important;
+        resize: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Hide the UI interactive elements within the quote body */
+    .remove-btn-dense, 
+    #autocompleteSuggestions, .resizer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    tfoot { display: none !important; }
+
+    /* Keep the stamp rotated properly */
+    .stamp-image {
+        max-height: 140px !important;
+    }
+    
+    /* Ensure background colors print */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

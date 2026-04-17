@@ -99,6 +99,11 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = data.wfDelivery || '';
         if (document.getElementById('qBankData')) document.getElementById('qBankData').value = data.bankData || '';
         
+        // Map isCompleted to UI
+        const isCompleted = data.isCompleted === true;
+        document.getElementById('projIsCompleted').value = isCompleted;
+        if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(isCompleted);
+        
         // Fill customer via ID (this will also update the UI)
         selectCustomerById(data.customerId);
         
@@ -108,10 +113,73 @@ window.showQuotationEditor = function(title, data = null) {
         // New Mode
         document.getElementById('projRowIndex').value = '';
         document.getElementById('projId').value = generateProjectId();
+        document.getElementById('projIsCompleted').value = 'false';
+        if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(false);
         document.getElementById('qPic').value = currentUser ? (currentUser.nickname || currentUser.username) : '';
         document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
         addQuotationRow(); // start with one empty row
         loadSettingsPreview(); // load default terms from settings
+    }
+}
+
+// --- Status and Tasks Logic for Quotation Editor ---
+
+window.updateProjectCompletedUI = function(isCompleted) {
+    const badge = document.getElementById('quoteCompletedBadge');
+    const text = document.getElementById('quoteCompletedText');
+    if (!badge || !text) return;
+    
+    if (isCompleted) {
+        badge.style.background = '#06C755';
+        badge.style.borderColor = '#06C755';
+        text.innerText = '已完結';
+        text.style.color = '#06C755';
+        text.style.fontWeight = '600';
+    } else {
+        badge.style.background = 'transparent';
+        badge.style.borderColor = 'var(--border)';
+        text.innerText = '未完結';
+        text.style.color = 'var(--text-main)';
+        text.style.fontWeight = 'normal';
+    }
+}
+
+window.toggleProjectCompleted = function() {
+    const el = document.getElementById('projIsCompleted');
+    const isCompleted = el.value === 'true';
+    el.value = (!isCompleted).toString();
+    updateProjectCompletedUI(!isCompleted);
+}
+
+window.handleAddProjectTask = function() {
+    // We must ensure the project has an ID and is saved at least once 
+    // to map the task directly to a valid project ID in the database.
+    const projId = document.getElementById('projId').value;
+    const rowIndex = document.getElementById('projRowIndex').value;
+    
+    if (!rowIndex) {
+        // Project has never been saved. Force a save first.
+        Swal.fire({
+            title: '需先儲存報價單',
+            text: '系統將為您自動儲存，並導向任務清單新增任務。',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: '確定',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window._redirectAfterSaveToTasks = true;
+                handleQuotationSubmit(new Event('submit'));
+            }
+        });
+    } else {
+        // Project exists, just navigate
+        document.getElementById('tasksTabBtn').click();
+        setTimeout(() => {
+            document.getElementById('taskProjectFilter').value = projId;
+            if (typeof filterTasksByProject === 'function') filterTasksByProject();
+            if (typeof showTaskEditorModal === 'function') showTaskEditorModal(projId);
+        }, 300);
     }
 }
 
@@ -279,7 +347,8 @@ async function handleQuotationSubmit(e) {
         bankData: document.getElementById('qBankData') ? document.getElementById('qBankData').value : '',
         days: document.getElementById('qWfDraft') ? document.getElementById('qWfDraft').value : '',
         remark: document.getElementById('qWfEdit') ? document.getElementById('qWfEdit').value : '',
-        wfDelivery: document.getElementById('qWfDelivery') ? document.getElementById('qWfDelivery').value : ''
+        wfDelivery: document.getElementById('qWfDelivery') ? document.getElementById('qWfDelivery').value : '',
+        isCompleted: document.getElementById('projIsCompleted').value === 'true'
     };
 
     const items = [];
@@ -295,17 +364,32 @@ async function handleQuotationSubmit(e) {
     });
 
     try {
+        const reqBody = { action: 'save_project', project, items };
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_project', project, items })
+            body: JSON.stringify(reqBody)
         });
         const json = await res.json();
+        
         if (json.success) {
             Swal.fire({ icon: 'success', title: '儲存成功', timer: 1500, showConfirmButton: false });
-            switchSubView('projects', 'list');
             fetchProjects();
+            
+            // Check if we need to redirect to add task
+            if (window._redirectAfterSaveToTasks) {
+                window._redirectAfterSaveToTasks = false;
+                switchSubView('projects', 'list');
+                document.getElementById('tasksTabBtn').click();
+                setTimeout(() => {
+                    document.getElementById('taskProjectFilter').value = project.projectId;
+                    if (typeof filterTasksByProject === 'function') filterTasksByProject();
+                    if (typeof showTaskEditorModal === 'function') showTaskEditorModal(project.projectId);
+                }, 500);
+            } else {
+                switchSubView('projects', 'list');
+            }
         } else {
             Swal.fire('錯誤', json.error || '儲存失敗', 'error');
         }

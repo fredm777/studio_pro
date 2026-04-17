@@ -22,9 +22,12 @@ function initTabs() {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) searchInput.value = '';
             
-            if (tabId === 'admin') {
+            if (tabId === 'permissions') {
                 fetchMembers();
-                switchAdminSubTab('members');
+            } else if (tabId === 'settings') {
+                if (typeof fetchSettings === 'function') fetchSettings();
+            } else if (tabId === 'tasks') {
+                if (typeof fetchTasks === 'function') fetchTasks();
             } else if (tabId === 'projects') {
                 fetchProjects();
             } else {
@@ -132,4 +135,11 @@ function checkModalIntegrity() {
     }
 }
 
-// --- End of Script ---
+// --- Print Utilities ---
+window.addEventListener('beforeprint', () => {
+    // Auto-expand all textareas inside the quotation print area so they don't get cropped
+    document.querySelectorAll('#quotePrintArea textarea').forEach(el => {
+        el.style.height = 'auto'; 
+        el.style.height = el.scrollHeight + 'px';
+    });
+});

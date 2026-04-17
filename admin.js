@@ -118,7 +118,9 @@ function renderMembers(list) {
     tbody.innerHTML = '';
     list.forEach(m => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${m.username}</td><td>${m.nickname}</td><td>${m.level}</td><td>${m.email}</td><td><button class="primary-btn" style="width:auto; padding:4px 12px;" onclick="showMemberEditor(${m.rowIndex})">設定</button></td>`;
+        tr.style.cursor = 'pointer';
+        tr.ondblclick = () => showMemberEditor(m.rowIndex);
+        tr.innerHTML = `<td>${m.username}</td><td>${m.nickname || ''}</td><td><span class="status-badge" style="background:#f1f5f9; color:var(--text-dark); border:1px solid var(--border);">${m.level || '未知'}</span></td><td>${m.email || ''}</td>`;
         tbody.appendChild(tr);
     });
 }
@@ -140,12 +142,12 @@ window.showMemberEditor = (idx) => {
     const m = allMembers.find(x => x.rowIndex == idx);
     if (!m) return console.error("Member not found for row index:", idx);
     
-    switchSubView('admin', 'edit');
+    switchSubView('permissions', 'edit');
 
     document.getElementById('memberTargetRow').value = idx;
     document.getElementById('memberUser').value = m.username || '';
     document.getElementById('memberLevel').value = m.level || '客戶';
-    document.getElementById('memberStatus').value = m.status || 'active';
+    document.getElementById('memberStatus').value = m.status || '啟用';
 
     // Clear error
     const memErr = document.getElementById('memberError');
@@ -171,7 +173,7 @@ async function handleMemberUpdateSubmit(e) {
         const json = await res.json();
         if (json.success) { 
             Swal.fire({ icon: 'success', title: '權限已更新', timer: 1500, showConfirmButton: false });
-            switchSubView('admin', 'list'); 
+            switchSubView('permissions', 'list'); 
             fetchMembers(); 
         } else {
             if (memErr) {
