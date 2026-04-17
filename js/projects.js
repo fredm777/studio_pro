@@ -112,6 +112,12 @@ window.showQuotationEditor = function(title, data = null) {
         // Fill customer via ID (this will also update the UI)
         selectCustomerById(data.customerId);
         
+        // Studio Info (Auto-fill from current user if available)
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            if (currentUser.phone) document.getElementById('qStudioPhone').innerText = currentUser.phone;
+            if (currentUser.email) document.getElementById('qStudioEmail').innerText = currentUser.email;
+        }
+        
         // Load items via backend if necessary
         fetchProjectItems(data.projectId);
     } else {
@@ -122,6 +128,13 @@ window.showQuotationEditor = function(title, data = null) {
         if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(false);
         document.getElementById('qPic').value = currentUser ? (currentUser.nickname || currentUser.username) : '';
         document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
+        
+        // Studio Info (Auto-fill from current user if available)
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            if (currentUser.phone) document.getElementById('qStudioPhone').innerText = currentUser.phone;
+            if (currentUser.email) document.getElementById('qStudioEmail').innerText = currentUser.email;
+        }
+        
         addQuotationRow(); // start with one empty row
         loadSettingsPreview(); // load default terms from settings
     }
@@ -422,4 +435,33 @@ window.filterProjects = function(val) {
     projectPage = 1;
     renderProjects();
 };
+
+window.preparePrint = function() {
+    // 1. Get raw data
+    const dateVal = document.getElementById('qDate').value; // YYYY-MM-DD
+    const custName = document.getElementById('qCustName').value || '客戶';
+    const projName = document.getElementById('qProjName').value || '未命名專案';
+    
+    // 2. Format components
+    // Date: YYYY-MM-DD -> YYMMDD
+    let yymmdd = '';
+    if (dateVal) {
+        const parts = dateVal.split('-'); // [YYYY, MM, DD]
+        if (parts.length === 3) {
+            yymmdd = parts[0].slice(2) + parts[1] + parts[2];
+        }
+    }
+    
+    // 3. Set temporary title for filename
+    const originalTitle = document.title;
+    document.title = `${yymmdd}_${custName}_${projName}`;
+    
+    // 4. Trigger print
+    window.print();
+    
+    // 5. Restore title after a short delay
+    setTimeout(() => {
+        document.title = originalTitle;
+    }, 1000);
+}
 

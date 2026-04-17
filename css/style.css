@@ -969,7 +969,17 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 
 /* --- Print CSS for PDF Generation --- */
 @media print {
-    @page { margin: 10mm; size: auto; }
+    @page { 
+        margin: 0; 
+        size: A4 portrait; 
+    }
+    
+    html, body {
+        height: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
     
     body * {
         visibility: hidden;
@@ -978,14 +988,18 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     #quotePrintArea, #quotePrintArea * {
         visibility: visible;
     }
-    
+
     #quotePrintArea {
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center; /* Vertical Center */
+        align-items: center;    /* Horizontal Center */
+        min-height: 100vh;
+        width: 100%;
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 0;
+        background: white !important;
     }
     
     .quotation-card {
@@ -993,6 +1007,7 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        width: 85%; /* Adjust width to fit nicely on paper */
         max-width: 100% !important;
     }
     
@@ -1002,11 +1017,12 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
         resize: none !important;
         box-shadow: none !important;
         overflow: visible !important;
+        border: none !important;
     }
     
     /* Hide the UI interactive elements within the quote body */
     .remove-btn-dense, 
-    #autocompleteSuggestions, .resizer {
+    #autocompleteSuggestions, .resizer, .remove-row-btn {
         display: none !important;
         visibility: hidden !important;
     }

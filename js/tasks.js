@@ -55,7 +55,7 @@ window.filterTasksByProject = function() {
     } else {
         window.currentFilteredTasks = [...(window.allTasks || [])];
     }
-    renderTasksList(!!pid);
+    renderTasksList(true); // Always allow dragging for global/per-project manual sorting
 }
 
 function renderTasksList(draggable = false) {
@@ -85,7 +85,7 @@ function renderTasksList(draggable = false) {
         li.dataset.rowIndex = t.rowIndex;
         li.dataset.taskId = t.taskId;
         
-        const gripStyle = draggable ? 'color: var(--text-muted); cursor: grab;' : 'color: transparent;';
+        const gripStyle = 'color: var(--text-muted); cursor: grab;';
         const checkIcon = t.isCompleted ? 'check-square' : 'square';
         const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted);' : 'color: var(--text-main); font-weight: 500;';
         const completedBtnStyle = t.isCompleted ? 'color: #06C755;' : 'color: var(--text-muted);';

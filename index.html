@@ -488,19 +488,19 @@
                                             <td class="bg-light text-center">聯絡人</td>
                                             <td><input id="qContact" class="text-center" placeholder="客戶窗口"></td>
                                             <td class="bg-light text-center">承辦人員</td>
-                                            <td><input id="qPic" class="text-center fw-bold" readonly tabindex="-1"></td>
+                                            <td><input id="qPic" class="text-center fw-bold"></td>
                                         </tr>
                                         <tr>
                                             <td class="bg-light text-center">聯絡電話</td>
                                             <td><input id="qPhone" class="text-center" placeholder="客戶電話"></td>
                                             <td class="bg-light text-center">聯絡電話</td>
-                                            <td class="text-center">0911-773-181</td>
+                                            <td id="qStudioPhone" class="text-center">0911-773-181</td>
                                         </tr>
                                         <tr>
                                             <td class="bg-light text-center">電子信箱</td>
                                             <td><input id="qEmail" class="text-center" placeholder="客戶信箱"></td>
                                             <td class="bg-light text-center">電子信箱</td>
-                                            <td class="text-center">jjukvs@gmail.com</td>
+                                            <td id="qStudioEmail" class="text-center">jjukvs@gmail.com</td>
                                         </tr>
                                         <tr>
                                             <td class="bg-light text-center">專案名稱</td>
@@ -631,7 +631,7 @@
                                     <span class="invoice-badge" id="quoteCompletedBadge" style="display: inline-flex; position: static; width: 22px; height: 22px; box-shadow: none; border: 1px solid var(--border); background: transparent; transition: all 0.2s;"><i data-lucide="check" style="width:14px;height:14px;color:white;"></i></span>
                                     <span id="quoteCompletedText">未完結</span>
                                 </button>
-                                <button type="button" class="back-btn" onclick="window.print()" style="flex: 1; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;" title="列印或轉存 PDF">
+                                <button type="button" class="back-btn" onclick="preparePrint()" style="flex: 1; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;" title="列印或轉存 PDF">
                                     <i data-lucide="printer" style="width: 18px; height: 18px;"></i>
                                 </button>
                                 <button type="button" class="save-btn" onclick="handleQuotationSubmit(event)" style="flex: 1;">儲存報價單</button>
