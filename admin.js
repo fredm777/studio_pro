@@ -30,17 +30,16 @@ async function fetchSettings() {
         const json = await res.json();
         if (json.success && json.settings) {
             const s = json.settings;
-            if (s.bank_info) {
-                try {
-                    const b = JSON.parse(s.bank_info);
-                    if (document.getElementById('setBankName')) document.getElementById('setBankName').value = b.bankName || '';
-                    if (document.getElementById('setAccountName')) document.getElementById('setAccountName').value = b.accountName || '';
-                    if (document.getElementById('setAccountNum')) document.getElementById('setAccountNum').value = b.accountNumber || '';
-                } catch(e) { console.warn("Bank Info Parse Error:", e); }
-            }
-            if (s.standard_terms && document.getElementById('setTerms')) {
-                document.getElementById('setTerms').value = s.standard_terms;
-            }
+            if (document.getElementById('setBankName')) document.getElementById('setBankName').value = s.bank_name || '';
+            if (document.getElementById('setBankBranch')) document.getElementById('setBankBranch').value = s.bank_branch || '';
+            if (document.getElementById('setAccountName')) document.getElementById('setAccountName').value = s.account_name || '';
+            if (document.getElementById('setAccountNum')) document.getElementById('setAccountNum').value = s.account_num || '';
+            
+            if (document.getElementById('setWfOrder')) document.getElementById('setWfOrder').value = s.wf_order || '';
+            if (document.getElementById('setWfDeposit')) document.getElementById('setWfDeposit').value = s.wf_deposit || '';
+            if (document.getElementById('setWfDraft')) document.getElementById('setWfDraft').value = s.wf_draft || '';
+            if (document.getElementById('setWfEdit')) document.getElementById('setWfEdit').value = s.wf_edit || '';
+            if (document.getElementById('setWfDelivery')) document.getElementById('setWfDelivery').value = s.wf_delivery || '';
         }
     } catch(e) { console.error("Fetch Settings Error:", e); }
     finally { setSyncStatus(false); }
@@ -49,14 +48,18 @@ async function fetchSettings() {
 async function handleSettingsSubmit(e) {
     e.preventDefault();
     setSyncStatus(true);
-    const bankInfo = {
-        bankName: document.getElementById('setBankName').value,
-        accountName: document.getElementById('setAccountName').value,
-        accountNumber: document.getElementById('setAccountNum').value
-    };
+    
     const settings = {
-        bank_info: JSON.stringify(bankInfo),
-        standard_terms: document.getElementById('setTerms').value
+        bank_name: document.getElementById('setBankName').value,
+        bank_branch: document.getElementById('setBankBranch').value,
+        account_name: document.getElementById('setAccountName').value,
+        account_num: document.getElementById('setAccountNum').value,
+        
+        wf_order: document.getElementById('setWfOrder').value,
+        wf_deposit: document.getElementById('setWfDeposit').value,
+        wf_draft: document.getElementById('setWfDraft').value,
+        wf_edit: document.getElementById('setWfEdit').value,
+        wf_delivery: document.getElementById('setWfDelivery').value
     };
     
     try {

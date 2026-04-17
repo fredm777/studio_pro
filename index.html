@@ -153,7 +153,6 @@
                                     <th>客戶簡稱</th>
                                     <th>聯絡人</th>
                                     <th>聯絡電話</th>
-                                    <th>電子信箱</th>
                                     <th>地址</th>
                                     <th>電子發票</th>
                                 </tr>
@@ -221,10 +220,10 @@
             <section id="admin" class="tab-content sub-view-container">
                 <div class="sub-nav">
                     <button class="tab-link active" onclick="switchAdminSubTab('members')" id="adminMembersTab">
-                        <i data-lucide="users"></i> 成員權限管理
+                        <i data-lucide="users"></i> 權限設定
                     </button>
                     <button class="tab-link" onclick="switchAdminSubTab('settings')" id="adminSettingsTab">
-                        <i data-lucide="layout-template"></i> 報價單預設配置
+                        <i data-lucide="layout-template"></i> 系統設定
                     </button>
                 </div>
 
@@ -251,40 +250,60 @@
                 </div>
 
                 <!-- Quotation Settings Sub-tab -->
-                <div id="adminSettingsView" class="admin-sub-tab">
+                <div id="adminSettingsView" class="admin-sub-tab" style="min-height: 400px;">
                     <div class="quotation-card" style="border: 1px solid var(--border); background: white;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem;">
-                            <h3 style="margin:0; font-size: 1.25rem;">全域報價配置</h3>
-                            <span style="font-size: 0.8rem; color: var(--text-muted); background: #f1f5f9; padding: 4px 12px; border-radius: 20px;">儲存後將套用於所有新專案</span>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; opacity: 1;">
+                            <h3 style="margin:0; font-size: 1.25rem;">系統設定與表單預設配置</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); background: #f1f5f9; padding: 4px 12px; border-radius: 20px;">儲存後將成為所有新報價單之預設內容</span>
                         </div>
                         <form id="globalSettingsForm">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
                                 <!-- Left Section: Bank Info -->
                                 <div>
                                     <h4 style="margin: 0 0 1.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                                        <i data-lucide="credit-card" style="width: 18px; color: var(--primary);"></i> 匯款與銀行資訊
+                                        <i data-lucide="credit-card" style="width: 18px; color: var(--primary);"></i> 匯款資料分區
                                     </h4>
                                     <div class="form-group">
-                                        <label>銀行名稱與代碼</label>
+                                        <label>銀行名稱代碼</label>
                                         <input id="setBankName" placeholder="例如：土地銀行 (005)">
                                     </div>
-                                    <div class="form-group" style="margin-top: 1.25rem;">
+                                    <div class="form-group" style="margin-top: 1rem;">
+                                        <label>所屬分行</label>
+                                        <input id="setBankBranch" placeholder="例如：南屯分行 (1611)">
+                                    </div>
+                                    <div class="form-group" style="margin-top: 1rem;">
                                         <label>帳戶名稱</label>
                                         <input id="setAccountName" placeholder="例如：日日有桔設計工作室">
                                     </div>
-                                    <div class="form-group" style="margin-top: 1.25rem;">
+                                    <div class="form-group" style="margin-top: 1rem;">
                                         <label>銀行帳號</label>
                                         <input id="setAccountNum" placeholder="例如：161-001-015-323">
                                     </div>
                                 </div>
-                                <!-- Right Section: Terms -->
+                                <!-- Right Section: Workflow Terms -->
                                 <div>
                                     <h4 style="margin: 0 0 1.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                                        <i data-lucide="file-text" style="width: 18px; color: var(--primary);"></i> 合約條款與作業流程
+                                        <i data-lucide="file-text" style="width: 18px; color: var(--primary);"></i> 作業流程分區
                                     </h4>
                                     <div class="form-group">
-                                        <label>預設內容</label>
-                                        <textarea id="setTerms" style="width: 100%; height: 215px; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); font-size: 0.9rem; resize: none; line-height: 1.6;" placeholder="輸入預設的合約或注意事項..."></textarea>
+                                        <label>訂購單</label>
+                                        <textarea id="setWfOrder" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="報價單承蒙認可簽署後..."></textarea>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 0.75rem;">
+                                        <label>訂金</label>
+                                        <textarea id="setWfDeposit" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="總額50%，即進入專案作業流程..."></textarea>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 0.75rem;">
+                                        <label>初稿</label>
+                                        <input id="setWfDraft" style="font-size: 0.85rem; padding: 0.5rem;" placeholder="3 至 5 個工作天，提供客戶初稿">
+                                    </div>
+                                    <div class="form-group" style="margin-top: 0.75rem;">
+                                        <label>修改次數</label>
+                                        <textarea id="setWfEdit" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="2次免費整體調整..."></textarea>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 0.75rem;">
+                                        <label>交付內容</label>
+                                        <textarea id="setWfDelivery" style="width: 100%; height: 50px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; resize: none;" placeholder="定稿後，支付尾款..."></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -451,29 +470,29 @@
                                             </tr>
                                             <tr>
                                                 <td class="bg-light text-center">訂購單</td>
-                                                <td>報價單承蒙客戶閣下認可簽署後，視同正式合約，不另開立訂購單</td>
+                                                <td style="padding: 0;"><textarea id="qWfOrder" style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;" rows="2" placeholder="報價單承蒙認可簽署後..."></textarea></td>
                                             </tr>
                                             <tr>
                                                 <td class="bg-light text-center">訂金</td>
-                                                <td>總額50%，即進入專案作業流程</td>
+                                                <td style="padding: 0;"><textarea id="qWfDeposit" style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;" rows="1" placeholder="總額50%..."></textarea></td>
                                             </tr>
                                             <tr>
-                                                <td class="bg-light text-center" style="vertical-align: top;">匯款帳號</td>
-                                                <td>
-                                                    <textarea id="qProcessContent" rows="3" style="resize:vertical;"></textarea>
+                                                <td class="bg-light text-center" style="vertical-align: middle;">匯款帳號</td>
+                                                <td style="padding: 0;">
+                                                    <textarea id="qBankData" rows="4" style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;" placeholder="銀行：...\n戶名：...\n帳號：..."></textarea>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="bg-light text-center">初稿</td>
-                                                <td><input id="qDays" placeholder="3 至 5 個工作天，提供客戶初稿"></td>
+                                                <td style="padding: 0;"><input id="qWfDraft" style="border:none; background:transparent; outline:none; width:100%; padding:8px 12px; font-family:inherit; font-size:inherit;" placeholder="3 至 5 個工作天..."></td>
                                             </tr>
                                             <tr>
-                                                <td class="bg-light text-center">備註</td>
-                                                <td><input id="qRemark" placeholder="2次免費整體調整，超出次數或於定稿後提出則酌收費用"></td>
+                                                <td class="bg-light text-center">修改次數</td>
+                                                <td style="padding: 0;"><textarea id="qWfEdit" style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;" rows="2" placeholder="2次免費整體調整..."></textarea></td>
                                             </tr>
                                             <tr>
                                                 <td class="bg-light text-center">交付內容</td>
-                                                <td>定稿後，支付尾款，並將成品交付、開立電子發票</td>
+                                                <td style="padding: 0;"><textarea id="qWfDelivery" style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;" rows="2" placeholder="定稿後，支付尾款..."></textarea></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -514,8 +533,8 @@
                                         <tbody>
                                             <tr>
                                                 <td class="bg-light text-center" style="writing-mode: vertical-rl; text-orientation: upright; height: 160px; letter-spacing: 5px;">報價簽章</td>
-                                                <td style="text-align: right; padding-right: 2rem;">
-                                                    <img src="/Users/chienwei/Downloads/發票章.svg" alt="Company Stamp" class="stamp-image" style="max-height: 140px; transform: rotate(-5deg);">
+                                                <td style="text-align: center; vertical-align: middle;">
+                                                    <img src="./發票章.svg" alt="Company Stamp" class="stamp-image" style="max-height: 140px;">
                                                 </td>
                                             </tr>
                                         </tbody>

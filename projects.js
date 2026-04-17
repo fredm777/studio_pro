@@ -90,16 +90,19 @@ window.showQuotationEditor = function(title, data = null) {
         document.getElementById('qProjName').value = data.projectName || '';
         document.getElementById('qPic').value = data.pic || '';
         document.getElementById('qDate').value = data.date ? new Date(data.date).toISOString().split('T')[0] : '';
-        document.getElementById('qDays').value = data.days || '';
-        document.getElementById('qRemark').value = data.remark || '';
+        
+        // Granular workflow inputs
+        if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = data.days || '';
+        if (document.getElementById('qWfEdit')) document.getElementById('qWfEdit').value = data.remark || '';
+        if (document.getElementById('qWfOrder')) document.getElementById('qWfOrder').value = data.wfOrder || '';
+        if (document.getElementById('qWfDeposit')) document.getElementById('qWfDeposit').value = data.wfDeposit || '';
+        if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = data.wfDelivery || '';
+        if (document.getElementById('qBankData')) document.getElementById('qBankData').value = data.bankData || '';
         
         // Fill customer via ID (this will also update the UI)
         selectCustomerById(data.customerId);
         
-        // Load items via backend if necessary, or pass in data (Wait, GAS didn't return items in get_projects)
-        // I need to fetch items separately or let GAS return them bundled. 
-        // Let's adjust GAS to return bundled items or add a fetch for it.
-        // Actually, let's keep it simple: I'll add a fetchItems function.
+        // Load items via backend if necessary
         fetchProjectItems(data.projectId);
     } else {
         // New Mode
@@ -113,10 +116,21 @@ window.showQuotationEditor = function(title, data = null) {
 }
 
 async function fetchProjectItems(projId) {
-    // For now, I'll mock this or assume it was bundled. 
-    // Optimization: I'll add the items to the same handleGetProjects in GAS next.
-    // But to save time, I'll just add one dummy row for now to show UI is working.
-    addQuotationRow(); 
+    // Items are now securely bundled in the backend get_projects call.
+    const proj = allProjects.find(p => p.projectId === projId);
+    
+    // Clear any existing rows (safety fallback)
+    const tbody = document.getElementById('quotationItemsBody');
+    if (tbody) tbody.innerHTML = '';
+    
+    if (proj && proj.items && proj.items.length > 0) {
+        proj.items.forEach(item => {
+            addQuotationRow(item);
+        });
+    } else {
+        // Fallback: start with one empty row if no items found
+        addQuotationRow(); 
+    }
 }
 
 function generateProjectId() {
@@ -138,16 +152,18 @@ async function loadSettingsPreview() {
         const json = await res.json();
         if (json.success) {
             const s = json.settings;
-            let processStr = "";
-            if (s.bank_info) {
-                const b = JSON.parse(s.bank_info);
-                processStr += `[匯款帳號]\n銀行：${b.bankName}\n戶名：${b.accountName}\n帳號：${b.accountNumber}\n\n`;
+            if (document.getElementById('qBankData')) {
+                const bname = s.bank_name ? s.bank_name : '';
+                const bbranch = s.bank_branch ? s.bank_branch : '';
+                const aname = s.account_name ? s.account_name : '';
+                const anum = s.account_num ? s.account_num : '';
+                document.getElementById('qBankData').value = `銀行：${bname} ${bbranch}\n戶名：${aname}\n帳號：${anum}`;
             }
-            if (s.standard_terms) {
-                processStr += `[作業及合約條款]\n${s.standard_terms}`;
-            }
-            const processBox = document.getElementById('qProcessContent');
-            if (processBox) processBox.value = processStr.trim();
+            if (document.getElementById('qWfOrder')) document.getElementById('qWfOrder').value = s.wf_order || '';
+            if (document.getElementById('qWfDeposit')) document.getElementById('qWfDeposit').value = s.wf_deposit || '';
+            if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = s.wf_draft || '';
+            if (document.getElementById('qWfEdit')) document.getElementById('qWfEdit').value = s.wf_edit || '';
+            if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = s.wf_delivery || '';
         }
     } catch(e) {}
 }
@@ -258,8 +274,12 @@ async function handleQuotationSubmit(e) {
         subtotal: parseFloat(document.getElementById('qSubtotal').innerText.replace(/,/g, '')),
         tax: parseFloat(document.getElementById('qTax').innerText.replace(/,/g, '')),
         total: parseFloat(document.getElementById('qTotal').innerText.replace(/,/g, '')),
-        days: document.getElementById('qDays').value,
-        remark: document.getElementById('qRemark').value
+        wfOrder: document.getElementById('qWfOrder') ? document.getElementById('qWfOrder').value : '',
+        wfDeposit: document.getElementById('qWfDeposit') ? document.getElementById('qWfDeposit').value : '',
+        bankData: document.getElementById('qBankData') ? document.getElementById('qBankData').value : '',
+        days: document.getElementById('qWfDraft') ? document.getElementById('qWfDraft').value : '',
+        remark: document.getElementById('qWfEdit') ? document.getElementById('qWfEdit').value : '',
+        wfDelivery: document.getElementById('qWfDelivery') ? document.getElementById('qWfDelivery').value : ''
     };
 
     const items = [];
