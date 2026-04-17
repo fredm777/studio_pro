@@ -324,7 +324,9 @@ window.handleProfileUpdateSubmit = async function(e) {
 }
 
 window.logout = function() { 
-    localStorage.removeItem('st_pro_session'); currentUser = null; showAuth();
+    localStorage.removeItem('st_pro_session'); 
+    window.currentUser = null; 
+    showAuth();
     Toast.fire({ title: '期待下次與您見面', icon: 'success', timer: 1500 });
 }
 

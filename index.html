@@ -13,35 +13,6 @@
 <body>
     <div id="syncProgressBar"></div>
     
-    <!-- Task Modal (Relocated to Root for maximum visibility) -->
-    <div id="stProTaskEditorModal" class="modal-overlay">
-        <div class="modal-card">
-            <h3 id="taskModalTitle">新增任務</h3>
-            <form id="taskForm">
-                <input type="hidden" id="taskRowIndex">
-                <input type="hidden" id="taskIdField">
-                
-                <div class="form-group">
-                    <label>綁定專案</label>
-                    <select id="taskProjectId" required>
-                        <!-- Project options -->
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>任務內容</label>
-                    <textarea id="taskName" required style="width: 100%; min-height: 80px; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border);" placeholder="描述必須完成的項目"></textarea>
-                </div>
-                
-                <div id="taskError" class="auth-error-inline"></div>
-                
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button type="button" class="save-btn" onclick="submitTaskEditor()" style="flex: 2;">儲存任務</button>
-                    <button type="button" class="back-btn" onclick="closeTaskModal()" style="flex: 1; justify-content: center;">取消</button>
-                </div>
-            </form>
-        </div>
-    </div>
     <div id="authOverlay">
         <div class="auth-card">
             <!-- Login -->
@@ -327,7 +298,18 @@
                                 </div>
                             </div>
 
-                            <div id="taskError" class="auth-error-inline" style="margin-bottom: 1.5rem;"></div>
+                            <div id="taskError" class="auth-error-inline"></div>
+
+                            <div class="task-status-container">
+                                <div id="statusIncomplete" class="status-item active" onclick="setTaskEditorStatus(false)">
+                                    <i data-lucide="square"></i>
+                                    <span>未完成</span>
+                                </div>
+                                <div id="statusComplete" class="status-item" onclick="setTaskEditorStatus(true)">
+                                    <i data-lucide="square-check"></i>
+                                    <span>已完成</span>
+                                </div>
+                            </div>
 
                             <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                                 <button type="submit" class="save-btn" style="flex: 2;">儲存任務</button>
@@ -401,7 +383,6 @@
                     <div class="quotation-card" style="border: 1px solid var(--border); background: white;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; opacity: 1;">
                             <h3 style="margin:0; font-size: 1.25rem;">系統設定與表單預設配置</h3>
-                            <span style="font-size: 0.8rem; color: var(--text-muted); background: #f1f5f9; padding: 4px 12px; border-radius: 20px;">儲存後將成為所有新報價單之預設內容</span>
                         </div>
                         <form id="globalSettingsForm">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">

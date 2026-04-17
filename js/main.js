@@ -77,7 +77,7 @@ function initEventListeners() {
             window.itemsPerPage = val;
             localStorage.setItem('st_pro_items_per_page', window.itemsPerPage);
             window.currentPage = 1;
-            renderCustomers();
+            window.renderCustomers();
         };
         itemsInput.onwheel = (e) => {
             e.preventDefault();
@@ -89,7 +89,7 @@ function initEventListeners() {
             window.itemsPerPage = val;
             localStorage.setItem('st_pro_items_per_page', window.itemsPerPage);
             window.currentPage = 1;
-            renderCustomers();
+            window.renderCustomers();
         };
     }
 
@@ -102,7 +102,7 @@ function initEventListeners() {
             window.projectItemsPerPage = val;
             localStorage.setItem('st_pro_project_items_per_page', window.projectItemsPerPage);
             window.projectPage = 1;
-            renderProjects();
+            window.renderProjects();
         };
         projItemsInput.onwheel = (e) => {
             e.preventDefault();
@@ -114,7 +114,7 @@ function initEventListeners() {
             window.projectItemsPerPage = val;
             localStorage.setItem('st_pro_project_items_per_page', window.projectItemsPerPage);
             window.projectPage = 1;
-            renderProjects();
+            window.renderProjects();
         };
     }
 

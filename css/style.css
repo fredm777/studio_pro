@@ -31,6 +31,18 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Hide scrollbars and resize handle symbols while keeping functionality */
+textarea {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+textarea::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+textarea::-webkit-resizer {
+    display: none; /* Chrome/Safari - hides visual drag lines */
+}
+
 /* ==========================================
    PREMIUM LOGIN UI (The "WOW" Factor)
    ========================================== */
@@ -1192,4 +1204,56 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     background: #3367d6 !important;
     transform: translateY(-1px);
     box-shadow: 0 6px 15px rgba(66, 133, 244, 0.3) !important;
+}
+
+/* ==========================================
+   TASK STATUS BLOCKS (Horizontal Layout)
+   ========================================== */
+.task-status-container {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.status-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1.5rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--text-muted);
+}
+
+.status-item i {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.status-item span {
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.status-item.active {
+    border-color: var(--primary);
+    background: rgba(6, 199, 85, 0.03);
+    color: var(--primary);
+    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.08);
+}
+
+.status-item.active i {
+    transform: scale(1.1);
+}
+
+.status-item:hover:not(.active) {
+    border-color: #cbd5e1;
+    background: #f8fafc;
 }

@@ -22,7 +22,7 @@ window.fetchCustomers = async function() {
                 setCache('customers', window.allCustomers);
                 window.currentFilteredCustomers = [...window.allCustomers];
                 applyCurrentSort();
-                renderCustomers(); 
+                window.renderCustomers(); 
             }
         }
     } catch (err) { 
@@ -46,13 +46,13 @@ window.changePage = (dir) => {
         window.currentPage += dir;
         if (window.currentPage < 1) window.currentPage = 1;
         if (window.currentPage > totalPages) window.currentPage = totalPages;
-        renderCustomers();
+        window.renderCustomers();
     } else if (tab === 'projects') {
         const totalPages = Math.ceil(window.currentFilteredProjects.length / window.projectItemsPerPage) || 1;
         window.projectPage += dir;
         if (window.projectPage < 1) window.projectPage = 1;
         if (window.projectPage > totalPages) window.projectPage = totalPages;
-        renderProjects();
+        window.renderProjects();
     }
 };
 
@@ -70,7 +70,7 @@ window.sortCustomers = function(field) {
     
     applyCurrentSort();
     window.currentPage = 1;
-    renderCustomers();
+    window.renderCustomers();
 }
 
 function applyCurrentSort() {
@@ -93,7 +93,7 @@ function applyCurrentSort() {
     });
 }
 
-function updateSortIcons() {
+window.updateSortIcons = function() {
     // Reset all icons
     document.querySelectorAll('.sortable-row th i').forEach(icon => {
         icon.setAttribute('data-lucide', 'arrow-up-down');
@@ -109,7 +109,7 @@ function updateSortIcons() {
     if (window.lucide) lucide.createIcons();
 }
 
-function renderCustomers() {
+window.renderCustomers = function() {
     const tbody = document.getElementById('customerTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -150,7 +150,7 @@ function renderCustomers() {
         tbody.appendChild(tr);
     });
     
-    updateSortIcons();
+    window.updateSortIcons();
 }
 
 window.switchSubView = function(tabId, viewType) {
@@ -241,7 +241,7 @@ window.saveCustomer = async function() {
     
     window.currentFilteredCustomers = [...window.allCustomers];
     applyCurrentSort();
-    renderCustomers();
+    window.renderCustomers();
     setSyncStatus(true);
 
     try {
@@ -262,7 +262,7 @@ window.saveCustomer = async function() {
         window.allCustomers = originalData;
         window.currentFilteredCustomers = [...window.allCustomers];
         applyCurrentSort();
-        renderCustomers();
+        window.renderCustomers();
         if (custErr) {
             custErr.innerText = '同步失敗: ' + (e.message || '請重新嘗試');
             custErr.classList.add('active');
@@ -281,5 +281,5 @@ window.filterCustomers = function(val) {
     });
     applyCurrentSort();
     window.currentPage = 1;
-    renderCustomers();
+    window.renderCustomers();
 }

@@ -146,20 +146,26 @@ function renderTasksList(draggable = false) {
             const displayTaskName = `${custName}_${t.taskName || ''}`;
             const displayTime = t.taskDate ? `<span style="font-size: 0.75rem; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${t.taskDate} ${t.taskTime || ''}</span>` : '';
             
-            const checkIcon = t.isCompleted ? 'circle-check' : 'circle';
+            const checkIcon = t.isCompleted ? 'check-circle-2' : 'circle';
+            const checkColor = t.isCompleted ? 'color: #06C755;' : 'color: #cbd5e1;';
             const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted); opacity: 0.7;' : 'color: var(--text-main); font-weight: 500;';
-            const completedBtnStyle = t.isCompleted ? 'color: #06C755;' : 'color: var(--text-muted);';
             
             li.innerHTML = `
-                <i data-lucide="grip-vertical" class="drag-handle" style="color: var(--text-muted); cursor: grab;" title="拖曳改變排序"></i>
-                <button type="button" onclick="toggleTaskCompletion(${t.rowIndex})" style="background:none; border:none; padding:0; display:flex; align-items:center; cursor:pointer; ${completedBtnStyle}">
-                    <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
-                </button>
-                <div style="flex: 1; display:flex; flex-direction:column; gap: 4px; ${textStyle}">
-                    <div>${displayTaskName}</div>
-                    ${displayTime}
+                <div class="drag-handle" style="display:flex; align-items:center; justify-content:center; width:24px; height:24px; color: #cbd5e1; cursor: grab;">
+                    <i data-lucide="grip-vertical" style="width:16px;height:16px;"></i>
                 </div>
-                <button type="button" class="remove-btn-dense" onclick="deleteTask(${t.rowIndex})" title="刪除"><i data-lucide="trash-2"></i></button>
+                <div class="task-check-wrapper" onclick="toggleTaskCompletion(${t.rowIndex})" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:28px; height:28px; ${checkColor}">
+                    <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
+                </div>
+                <div class="task-content-area" style="flex: 1; display:flex; flex-direction:column; gap: 4px; ${textStyle}">
+                    <div style="font-size: 0.9375rem;">${displayTaskName}</div>
+                    <div style="display:flex; align-items:center; gap: 0.5rem;">
+                        ${displayTime}
+                    </div>
+                </div>
+                <button type="button" class="action-btn-sub" onclick="deleteTask(${t.rowIndex})" title="刪除" style="border:none; background:none; color: #94a3b8; cursor:pointer;">
+                    <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+                </button>
             `;
             
             li.ondblclick = (e) => {
@@ -274,6 +280,29 @@ async function calculateNewWeight(item) {
 
 // --- CRUD ---
 
+window.setTaskEditorStatus = function(isCompleted) {
+    const el = document.getElementById('taskIsCompleted');
+    if (el) el.value = String(isCompleted);
+    
+    // Update UI
+    const iCont = document.getElementById('statusIncomplete');
+    const cCont = document.getElementById('statusComplete');
+    if (iCont && cCont) {
+        if (isCompleted) {
+            iCont.classList.remove('active');
+            cCont.classList.add('active');
+            cCont.querySelector('i').setAttribute('data-lucide', 'square-check');
+            iCont.querySelector('i').setAttribute('data-lucide', 'square');
+        } else {
+            iCont.classList.add('active');
+            cCont.classList.remove('active');
+            cCont.querySelector('i').setAttribute('data-lucide', 'square');
+            iCont.querySelector('i').setAttribute('data-lucide', 'square');
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+}
+
 window.showTaskEditorPage = function(task = null) {
     switchSubView('tasks', 'edit');
     
@@ -311,19 +340,21 @@ window.showTaskEditorPage = function(task = null) {
         title.innerText = '編輯任務';
         document.getElementById('taskRowIndex').value = task.rowIndex;
         document.getElementById('taskIdField').value = task.taskId;
-        document.getElementById('taskIsCompleted').value = String(task.isCompleted);
         document.getElementById('taskOrderWeight').value = task.orderWeight;
         document.getElementById('taskName').value = task.taskName || '';
         document.getElementById('taskDate').value = task.taskDate || '';
         document.getElementById('taskTime').value = task.taskTime || '';
         pSelect.value = task.projectId;
+        
+        window.setTaskEditorStatus(task.isCompleted === true || String(task.isCompleted).toLowerCase() === 'true');
     } else {
         // New Mode
         title.innerText = '新增任務';
         document.getElementById('taskRowIndex').value = '';
         document.getElementById('taskIdField').value = 'T-' + Date.now();
-        document.getElementById('taskIsCompleted').value = 'false';
         document.getElementById('taskOrderWeight').value = '';
+        
+        window.setTaskEditorStatus(false);
         
         const now = new Date();
         document.getElementById('taskDate').value = now.toISOString().split('T')[0];

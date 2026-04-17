@@ -15,8 +15,8 @@ window.fetchProjects = async function() {
     if (cached) {
         window.allProjects = cached;
         window.currentFilteredProjects = [...window.allProjects];
-        applyProjectSort();
-        renderProjects();
+        window.applyProjectSort();
+        window.renderProjects();
     }
 
     setSyncStatus(true);
@@ -35,8 +35,8 @@ window.fetchProjects = async function() {
             window.allProjects = json.projects || [];
             setCache('projects', window.allProjects);
             window.currentFilteredProjects = [...window.allProjects];
-            applyProjectSort();
-            renderProjects();
+            window.applyProjectSort();
+            window.renderProjects();
             if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
         }
     } catch (err) { console.error("Fetch Projects Error:", err); }
@@ -58,12 +58,12 @@ window.sortProjects = function(field) {
     localStorage.setItem('st_pro_proj_sort_field', window.projectSortField);
     localStorage.setItem('st_pro_proj_sort_order', window.projectSortOrder);
     
-    applyProjectSort();
+    window.applyProjectSort();
     window.projectPage = 1;
-    renderProjects();
+    window.renderProjects();
 }
 
-function applyProjectSort() {
+window.applyProjectSort = function() {
     const field = window.projectSortField;
     const order = window.projectSortOrder;
     
@@ -89,7 +89,7 @@ function applyProjectSort() {
     });
 }
 
-function updateProjectSortIcons() {
+window.updateProjectSortIcons = function() {
     // Reset all icons in project table
     document.querySelectorAll('#projects table thead i').forEach(icon => {
         icon.setAttribute('data-lucide', 'arrow-up-down');
@@ -105,7 +105,7 @@ function updateProjectSortIcons() {
     if (window.lucide) lucide.createIcons();
 }
 
-function renderProjects() {
+window.renderProjects = function() {
     const tbody = document.getElementById('projectTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -150,7 +150,7 @@ function renderProjects() {
         tbody.appendChild(tr);
     });
     
-    updateProjectSortIcons();
+    window.updateProjectSortIcons();
 }
 
 window.showQuotationEditor = function(title, data = null) {
