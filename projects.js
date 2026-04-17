@@ -1,3 +1,7 @@
+window.currentFilteredProjects = [];
+window.projectPage = 1;
+window.projectItemsPerPage = 10;
+
 window.fetchProjects = async function() {
     setSyncStatus(true);
     const loading = document.getElementById('projectLoading');
@@ -12,9 +16,9 @@ window.fetchProjects = async function() {
         });
         const json = await res.json();
         if (json.success) {
-            window.allProjects = json.projects;
-            currentFilteredProjects = [...window.allProjects];
-            projectPage = 1;
+            window.allProjects = json.projects || [];
+            window.currentFilteredProjects = [...window.allProjects];
+            window.projectPage = 1;
             renderProjects();
             if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
         }
@@ -33,7 +37,7 @@ function renderProjects() {
     const loading = document.getElementById('projectLoading');
     if (loading) loading.style.display = 'none';
 
-    if (currentFilteredProjects.length === 0) {
+    if (window.currentFilteredProjects.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem;">尚未建立專案，點擊下方按鈕開始</td></tr>`;
         const pag = document.getElementById('projectPaginationContainer');
         if (pag) pag.style.display = 'none';
@@ -41,18 +45,18 @@ function renderProjects() {
     }
 
     // Pagination Slicing
-    const totalPages = Math.ceil(currentFilteredProjects.length / projectItemsPerPage);
-    if (projectPage > totalPages) projectPage = totalPages || 1;
+    const totalPages = Math.ceil(window.currentFilteredProjects.length / window.projectItemsPerPage);
+    if (window.projectPage > totalPages) window.projectPage = totalPages || 1;
     
-    const start = (projectPage - 1) * projectItemsPerPage;
-    const end = start + projectItemsPerPage;
-    const pagedEntries = currentFilteredProjects.slice(start, end);
+    const start = (window.projectPage - 1) * window.projectItemsPerPage;
+    const end = start + window.projectItemsPerPage;
+    const pagedEntries = window.currentFilteredProjects.slice(start, end);
 
     // Update UI info
     const pag = document.getElementById('projectPaginationContainer');
-    if (pag) pag.style.display = (currentFilteredProjects.length > 0) ? 'flex' : 'none';
+    if (pag) pag.style.display = (window.currentFilteredProjects.length > 0) ? 'flex' : 'none';
     const info = document.getElementById('projPageInfo');
-    if (info) info.innerText = `第 ${projectPage} / ${totalPages || 1} 頁 (共 ${currentFilteredProjects.length} 筆)`;
+    if (info) info.innerText = `第 ${window.projectPage} / ${totalPages || 1} 頁 (共 ${window.currentFilteredProjects.length} 筆)`;
 
     pagedEntries.forEach(proj => {
         // Find customer nickname
@@ -186,7 +190,7 @@ window.handleAddProjectTask = function() {
 
 async function fetchProjectItems(projId) {
     // Items are now securely bundled in the backend get_projects call.
-    const proj = allProjects.find(p => p.projectId === projId);
+    const proj = (window.allProjects || []).find(p => p.projectId === projId);
     
     // Clear any existing rows (safety fallback)
     const tbody = document.getElementById('quotationItemsBody');
@@ -404,7 +408,7 @@ async function handleQuotationSubmit(e) {
 
 window.filterProjects = function(val) {
     const query = String(val).toLowerCase();
-    window.currentFilteredProjects = window.allProjects.filter(p => {
+    window.currentFilteredProjects = (window.allProjects || []).filter(p => {
         // Find customer nickname for joint search
         const cust = window.allCustomers.find(c => c.customerId === p.customerId);
         const custName = cust ? (cust.nickname || cust.companyName) : (p.customerId || '');

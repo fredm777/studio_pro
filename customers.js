@@ -34,10 +34,10 @@ window.changePage = (dir) => {
     const tab = activeTab.dataset.tab;
 
     if (tab === 'customers') {
-        const totalPages = Math.ceil(currentFilteredCustomers.length / itemsPerPage);
-        currentPage += dir;
-        if (currentPage < 1) currentPage = 1;
-        if (currentPage > totalPages) currentPage = totalPages || 1;
+        const totalPages = Math.ceil(window.currentFilteredCustomers.length / window.itemsPerPage);
+        window.currentPage += dir;
+        if (window.currentPage < 1) window.currentPage = 1;
+        if (window.currentPage > totalPages) window.currentPage = totalPages || 1;
         renderCustomers();
     } else if (tab === 'projects') {
         const totalPages = Math.ceil(currentFilteredProjects.length / projectItemsPerPage);
@@ -58,21 +58,21 @@ function renderCustomers() {
     if (loading) loading.style.display = 'none';
     if (pagCont) pagCont.style.display = 'flex';
     
-    const totalItems = currentFilteredCustomers.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-    if (currentPage > totalPages) currentPage = totalPages;
-    if (currentPage < 1) currentPage = 1;
+    const totalItems = window.currentFilteredCustomers.length;
+    const totalPages = Math.ceil(totalItems / window.itemsPerPage) || 1;
+    if (window.currentPage > totalPages) window.currentPage = totalPages;
+    if (window.currentPage < 1) window.currentPage = 1;
     
     const pageInfo = document.getElementById('pageInfo');
     const prevBtn = document.getElementById('prevPageBtn');
     const nextBtn = document.getElementById('nextPageBtn');
     
-    if (pageInfo) pageInfo.innerText = `第 ${currentPage} / ${totalPages} 頁 (共 ${totalItems} 筆)`;
-    if (prevBtn) { prevBtn.disabled = (currentPage === 1); prevBtn.style.opacity = (currentPage === 1) ? '0.3' : '1'; }
-    if (nextBtn) { nextBtn.disabled = (currentPage === totalPages); nextBtn.style.opacity = (currentPage === totalPages) ? '0.3' : '1'; }
+    if (pageInfo) pageInfo.innerText = `第 ${window.currentPage} / ${totalPages} 頁 (共 ${totalItems} 筆)`;
+    if (prevBtn) { prevBtn.disabled = (window.currentPage === 1); prevBtn.style.opacity = (window.currentPage === 1) ? '0.3' : '1'; }
+    if (nextBtn) { nextBtn.disabled = (window.currentPage === totalPages); nextBtn.style.opacity = (window.currentPage === totalPages) ? '0.3' : '1'; }
     
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedData = currentFilteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+    const startIndex = (window.currentPage - 1) * window.itemsPerPage;
+    const paginatedData = window.currentFilteredCustomers.slice(startIndex, startIndex + window.itemsPerPage);
     
     if (paginatedData.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem;">沒有符合的資料</td></tr>`;

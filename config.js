@@ -55,8 +55,20 @@ function showNavHint(msg) {
 // --- Performance & Sync Helpers ---
 
 window.closeAllModals = () => {
-    console.log(">> Closing all active modals...");
-    document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+    try {
+        console.log(">> Closing all active modals...");
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+    } catch (e) { console.error("closeAllModals error:", e); }
+};
+
+window.logError = (ctx, err) => {
+    console.error(`[${ctx}]`, err);
+    Swal.fire({
+        icon: 'error',
+        title: '系統錯誤',
+        text: `在 ${ctx} 發生錯誤: ${err.message || err}`,
+        footer: '請截圖並聯繫開發人員'
+    });
 };
 
 function setSyncStatus(active) {

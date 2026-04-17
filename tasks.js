@@ -1,9 +1,10 @@
 // Tasks Management
 
-window.allTasks = [];
-window.currentFilteredTasks = [];
+window.allTasks = window.allTasks || [];
+window.currentFilteredTasks = window.currentFilteredTasks || [];
 
 window.fetchTasks = async function() {
+    console.log(">> Fetching Tasks...");
     setSyncStatus(true);
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -13,12 +14,14 @@ window.fetchTasks = async function() {
         });
         const json = await res.json();
         if (json.success) {
-            allTasks = json.tasks || [];
-            updateTaskProjectFilter();
-            filterTasksByProject();
+            window.allTasks = json.tasks || [];
+            if (typeof window.updateTaskProjectFilter === 'function') window.updateTaskProjectFilter();
+            if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
         }
-    } catch (e) { console.error("Fetch Tasks Error:", e); }
-    finally { setSyncStatus(false); }
+    } catch (e) { 
+        console.error("Fetch Tasks Error:", e);
+        if (window.logError) window.logError("FetchTasks", e);
+    } finally { setSyncStatus(false); }
 }
 
 window.updateTaskProjectFilter = function() {
@@ -26,19 +29,21 @@ window.updateTaskProjectFilter = function() {
     if (!filterSelect) return;
     
     const currVal = filterSelect.value;
-    
-    // We want to show all projects from allProjects, but only those that have tasks?
-    // Actually, showing all active projects is better so users can select any project to add a task to.
     let html = '<option value="">顯示所有專案之任務</option>';
     
-    (window.allProjects || []).forEach(p => {
-        html += `<option value="${p.projectId}">${p.projectName} (${p.projectId})</option>`;
+    const projs = window.allProjects || [];
+    const custs = window.allCustomers || [];
+    
+    projs.forEach(p => {
+        const cust = custs.find(c => c.customerId === p.customerId);
+        const custName = cust ? (cust.nickname || cust.companyName) : '';
+        const label = custName ? `${p.projectName} (${custName})` : p.projectName;
+        html += `<option value="${p.projectId}">${label}</option>`;
     });
     
     filterSelect.innerHTML = html;
     if (currVal) filterSelect.value = currVal;
-    
-    filterSelect.onchange = filterTasksByProject;
+    filterSelect.onchange = window.filterTasksByProject;
 }
 
 window.filterTasksByProject = function() {
@@ -46,28 +51,25 @@ window.filterTasksByProject = function() {
     const pid = filterSelect ? filterSelect.value : '';
     
     if (pid) {
-        currentFilteredTasks = allTasks.filter(t => t.projectId === pid);
+        window.currentFilteredTasks = (window.allTasks || []).filter(t => t.projectId === pid);
     } else {
-        currentFilteredTasks = [...allTasks];
+        window.currentFilteredTasks = [...(window.allTasks || [])];
     }
-    
-    // Default drag-and-drop ordering only makes sense within the same project.
-    // So we only enable it if a specific project is selected.
     renderTasksList(!!pid);
 }
 
 function renderTasksList(draggable = false) {
     const list = document.getElementById('taskList');
     if (!list) return;
-    
     list.innerHTML = '';
     
-    if (currentFilteredTasks.length === 0) {
+    const tasks = window.currentFilteredTasks || [];
+    if (tasks.length === 0) {
         list.innerHTML = `<li style="text-align: center; color: var(--text-muted); padding: 2rem;">尚無任務紀錄</li>`;
         return;
     }
     
-    currentFilteredTasks.forEach(t => {
+    tasks.forEach(t => {
         const li = document.createElement('li');
         li.className = 'task-item';
         li.style.display = 'flex';
@@ -84,7 +86,6 @@ function renderTasksList(draggable = false) {
         li.dataset.taskId = t.taskId;
         
         const gripStyle = draggable ? 'color: var(--text-muted); cursor: grab;' : 'color: transparent;';
-        
         const checkIcon = t.isCompleted ? 'check-square' : 'square';
         const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted);' : 'color: var(--text-main); font-weight: 500;';
         const completedBtnStyle = t.isCompleted ? 'color: #06C755;' : 'color: var(--text-muted);';
@@ -94,29 +95,24 @@ function renderTasksList(draggable = false) {
             <button type="button" onclick="toggleTaskCompletion(${t.rowIndex})" style="background:none; border:none; padding:0; display:flex; align-items:center; cursor:pointer; ${completedBtnStyle}">
                 <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
             </button>
-            <div style="flex: 1; ${textStyle}">${t.taskName} <span style="font-size: 0.75rem; color: #a0aec0; margin-left: 8px;">(${t.projectId})</span></div>
+            <div style="flex: 1; ${textStyle}">${t.taskName || ''} <span style="font-size: 0.75rem; color: #a0aec0; margin-left: 8px;">(${t.projectId})</span></div>
             <button type="button" class="remove-btn-dense" onclick="deleteTask(${t.rowIndex})" title="刪除"><i data-lucide="trash-2"></i></button>
         `;
         list.appendChild(li);
     });
     
     if (window.lucide) lucide.createIcons();
-    
-    if (draggable) {
-        initDragAndDrop(list);
-    }
+    if (draggable) initDragAndDrop(list);
 }
 
 // --- Drag and Drop Logic ---
 function initDragAndDrop(listElement) {
     let draggedItem = null;
-
     listElement.querySelectorAll('.task-item').forEach(item => {
         item.addEventListener('dragstart', function(e) {
             draggedItem = this;
             setTimeout(() => this.style.opacity = '0.5', 0);
         });
-
         item.addEventListener('dragend', function() {
             setTimeout(() => {
                 this.style.opacity = '1';
@@ -124,27 +120,20 @@ function initDragAndDrop(listElement) {
                 saveTasksOrder();
             }, 0);
         });
-
-        item.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
-
+        item.addEventListener('dragover', e => e.preventDefault());
         item.addEventListener('dragenter', function(e) {
             e.preventDefault();
             this.style.background = '#f8fafc';
         });
-
         item.addEventListener('dragleave', function() {
             this.style.background = 'white';
         });
-
         item.addEventListener('drop', function(e) {
             this.style.background = 'white';
             if (this !== draggedItem) {
                 let allItems = Array.from(listElement.querySelectorAll('.task-item'));
                 let draggedIdx = allItems.indexOf(draggedItem);
                 let targetIdx = allItems.indexOf(this);
-                
                 if (draggedIdx < targetIdx) {
                     listElement.insertBefore(draggedItem, this.nextSibling);
                 } else {
@@ -158,21 +147,13 @@ function initDragAndDrop(listElement) {
 async function saveTasksOrder() {
     const list = document.getElementById('taskList');
     if (!list) return;
-    
     const updates = [];
     list.querySelectorAll('.task-item').forEach((item, index) => {
-        updates.push({
-            rowIndex: parseInt(item.dataset.rowIndex),
-            order: index
-        });
-        // Update local object immediately to avoid jump
-        const t = allTasks.find(x => x.rowIndex == item.dataset.rowIndex);
+        updates.push({ rowIndex: parseInt(item.dataset.rowIndex), order: index });
+        const t = window.allTasks.find(x => x.rowIndex == item.dataset.rowIndex);
         if (t) t.order = index;
     });
-    
-    // Sort local allTasks by order
-    allTasks.sort((a,b) => a.order - b.order);
-    
+    window.allTasks.sort((a,b) => a.order - b.order);
     setSyncStatus(true);
     try {
         await fetch(GAS_WEB_APP_URL, {
@@ -190,24 +171,75 @@ async function saveTasksOrder() {
 // --- CRUD ---
 
 window.showTaskEditorModal = function(prefillProjectId = '') {
-    window.closeAllModals();
-    const modal = document.getElementById('taskModal');
-    if (modal) modal.classList.add('active');
-    
-    document.getElementById('taskRowIndex').value = '';
-    document.getElementById('taskIdField').value = 'T-' + new Date().getTime();
-    document.getElementById('taskName').value = '';
-    
-    const pSelect = document.getElementById('taskProjectId');
-    let html = '<option value="">請選擇專案...</option>';
-    const projs = window.allProjects || [];
-    projs.forEach(p => {
-        html += `<option value="${p.projectId}">${p.projectName} (${p.projectId})</option>`;
-    });
-    pSelect.innerHTML = html;
-    
-    if (prefillProjectId) pSelect.value = prefillProjectId;
-    else if (document.getElementById('taskProjectFilter').value) pSelect.value = document.getElementById('taskProjectFilter').value;
+    try {
+        console.log(">> showTaskEditorModal initiated...", prefillProjectId);
+        
+        // 1. Find modal and show it IMMEDIATELY
+        const modal = document.getElementById('taskModal');
+        if (!modal) {
+            Swal.fire('系統錯誤', '找不到 taskModal 元素，請檢查 HTML 結構', 'error');
+            return;
+        }
+        modal.classList.add('active');
+        console.log(">> Modal overlay activated.");
+
+        // 2. Clear previous state and show diagnostic alert
+        window.alert("JS TRIGGERED - 即將載入任務資料...");
+        
+        if (typeof window.closeAllModals === 'function') {
+            try { 
+                // Don't close our own modal we just opened!
+                // window.closeAllModals(); 
+            } catch(e) { console.warn("closeAllModals skip", e); }
+        }
+        
+        const rowIndexEl = document.getElementById('taskRowIndex');
+        const taskIdEl = document.getElementById('taskIdField');
+        const taskNameEl = document.getElementById('taskName');
+        const pSelect = document.getElementById('taskProjectId');
+
+        if (rowIndexEl) rowIndexEl.value = '';
+        if (taskIdEl) taskIdEl.value = 'T-' + new Date().getTime();
+        if (taskNameEl) taskNameEl.value = '';
+        
+        // 3. Populate project list with extreme caution
+        if (pSelect) {
+            let html = '<option value="">請選擇專案...</option>';
+            const projs = window.allProjects || [];
+            const custs = window.allCustomers || [];
+            
+            if (!Array.isArray(projs)) {
+                console.error("allProjects is not an array:", projs);
+            } else {
+                projs.forEach(p => {
+                    if (!p || !p.projectId) return;
+                    const cust = Array.isArray(custs) ? custs.find(c => c && c.customerId === p.customerId) : null;
+                    const custName = cust ? (cust.nickname || cust.companyName) : '';
+                    const label = custName ? `${p.projectName} (${custName})` : p.projectName;
+                    html += `<option value="${p.projectId}">${label}</option>`;
+                });
+            }
+            pSelect.innerHTML = html;
+            
+            if (prefillProjectId) {
+                pSelect.value = prefillProjectId;
+            } else {
+                const filter = document.getElementById('taskProjectFilter');
+                if (filter && filter.value) pSelect.value = filter.value;
+            }
+        }
+        
+        // Final check
+        if (window.lucide) lucide.createIcons();
+        console.log(">> showTaskEditorModal completed successfully.");
+
+    } catch (e) {
+        if (window.logError) window.logError("showTaskEditorModal", e);
+        else {
+            console.error("Critical showTaskEditorModal Error:", e);
+            Swal.fire('執行錯誤', e.message, 'error');
+        }
+    }
 }
 
 window.closeTaskModal = function() {
@@ -216,33 +248,33 @@ window.closeTaskModal = function() {
 }
 
 window.submitTaskEditor = async function() {
-    const rowIndex = document.getElementById('taskRowIndex').value;
-    const taskId = document.getElementById('taskIdField').value;
-    const projectId = document.getElementById('taskProjectId').value;
-    const taskName = document.getElementById('taskName').value.trim();
-    
-    if (!projectId || !taskName) {
-        Swal.fire('錯誤', '請選擇專案並填寫任務內容', 'warning');
-        return;
-    }
-    
-    // If it's a new task, we insert it at the end of the current filtered list
-    let maxOrder = 0;
-    if (currentFilteredTasks.length > 0) {
-        maxOrder = Math.max(...currentFilteredTasks.map(t => t.order || 0)) + 1;
-    }
-    
-    const task = {
-        taskId,
-        projectId,
-        taskName,
-        isCompleted: false,
-        order: maxOrder,
-        rowIndex: rowIndex ? parseInt(rowIndex) : null
-    };
-    
-    setSyncStatus(true);
     try {
+        const rowIndex = document.getElementById('taskRowIndex').value;
+        const taskId = document.getElementById('taskIdField').value;
+        const projectId = document.getElementById('taskProjectId').value;
+        const taskName = document.getElementById('taskName').value.trim();
+        
+        if (!projectId || !taskName) {
+            Swal.fire('錯誤', '請選擇專案並填寫任務內容', 'warning');
+            return;
+        }
+        
+        let maxOrder = 0;
+        const tasks = window.currentFilteredTasks || [];
+        if (tasks.length > 0) {
+            maxOrder = Math.max(...tasks.map(t => t.order || 0)) + 1;
+        }
+        
+        const task = {
+            taskId,
+            projectId,
+            taskName,
+            isCompleted: false,
+            order: maxOrder,
+            rowIndex: rowIndex ? parseInt(rowIndex) : null
+        };
+        
+        setSyncStatus(true);
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -251,26 +283,27 @@ window.submitTaskEditor = async function() {
         const json = await res.json();
         if (json.success) {
             Swal.fire({ icon: 'success', title: '任務已儲存', timer: 1000, showConfirmButton: false });
-            closeTaskModal();
-            fetchTasks();
+            window.closeTaskModal();
+            window.fetchTasks();
         } else {
             Swal.fire('錯誤', json.error || '儲存失敗', 'error');
         }
     } catch (e) {
-        console.error("Save task error", e);
+        if (window.logError) window.logError("submitTaskEditor", e);
+        else console.error(e);
     } finally {
         setSyncStatus(false);
     }
 }
 
 window.toggleTaskCompletion = async function(rowIndex) {
-    const t = allTasks.find(x => x.rowIndex == rowIndex);
+    const t = (window.allTasks || []).find(x => x.rowIndex == rowIndex);
     if (!t) return;
     
     t.isCompleted = !t.isCompleted;
     
     // Optimistic UI update
-    filterTasksByProject();
+    if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
     
     setSyncStatus(true);
     try {
@@ -306,8 +339,8 @@ window.deleteTask = function(rowIndex) {
                 });
                 const json = await res.json();
                 if (json.success) {
-                    allTasks = allTasks.filter(x => x.rowIndex != rowIndex);
-                    filterTasksByProject();
+                    window.allTasks = (window.allTasks || []).filter(x => x.rowIndex != rowIndex);
+                    if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
                 } else {
                     Swal.fire('錯誤', json.error || '刪除失敗', 'error');
                 }
