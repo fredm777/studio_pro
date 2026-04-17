@@ -28,6 +28,10 @@ function initTabs() {
                 if (typeof fetchSettings === 'function') fetchSettings();
             } else if (tabId === 'tasks') {
                 if (typeof fetchTasks === 'function') fetchTasks();
+                // Ensure projects are loaded for the filter dropdown
+                if (!window.allProjects || window.allProjects.length === 0) {
+                    if (typeof fetchProjects === 'function') fetchProjects();
+                }
             } else if (tabId === 'projects') {
                 fetchProjects();
             } else {

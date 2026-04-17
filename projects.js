@@ -12,10 +12,11 @@ window.fetchProjects = async function() {
         });
         const json = await res.json();
         if (json.success) {
-            allProjects = json.projects;
-            currentFilteredProjects = [...allProjects];
+            window.allProjects = json.projects;
+            currentFilteredProjects = [...window.allProjects];
             projectPage = 1;
             renderProjects();
+            if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
         }
     } catch (err) { console.error("Fetch Projects Error:", err); }
     finally {

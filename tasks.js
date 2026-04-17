@@ -21,7 +21,7 @@ window.fetchTasks = async function() {
     finally { setSyncStatus(false); }
 }
 
-function updateTaskProjectFilter() {
+window.updateTaskProjectFilter = function() {
     const filterSelect = document.getElementById('taskProjectFilter');
     if (!filterSelect) return;
     
@@ -199,8 +199,9 @@ window.showTaskEditorModal = function(prefillProjectId = '') {
     document.getElementById('taskName').value = '';
     
     const pSelect = document.getElementById('taskProjectId');
-    let html = '';
-    (window.allProjects || []).forEach(p => {
+    let html = '<option value="">請選擇專案...</option>';
+    const projs = window.allProjects || [];
+    projs.forEach(p => {
         html += `<option value="${p.projectId}">${p.projectName} (${p.projectId})</option>`;
     });
     pSelect.innerHTML = html;
