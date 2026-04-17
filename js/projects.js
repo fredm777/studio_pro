@@ -1,6 +1,13 @@
+// Project Management & Quotation Editor
+// ==========================================
+
 window.currentFilteredProjects = [];
 window.projectPage = 1;
-window.projectItemsPerPage = 10;
+window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 20;
+
+// --- Sorting State ---
+window.projectSortField = localStorage.getItem('st_pro_proj_sort_field') || 'date';
+window.projectSortOrder = localStorage.getItem('st_pro_proj_sort_order') || 'desc';
 
 window.fetchProjects = async function() {
     // 1. Load from cache first for instant UI
@@ -8,6 +15,7 @@ window.fetchProjects = async function() {
     if (cached) {
         window.allProjects = cached;
         window.currentFilteredProjects = [...window.allProjects];
+        applyProjectSort();
         renderProjects();
     }
 
@@ -27,7 +35,7 @@ window.fetchProjects = async function() {
             window.allProjects = json.projects || [];
             setCache('projects', window.allProjects);
             window.currentFilteredProjects = [...window.allProjects];
-            window.projectPage = 1;
+            applyProjectSort();
             renderProjects();
             if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
         }
@@ -36,6 +44,65 @@ window.fetchProjects = async function() {
         setSyncStatus(false);
         if (loading) loading.style.display = 'none';
     }
+}
+
+window.sortProjects = function(field) {
+    if (window.projectSortField === field) {
+        window.projectSortOrder = window.projectSortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        window.projectSortField = field;
+        window.projectSortOrder = 'asc';
+    }
+    
+    // Persist to cache
+    localStorage.setItem('st_pro_proj_sort_field', window.projectSortField);
+    localStorage.setItem('st_pro_proj_sort_order', window.projectSortOrder);
+    
+    applyProjectSort();
+    window.projectPage = 1;
+    renderProjects();
+}
+
+function applyProjectSort() {
+    const field = window.projectSortField;
+    const order = window.projectSortOrder;
+    
+    window.currentFilteredProjects.sort((a, b) => {
+        let valA, valB;
+        
+        if (field === 'custNickname') {
+            const custA = window.allCustomers.find(c => c.customerId === a.customerId);
+            const custB = window.allCustomers.find(c => c.customerId === b.customerId);
+            valA = custA ? (custA.nickname || custA.companyName) : a.customerId;
+            valB = custB ? (custB.nickname || custB.companyName) : b.customerId;
+        } else if (field === 'grandTotal') {
+            valA = parseFloat(a.total) || 0;
+            valB = parseFloat(b.total) || 0;
+        } else {
+            valA = (a[field] || '').toString().toLowerCase();
+            valB = (b[field] || '').toString().toLowerCase();
+        }
+        
+        if (valA < valB) return order === 'asc' ? -1 : 1;
+        if (valA > valB) return order === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+function updateProjectSortIcons() {
+    // Reset all icons in project table
+    document.querySelectorAll('#projects table thead i').forEach(icon => {
+        icon.setAttribute('data-lucide', 'arrow-up-down');
+        icon.parentElement.classList.remove('active');
+    });
+    
+    const activeIcon = document.getElementById(`sortIcon-${window.projectSortField}`);
+    if (activeIcon) {
+        activeIcon.setAttribute('data-lucide', window.projectSortOrder === 'asc' ? 'arrow-up' : 'arrow-down');
+        activeIcon.parentElement.classList.add('active');
+    }
+    
+    if (window.lucide) lucide.createIcons();
 }
 
 function renderProjects() {
@@ -53,7 +120,6 @@ function renderProjects() {
         return;
     }
 
-    // Pagination Slicing
     const totalPages = Math.ceil(window.currentFilteredProjects.length / window.projectItemsPerPage);
     if (window.projectPage > totalPages) window.projectPage = totalPages || 1;
     
@@ -61,17 +127,15 @@ function renderProjects() {
     const end = start + window.projectItemsPerPage;
     const pagedEntries = window.currentFilteredProjects.slice(start, end);
 
-    // Update UI info
     const pag = document.getElementById('projectPaginationContainer');
     if (pag) pag.style.display = (window.currentFilteredProjects.length > 0) ? 'flex' : 'none';
     const info = document.getElementById('projPageInfo');
     if (info) info.innerText = `第 ${window.projectPage} / ${totalPages || 1} 頁 (共 ${window.currentFilteredProjects.length} 筆)`;
 
     pagedEntries.forEach(proj => {
-        // Find customer nickname
         const cust = window.allCustomers.find(c => c.customerId === proj.customerId);
         const custDisp = cust ? (cust.nickname || cust.companyName) : proj.customerId;
-        const dateStr = proj.date ? new Date(proj.date).toLocaleDateString() : '';
+        const dateStr = proj.date || '';
         const totalDisp = proj.total ? Number(proj.total).toLocaleString() : '0';
 
         const tr = document.createElement('tr');
@@ -85,6 +149,8 @@ function renderProjects() {
         tr.ondblclick = () => showQuotationEditor('編輯報價單', proj);
         tbody.appendChild(tr);
     });
+    
+    updateProjectSortIcons();
 }
 
 window.showQuotationEditor = function(title, data = null) {
@@ -103,10 +169,8 @@ window.showQuotationEditor = function(title, data = null) {
         document.getElementById('projId').value = data.projectId || '';
         document.getElementById('qProjName').value = data.projectName || '';
         document.getElementById('qPic').value = data.pic || '';
-        // Load date safely as a string to avoid timezone shifting
         document.getElementById('qDate').value = data.date || '';
         
-        // Granular workflow inputs
         if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = data.days || '';
         if (document.getElementById('qWfEdit')) document.getElementById('qWfEdit').value = data.revCount || '';
         if (document.getElementById('qWfOrder')) document.getElementById('qWfOrder').value = data.wfOrder || '';
@@ -114,21 +178,17 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = data.wfDelivery || '';
         if (document.getElementById('qBankData')) document.getElementById('qBankData').value = data.bankData || '';
         
-        // Map isCompleted to UI
-        const isCompleted = data.isCompleted === true;
+        const isCompleted = data.isCompleted === true || String(data.isCompleted).toLowerCase() === 'true';
         document.getElementById('projIsCompleted').value = isCompleted;
         if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(isCompleted);
         
-        // Fill customer via ID (this will also update the UI)
         selectCustomerById(data.customerId);
         
-        // Studio Info (Auto-fill from current user if available)
         if (typeof currentUser !== 'undefined' && currentUser) {
             if (currentUser.phone) document.getElementById('qStudioPhone').innerText = currentUser.phone;
             if (currentUser.email) document.getElementById('qStudioEmail').innerText = currentUser.email;
         }
         
-        // Load items via backend if necessary
         fetchProjectItems(data.projectId);
     } else {
         // New Mode
@@ -139,18 +199,15 @@ window.showQuotationEditor = function(title, data = null) {
         document.getElementById('qPic').value = currentUser ? (currentUser.nickname || currentUser.username) : '';
         document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
         
-        // Studio Info (Auto-fill from current user if available)
         if (typeof currentUser !== 'undefined' && currentUser) {
             if (currentUser.phone) document.getElementById('qStudioPhone').innerText = currentUser.phone;
             if (currentUser.email) document.getElementById('qStudioEmail').innerText = currentUser.email;
         }
         
-        addQuotationRow(); // start with one empty row
-        loadSettingsPreview(); // load default terms from settings
+        addQuotationRow(); 
+        loadSettingsPreview(); 
     }
 }
-
-// --- Status and Tasks Logic for Quotation Editor ---
 
 window.updateProjectCompletedUI = function(isCompleted) {
     const badge = document.getElementById('quoteCompletedBadge');
@@ -180,13 +237,10 @@ window.toggleProjectCompleted = function() {
 }
 
 window.handleAddProjectTask = function() {
-    // We must ensure the project has an ID and is saved at least once 
-    // to map the task directly to a valid project ID in the database.
     const projId = document.getElementById('projId').value;
     const rowIndex = document.getElementById('projRowIndex').value;
     
     if (!rowIndex) {
-        // Project has never been saved. Force a save first.
         Swal.fire({
             title: '需先儲存報價單',
             text: '系統將為您自動儲存，並導向任務清單新增任務。',
@@ -201,21 +255,18 @@ window.handleAddProjectTask = function() {
             }
         });
     } else {
-        // Project exists, just navigate
         document.getElementById('tasksTabBtn').click();
         setTimeout(() => {
-            document.getElementById('taskProjectFilter').value = projId;
+            const filter = document.getElementById('taskProjectFilter');
+            if (filter) filter.value = projId;
             if (typeof filterTasksByProject === 'function') filterTasksByProject();
-            if (typeof showTaskEditorModal === 'function') showTaskEditorModal(projId);
+            if (typeof showTaskEditorPage === 'function') showTaskEditorPage();
         }, 300);
     }
 }
 
 async function fetchProjectItems(projId) {
-    // Items are now securely bundled in the backend get_projects call.
     const proj = (window.allProjects || []).find(p => p.projectId === projId);
-    
-    // Clear any existing rows (safety fallback)
     const tbody = document.getElementById('quotationItemsBody');
     if (tbody) tbody.innerHTML = '';
     
@@ -224,7 +275,6 @@ async function fetchProjectItems(projId) {
             addQuotationRow(item);
         });
     } else {
-        // Fallback: start with one empty row if no items found
         addQuotationRow(); 
     }
 }
@@ -238,7 +288,6 @@ function generateProjectId() {
 
 async function loadSettingsPreview() {
     try {
-        // Load from cache or fetch sessionly
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'cors',
@@ -287,60 +336,23 @@ function calcQuotation() {
     let subtotal = 0;
     const rows = document.querySelectorAll('#quotationItemsBody tr');
     rows.forEach((row, idx) => {
-        row.cells[0].innerText = idx + 1; // update index
+        row.cells[0].innerText = idx + 1; 
         const price = parseFloat(row.querySelector('.i-price').value) || 0;
         const qty = parseFloat(row.querySelector('.i-qty').value) || 0;
         const total = price * qty;
         row.querySelector('.i-total').value = total;
         subtotal += total;
     });
-
     const tax = Math.round(subtotal * 0.05);
     const total = subtotal + tax;
-
     document.getElementById('qSubtotal').innerText = subtotal.toLocaleString();
     document.getElementById('qTax').innerText = tax.toLocaleString();
     document.getElementById('qTotal').innerText = total.toLocaleString();
 }
 
-// Autocomplete Logic
-function initQuotationAutocomplete() {
-    const input = document.getElementById('qCustSearch');
-    const container = document.getElementById('autocompleteSuggestions');
-    if (!input || !container) return;
-
-    input.oninput = () => {
-        const val = input.value.trim().toLowerCase();
-        if (!val) { container.style.display = 'none'; return; }
-        
-        const suggestions = window.allCustomers.filter(c => {
-            // Scan all fields for the keyword
-            return Object.values(c).some(fieldVal => 
-                String(fieldVal || '').toLowerCase().includes(val)
-            );
-        });
-
-        if (suggestions.length === 0) { container.style.display = 'none'; return; }
-
-        container.innerHTML = suggestions.map(s => `
-            <div class="suggestion-item" onclick="selectCustomerById('${s.customerId}')">
-                <span class="s-name">${s.companyName} (${s.nickname || '無簡稱'})</span>
-                <span class="s-tax">統編：${s.taxId || '無'} | 聯絡人：${s.contact || '無'}</span>
-            </div>
-        `).join('');
-        container.style.display = 'block';
-    };
-
-    // Close when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !container.contains(e.target)) container.style.display = 'none';
-    });
-}
-
 window.selectCustomerById = function(cid) {
     const cust = window.allCustomers.find(c => c.customerId === cid);
     if (!cust) return;
-
     document.getElementById('qCustName').value = cust.companyName || '';
     document.getElementById('qTaxId').value = cust.taxId || '';
     document.getElementById('qContact').value = cust.contact || '';
@@ -348,16 +360,11 @@ window.selectCustomerById = function(cid) {
     document.getElementById('qEmail').value = cust.email || '';
     document.getElementById('qCustSearch').value = cust.companyName;
     document.getElementById('autocompleteSuggestions').style.display = 'none';
-    
-    // Hidden customer ID
-    // I need a way to store the selected customer ID. I'll use a data attribute or another hidden input.
     document.getElementById('qCustSearch').dataset.selectedId = cid;
 }
 
 async function handleQuotationSubmit(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    if (btn) btn.classList.add('btn-loading');
+    if (e) e.preventDefault();
     setSyncStatus(true);
 
     const project = {
@@ -375,7 +382,7 @@ async function handleQuotationSubmit(e) {
         bankData: document.getElementById('qBankData') ? document.getElementById('qBankData').value : '',
         days: document.getElementById('qWfDraft') ? document.getElementById('qWfDraft').value : '',
         revCount: document.getElementById('qWfEdit') ? document.getElementById('qWfEdit').value : '',
-        remark: "", // If you need a separate remark field, add it to UI first.
+        remark: "",
         wfDelivery: document.getElementById('qWfDelivery') ? document.getElementById('qWfDelivery').value : '',
         isCompleted: document.getElementById('projIsCompleted').value === 'true'
     };
@@ -393,20 +400,15 @@ async function handleQuotationSubmit(e) {
     });
 
     try {
-        const reqBody = { action: 'save_project', project, items };
         const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors',
+            method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(reqBody)
+            body: JSON.stringify({ action: 'save_project', project, items })
         });
         const json = await res.json();
-        
         if (json.success) {
-            Swal.fire({ icon: 'success', title: '儲存成功', timer: 1500, showConfirmButton: false });
+            Toast.fire({ icon: 'success', title: '專案已儲存' });
             fetchProjects();
-            
-            // Check if we need to redirect to add task
             if (window._redirectAfterSaveToTasks) {
                 window._redirectAfterSaveToTasks = false;
                 switchSubView('projects', 'list');
@@ -414,7 +416,7 @@ async function handleQuotationSubmit(e) {
                 setTimeout(() => {
                     document.getElementById('taskProjectFilter').value = project.projectId;
                     if (typeof filterTasksByProject === 'function') filterTasksByProject();
-                    if (typeof showTaskEditorModal === 'function') showTaskEditorModal(project.projectId);
+                    if (typeof showTaskEditorPage === 'function') showTaskEditorPage();
                 }, 500);
             } else {
                 switchSubView('projects', 'list');
@@ -425,7 +427,6 @@ async function handleQuotationSubmit(e) {
     } catch (e) {
         Swal.fire('連線錯誤', '無法儲存資料', 'error');
     } finally {
-        if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
     }
 }
@@ -433,10 +434,8 @@ async function handleQuotationSubmit(e) {
 window.filterProjects = function(val) {
     const query = String(val).toLowerCase();
     window.currentFilteredProjects = (window.allProjects || []).filter(p => {
-        // Find customer nickname for joint search
         const cust = window.allCustomers.find(c => c.customerId === p.customerId);
         const custName = cust ? (cust.nickname || cust.companyName) : (p.customerId || '');
-        
         return (p.projectName || '').toLowerCase().includes(query) ||
                custName.toLowerCase().includes(query) ||
                (p.pic || '').toLowerCase().includes(query) ||
@@ -446,36 +445,22 @@ window.filterProjects = function(val) {
                (cust ? (cust.taxId || '').toLowerCase().includes(query) : false) ||
                (cust ? (cust.address || '').toLowerCase().includes(query) : false);
     });
-    projectPage = 1;
+    applyProjectSort();
+    window.projectPage = 1;
     renderProjects();
 };
 
 window.preparePrint = function() {
-    // 1. Get raw data
-    const dateVal = document.getElementById('qDate').value; // YYYY-MM-DD
+    const dateVal = document.getElementById('qDate').value; 
     const custName = document.getElementById('qCustName').value || '客戶';
     const projName = document.getElementById('qProjName').value || '未命名專案';
-    
-    // 2. Format components
-    // Date: YYYY-MM-DD -> YYMMDD
     let yymmdd = '';
     if (dateVal) {
-        const parts = dateVal.split('-'); // [YYYY, MM, DD]
-        if (parts.length === 3) {
-            yymmdd = parts[0].slice(2) + parts[1] + parts[2];
-        }
+        const parts = dateVal.split('-');
+        if (parts.length === 3) yymmdd = parts[0].slice(2) + parts[1] + parts[2];
     }
-    
-    // 3. Set temporary title for filename
     const originalTitle = document.title;
     document.title = `${yymmdd}_${custName}_${projName}`;
-    
-    // 4. Trigger print
     window.print();
-    
-    // 5. Restore title after a short delay
-    setTimeout(() => {
-        document.title = originalTitle;
-    }, 1000);
+    setTimeout(() => { document.title = originalTitle; }, 1000);
 }
-

@@ -1,13 +1,15 @@
-// Tasks Management
+// Tasks Management - Sub-view Pattern & Smart Midpoint Sorting
+// ==========================================
 
 window.allTasks = window.allTasks || [];
 window.currentFilteredTasks = window.currentFilteredTasks || [];
+window.taskStatusFilters = { complete: true, incomplete: true };
 
 window.fetchTasks = async function() {
     // 1. Load from cache first for instant UI
     const cached = getCache('tasks');
     if (cached) {
-        window.allTasks = cached;
+        window.allTasks = cached.map(t => initializeTaskWeight(t));
         renderTasksList();
     }
 
@@ -21,7 +23,7 @@ window.fetchTasks = async function() {
         });
         const json = await res.json();
         if (json.success) {
-            window.allTasks = json.data || [];
+            window.allTasks = (json.data || []).map(t => initializeTaskWeight(t));
             setCache('tasks', window.allTasks);
             if (typeof window.updateTaskProjectFilter === 'function') window.updateTaskProjectFilter();
             if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
@@ -30,6 +32,21 @@ window.fetchTasks = async function() {
         console.error("Fetch Tasks Error:", e);
         if (window.logError) window.logError("FetchTasks", e);
     } finally { setSyncStatus(false); }
+}
+
+/**
+ * Auto-initialize tasks without weights and dates
+ */
+function initializeTaskWeight(t) {
+    if (!t.orderWeight) {
+        // Fallback: Use current date or rowIndex as starting point
+        const now = new Date();
+        const baseTime = now.getTime();
+        t.orderWeight = baseTime + (t.rowIndex || 0) * 1000;
+        if (!t.taskDate) t.taskDate = now.toISOString().split('T')[0];
+        if (!t.taskTime) t.taskTime = "09:00";
+    }
+    return t;
 }
 
 window.updateTaskProjectFilter = function() {
@@ -51,92 +68,124 @@ window.updateTaskProjectFilter = function() {
     
     filterSelect.innerHTML = html;
     if (currVal) filterSelect.value = currVal;
-    filterSelect.onchange = window.filterTasksByProject;
+}
+
+window.toggleStatusFilter = function(type) {
+    window.taskStatusFilters[type] = !window.taskStatusFilters[type];
+    
+    const btnId = type === 'complete' ? 'filterComplete' : 'filterIncomplete';
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        btn.classList.toggle('active', window.taskStatusFilters[type]);
+    }
+    
+    window.filterTasksByProject();
 }
 
 window.filterTasksByProject = function() {
     const filterSelect = document.getElementById('taskProjectFilter');
     const pid = filterSelect ? filterSelect.value : '';
     
+    let filtered = window.allTasks || [];
+    
+    // 1. Project Filter
     if (pid) {
-        window.currentFilteredTasks = (window.allTasks || []).filter(t => t.projectId === pid);
-    } else {
-        window.currentFilteredTasks = [...(window.allTasks || [])];
+        filtered = filtered.filter(t => t.projectId === pid);
     }
-    renderTasksList(true); // Always allow dragging for global/per-project manual sorting
+    
+    // 2. Status Filter
+    filtered = filtered.filter(t => {
+        if (t.isCompleted && !window.taskStatusFilters.complete) return false;
+        if (!t.isCompleted && !window.taskStatusFilters.incomplete) return false;
+        return true;
+    });
+    
+    window.currentFilteredTasks = filtered;
+    renderTasksList(true); 
 }
 
 function renderTasksList(draggable = false) {
     const list = document.getElementById('taskList');
-    if (!list) return;
-    list.innerHTML = '';
+    const container = document.getElementById('tasksListView');
+    if (!list || !container) return;
     
-    const tasks = window.currentFilteredTasks || [];
-    if (tasks.length === 0) {
-        list.innerHTML = `<li style="text-align: center; color: var(--text-muted); padding: 2rem;">尚無任務紀錄</li>`;
-        return;
-    }
-    
-    tasks.forEach(t => {
-        const li = document.createElement('li');
-        li.className = 'task-item';
-        li.style.display = 'flex';
-        li.style.alignItems = 'center';
-        li.style.padding = '1rem';
-        li.style.borderBottom = '1px solid var(--border)';
-        li.style.gap = '1rem';
-        if (draggable) {
-            li.draggable = true;
-            li.style.cursor = 'grab';
+    // Ensure we are in list view
+    if (container.classList.contains('active')) {
+        list.innerHTML = '';
+        
+        const tasks = window.currentFilteredTasks || [];
+        if (tasks.length === 0) {
+            list.innerHTML = `<li style="text-align: center; color: var(--text-muted); padding: 5rem 2rem;">
+                <i data-lucide="inbox" style="width: 48px; height: 48px; opacity: 0.2; margin-bottom: 1rem;"></i>
+                <p>尚無符合條件的任務紀錄</p>
+            </li>`;
+            if (window.lucide) lucide.createIcons();
+            return;
         }
         
-        li.dataset.rowIndex = t.rowIndex;
-        li.dataset.taskId = t.taskId;
+        tasks.forEach(t => {
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            li.style.display = 'flex';
+            li.style.alignItems = 'center';
+            li.style.padding = '1rem 1.25rem';
+            li.style.borderBottom = '1px solid var(--border)';
+            li.style.gap = '1rem';
+            if (draggable) {
+                li.draggable = true;
+            }
+            
+            li.dataset.rowIndex = t.rowIndex;
+            li.dataset.taskId = t.taskId;
+            li.dataset.orderWeight = t.orderWeight;
+            
+            const project = (window.allProjects || []).find(p => p.projectId === t.projectId);
+            const customer = project ? (window.allCustomers || []).find(c => c.customerId === project.customerId) : null;
+            const custName = customer ? (customer.nickname || customer.companyName) : '未知';
+            
+            const displayTaskName = `${custName}_${t.taskName || ''}`;
+            const displayTime = t.taskDate ? `<span style="font-size: 0.75rem; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${t.taskDate} ${t.taskTime || ''}</span>` : '';
+            
+            const checkIcon = t.isCompleted ? 'check-square' : 'square';
+            const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted); opacity: 0.7;' : 'color: var(--text-main); font-weight: 500;';
+            const completedBtnStyle = t.isCompleted ? 'color: #06C755;' : 'color: var(--text-muted);';
+            
+            li.innerHTML = `
+                <i data-lucide="grip-vertical" class="drag-handle" style="color: var(--text-muted); cursor: grab;" title="拖曳改變排序"></i>
+                <button type="button" onclick="toggleTaskCompletion(${t.rowIndex})" style="background:none; border:none; padding:0; display:flex; align-items:center; cursor:pointer; ${completedBtnStyle}">
+                    <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
+                </button>
+                <div style="flex: 1; display:flex; flex-direction:column; gap: 4px; ${textStyle}">
+                    <div>${displayTaskName}</div>
+                    ${displayTime}
+                </div>
+                <button type="button" class="remove-btn-dense" onclick="deleteTask(${t.rowIndex})" title="刪除"><i data-lucide="trash-2"></i></button>
+            `;
+            
+            li.ondblclick = (e) => {
+                if (e.target.closest('button') || e.target.closest('.drag-handle')) return;
+                showTaskEditorPage(t);
+            };
+            
+            list.appendChild(li);
+        });
         
-        // Lookup customer nickname for display
-        const project = (window.allProjects || []).find(p => p.projectId === t.projectId);
-        const customer = project ? (window.allCustomers || []).find(c => c.customerId === project.customerId) : null;
-        
-        // Use a better fallback if data is still syncing
-        const custName = customer ? (customer.nickname || customer.companyName) : 
-                       (window.allProjects && window.allProjects.length > 0 ? '未知' : '載入中...');
-        
-        const displayTaskName = `${custName}_${t.taskName || ''}`;
-        
-        const gripStyle = 'color: var(--text-muted); cursor: grab;';
-        const checkIcon = t.isCompleted ? 'check-square' : 'square';
-        const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted);' : 'color: var(--text-main); font-weight: 500;';
-        const completedBtnStyle = t.isCompleted ? 'color: #06C755;' : 'color: var(--text-muted);';
-        
-        li.innerHTML = `
-            <i data-lucide="grip-vertical" class="drag-handle" style="${gripStyle}" title="拖曳改變排序"></i>
-            <button type="button" onclick="toggleTaskCompletion(${t.rowIndex})" style="background:none; border:none; padding:0; display:flex; align-items:center; cursor:pointer; ${completedBtnStyle}">
-                <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
-            </button>
-            <div style="flex: 1; ${textStyle}">${displayTaskName}</div>
-            <button type="button" class="remove-btn-dense" onclick="deleteTask(${t.rowIndex})" title="刪除"><i data-lucide="trash-2"></i></button>
-        `;
-        list.appendChild(li);
-    });
-    
-    if (window.lucide) lucide.createIcons();
-    if (draggable) initDragAndDrop(list);
+        if (window.lucide) lucide.createIcons();
+        if (draggable) initDragAndDrop(list);
+    }
 }
 
-// --- Drag and Drop Logic ---
+// --- Smart Midpoint Sorting Logic ---
 function initDragAndDrop(listElement) {
     let draggedItem = null;
     listElement.querySelectorAll('.task-item').forEach(item => {
-        item.addEventListener('dragstart', function(e) {
+        item.addEventListener('dragstart', function() {
             draggedItem = this;
             setTimeout(() => this.style.opacity = '0.5', 0);
         });
         item.addEventListener('dragend', function() {
-            setTimeout(() => {
-                this.style.opacity = '1';
-                draggedItem = null;
-                saveTasksOrder();
-            }, 0);
+            this.style.opacity = '1';
+            draggedItem = null;
         });
         item.addEventListener('dragover', e => e.preventDefault());
         item.addEventListener('dragenter', function(e) {
@@ -148,153 +197,163 @@ function initDragAndDrop(listElement) {
         });
         item.addEventListener('drop', function(e) {
             this.classList.remove('drag-over-marker');
-            if (this !== draggedItem) {
-                let allItems = Array.from(listElement.querySelectorAll('.task-item'));
-                let draggedIdx = allItems.indexOf(draggedItem);
-                let targetIdx = allItems.indexOf(this);
-                if (draggedIdx < targetIdx) {
-                    listElement.insertBefore(draggedItem, this.nextSibling);
-                } else {
-                    listElement.insertBefore(draggedItem, this);
-                }
+            if (this === draggedItem) return;
+
+            const allItems = Array.from(listElement.querySelectorAll('.task-item'));
+            const draggedIdx = allItems.indexOf(draggedItem);
+            const targetIdx = allItems.indexOf(this);
+            
+            // Move item in DOM
+            if (draggedIdx < targetIdx) {
+                listElement.insertBefore(draggedItem, this.nextSibling);
+            } else {
+                listElement.insertBefore(draggedItem, this);
             }
+            
+            // Re-calculate weights based on neighbors
+            calculateNewWeight(draggedItem);
         });
     });
 }
 
-async function saveTasksOrder() {
-    const list = document.getElementById('taskList');
-    if (!list) return;
-    const updates = [];
-    list.querySelectorAll('.task-item').forEach((item, index) => {
-        updates.push({ rowIndex: parseInt(item.dataset.rowIndex), order: index });
-        const t = window.allTasks.find(x => x.rowIndex == item.dataset.rowIndex);
-        if (t) t.order = index;
-    });
-    window.allTasks.sort((a,b) => a.order - b.order);
-    setSyncStatus(true);
-    try {
-        await fetch(GAS_WEB_APP_URL, {
-            method: 'POST', mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'update_tasks_order', updates })
-        });
-    } catch (e) {
-        console.error("Order update failed:", e);
-    } finally {
-        setSyncStatus(false);
+/**
+ * The Midpoint Logic core
+ */
+async function calculateNewWeight(item) {
+    const prev = item.previousElementSibling;
+    const next = item.nextElementSibling;
+    
+    let newWeight;
+    const BOUNDARY_MS = 30 * 60 * 1000; // 30 minutes
+
+    if (!prev && !next) {
+        newWeight = Date.now();
+    } else if (!prev) {
+        // Top of list
+        newWeight = parseFloat(next.dataset.orderWeight) - BOUNDARY_MS;
+    } else if (!next) {
+        // Bottom of list
+        newWeight = parseFloat(prev.dataset.orderWeight) + BOUNDARY_MS;
+    } else {
+        // Midpoint
+        newWeight = (parseFloat(prev.dataset.orderWeight) + parseFloat(next.dataset.orderWeight)) / 2;
+    }
+
+    item.dataset.orderWeight = newWeight;
+    
+    // Update the task object and sync to backend
+    const task = window.allTasks.find(t => t.rowIndex == item.dataset.rowIndex);
+    if (task) {
+        task.orderWeight = newWeight;
+        
+        // Auto-update task date/time based on the weight if needed (Visual feedback)
+        const d = new Date(newWeight);
+        task.taskDate = d.toISOString().split('T')[0];
+        task.taskTime = d.toTimeString().split(' ')[0].substring(0, 5);
+        
+        // Finalize sorting and refresh
+        window.allTasks.sort((a,b) => a.orderWeight - b.orderWeight);
+        window.filterTasksByProject();
+        
+        // Sync
+        setSyncStatus(true);
+        try {
+            await fetch(GAS_WEB_APP_URL, {
+                method: 'POST', mode: 'cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'save_task', task })
+            });
+            setCache('tasks', window.allTasks);
+        } catch (e) {
+            console.error("Order sync failed", e);
+        } finally {
+            setSyncStatus(false);
+        }
     }
 }
 
 // --- CRUD ---
 
-window.showTaskEditorModal = function(prefillProjectId = '') {
-    try {
-        console.log(">> showTaskEditorModal initiated...", prefillProjectId);
-        
-        // Use a unique ID to avoid any overlaps and ensure root access
-        const modal = document.getElementById('stProTaskEditorModal');
-        if (!modal) {
-            console.error("Critical Error: stProTaskEditorModal not found.");
-            Swal.fire('系統錯誤', '找不到任務編輯視窗元件，請嘗試重新整理頁面。', 'error');
-            return;
-        }
-
-        // Use requestAnimationFrame to ensure the display change happens in the next render cycle correctly
-        requestAnimationFrame(() => {
-            modal.classList.add('active');
-            console.log(">> stProTaskEditorModal activated via requestAnimationFrame.");
-        });
-
-        if (typeof window.closeAllModals === 'function') {
-            try { 
-                // Skip for this aggressive opening strategy to avoid accidental self-closing
-            } catch(e) { console.warn("closeAllModals skip", e); }
-        }
-        
-        const rowIndexEl = document.getElementById('taskRowIndex');
-        const taskIdEl = document.getElementById('taskIdField');
-        const taskNameEl = document.getElementById('taskName');
-        const pSelect = document.getElementById('taskProjectId');
-
-        if (rowIndexEl) rowIndexEl.value = '';
-        if (taskIdEl) taskIdEl.value = 'T-' + new Date().getTime();
-        if (taskNameEl) taskNameEl.value = '';
-        
-        // 3. Populate project list with extreme caution
-        if (pSelect) {
-            let html = '<option value="">請選擇專案...</option>';
-            const projs = window.allProjects || [];
-            const custs = window.allCustomers || [];
-            
-            if (!Array.isArray(projs)) {
-                console.error("allProjects is not an array:", projs);
-            } else {
-                projs.forEach(p => {
-                    if (!p || !p.projectId) return;
-                    const cust = Array.isArray(custs) ? custs.find(c => c && c.customerId === p.customerId) : null;
-                    const custName = cust ? (cust.nickname || cust.companyName) : '';
-                    const label = custName ? `${p.projectName} (${custName})` : p.projectName;
-                    html += `<option value="${p.projectId}">${label}</option>`;
-                });
-            }
-            pSelect.innerHTML = html;
-            
-            if (prefillProjectId) {
-                pSelect.value = prefillProjectId;
-            } else {
-                const filter = document.getElementById('taskProjectFilter');
-                if (filter && filter.value) pSelect.value = filter.value;
-            }
+window.showTaskEditorPage = function(task = null) {
+    switchSubView('tasks', 'edit');
+    
+    const form = document.getElementById('taskEditorForm');
+    const title = document.getElementById('taskEditorTitle');
+    const pSelect = document.getElementById('taskProjectId');
+    
+    if (!form || !pSelect) return;
+    
+    // 1. Reset
+    form.reset();
+    document.getElementById('taskError').innerText = '';
+    
+    // 2. Populate Project Dropdown (Exclude Completed)
+    let html = '<option value="">請選擇進行中的專案...</option>';
+    const projs = window.allProjects || [];
+    const custs = window.allCustomers || [];
+    
+    projs.forEach(p => {
+        // User Requirement: Exclude completed projects
+        if (p.isCompleted === true || String(p.isCompleted).toLowerCase() === 'true') {
+            // But if we are EDITING a task belonging to a completed project, we should keep it visible
+            if (!task || task.projectId !== p.projectId) return;
         }
         
-        // Final check
-        if (window.lucide) lucide.createIcons();
-        console.log(">> showTaskEditorModal completed successfully.");
+        const cust = custs.find(c => c.customerId === p.customerId);
+        const custNickname = cust ? (cust.nickname || cust.companyName) : '';
+        html += `<option value="${p.projectId}">${p.projectName} (${custNickname})</option>`;
+    });
+    pSelect.innerHTML = html;
 
-    } catch (e) {
-        if (window.logError) window.logError("showTaskEditorModal", e);
-        else {
-            console.error("Critical showTaskEditorModal Error:", e);
-            Swal.fire('執行錯誤', e.message, 'error');
-        }
+    if (task) {
+        // Edit Mode
+        title.innerText = '編輯任務';
+        document.getElementById('taskRowIndex').value = task.rowIndex;
+        document.getElementById('taskIdField').value = task.taskId;
+        document.getElementById('taskIsCompleted').value = task.isCompleted;
+        document.getElementById('taskOrderWeight').value = task.orderWeight;
+        document.getElementById('taskName').value = task.taskName;
+        document.getElementById('taskDate').value = task.taskDate || '';
+        document.getElementById('taskTime').value = task.taskTime || '';
+        pSelect.value = task.projectId;
+    } else {
+        // New Mode
+        title.innerText = '新增任務';
+        document.getElementById('taskRowIndex').value = '';
+        document.getElementById('taskIdField').value = 'T-' + Date.now();
+        document.getElementById('taskIsCompleted').value = 'false';
+        document.getElementById('taskOrderWeight').value = '';
+        
+        const now = new Date();
+        document.getElementById('taskDate').value = now.toISOString().split('T')[0];
+        document.getElementById('taskTime').value = "09:00";
+        
+        // Auto-select project filter if active
+        const filter = document.getElementById('taskProjectFilter');
+        if (filter && filter.value) pSelect.value = filter.value;
     }
 }
 
-window.closeTaskModal = function() {
-    const modal = document.getElementById('stProTaskEditorModal');
-    if (modal) modal.classList.remove('active');
-}
-
-window.submitTaskEditor = async function() {
+window.submitTaskEditor = async function(event) {
+    if (event) event.preventDefault();
+    
     try {
-        console.log(">> submitTaskEditor initiated...");
         const rowIndex = document.getElementById('taskRowIndex').value;
-        const taskId = document.getElementById('taskIdField').value;
-        const projectId = document.getElementById('taskProjectId').value;
-        const taskName = document.getElementById('taskName').value.trim();
-        
-        console.log(">> Save Data:", { rowIndex, taskId, projectId, taskName });
-        
-        if (!projectId || !taskName) {
-            Swal.fire('錯誤', '請選擇專案並填寫任務內容', 'warning');
-            return;
-        }
-        
-        let maxOrder = 0;
-        const tasks = window.currentFilteredTasks || [];
-        if (tasks.length > 0) {
-            maxOrder = Math.max(...tasks.map(t => t.order || 0)) + 1;
-        }
-        
         const task = {
-            taskId,
-            projectId,
-            taskName,
-            isCompleted: false,
-            order: maxOrder,
+            taskId: document.getElementById('taskIdField').value,
+            projectId: document.getElementById('taskProjectId').value,
+            taskName: document.getElementById('taskName').value.trim(),
+            isCompleted: document.getElementById('taskIsCompleted').value === 'true',
+            orderWeight: parseFloat(document.getElementById('taskOrderWeight').value) || Date.now(),
+            taskDate: document.getElementById('taskDate').value,
+            taskTime: document.getElementById('taskTime').value,
             rowIndex: rowIndex ? parseInt(rowIndex) : null
         };
+        
+        if (!task.projectId || !task.taskName) {
+            document.getElementById('taskError').innerText = '請完整填寫專案與內容';
+            return;
+        }
         
         setSyncStatus(true);
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -304,15 +363,15 @@ window.submitTaskEditor = async function() {
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire({ icon: 'success', title: '任務已儲存', timer: 1000, showConfirmButton: false });
-            window.closeTaskModal();
+            Toast.fire({ icon: 'success', title: '任務已儲存' });
+            switchSubView('tasks', 'list');
             window.fetchTasks();
         } else {
-            Swal.fire('錯誤', json.error || '儲存失敗', 'error');
+            document.getElementById('taskError').innerText = json.error || '儲存失敗';
         }
     } catch (e) {
+        console.error(e);
         if (window.logError) window.logError("submitTaskEditor", e);
-        else console.error(e);
     } finally {
         setSyncStatus(false);
     }
@@ -323,9 +382,7 @@ window.toggleTaskCompletion = async function(rowIndex) {
     if (!t) return;
     
     t.isCompleted = !t.isCompleted;
-    
-    // Optimistic UI update
-    if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
+    window.filterTasksByProject();
     
     setSyncStatus(true);
     try {
@@ -334,6 +391,7 @@ window.toggleTaskCompletion = async function(rowIndex) {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'save_task', task: t })
         });
+        setCache('tasks', window.allTasks);
     } catch (e) {
         console.error("Toggle completion error", e);
     } finally {
@@ -362,7 +420,8 @@ window.deleteTask = function(rowIndex) {
                 const json = await res.json();
                 if (json.success) {
                     window.allTasks = (window.allTasks || []).filter(x => x.rowIndex != rowIndex);
-                    if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
+                    window.filterTasksByProject();
+                    setCache('tasks', window.allTasks);
                 } else {
                     Swal.fire('錯誤', json.error || '刪除失敗', 'error');
                 }

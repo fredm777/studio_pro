@@ -9,6 +9,7 @@ window.currentPage = 1;
 window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 20;
 
 window.allMembers = [];
+window.allProjects = []; // Added here as a base
 window.currentUser = null;
 window.registeredUsername = ''; 
 window.verifyContext = 'register';

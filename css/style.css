@@ -1078,3 +1078,102 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
         print-color-adjust: exact !important;
     }
 }
+/* --- Interactive Tables (Sortable Headers) --- */
+.sortable-row th {
+    cursor: pointer;
+    position: relative;
+    padding-right: 25px !important;
+    transition: background-color 0.2s, color 0.2s;
+    user-select: none;
+}
+
+.sortable-row th:hover {
+    background-color: #f1f5f9 !important;
+    color: var(--primary);
+}
+
+.sort-icon {
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+    vertical-align: middle;
+    opacity: 0.3;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.sortable-row th:hover .sort-icon,
+.sortable-row th.active .sort-icon {
+    opacity: 1;
+    color: var(--primary);
+}
+
+/* --- Task Status Filters --- */
+.status-filter-group {
+    display: flex;
+    gap: 0.5rem;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    margin-right: 1rem;
+}
+
+.filter-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.filter-pill i {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.5;
+}
+
+.filter-pill.active {
+    background: white;
+    color: #06C755; /* Use success color for active state */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filter-pill:hover:not(.active) {
+    background: rgba(255,255,255,0.5);
+    color: var(--text-main);
+}
+
+/* --- Social Binding Buttons (Google Premium) --- */
+.google-bind-btn {
+    position: relative;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Gradient Border Trick */
+    border: 2px solid transparent;
+    background-image: linear-gradient(white, white), 
+                      linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+}
+
+.google-bind-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+}
+
+.google-bind-btn:active {
+    transform: translateY(0);
+}

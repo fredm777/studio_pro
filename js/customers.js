@@ -1,3 +1,10 @@
+// Customer Management - Logic & CRUD
+// ==========================================
+
+// --- Sorting State ---
+window.customerSortField = localStorage.getItem('st_pro_cust_sort_field') || 'companyName';
+window.customerSortOrder = localStorage.getItem('st_pro_cust_sort_order') || 'asc';
+
 window.fetchCustomers = async function() {
     setSyncStatus(true);
     try {
@@ -13,7 +20,8 @@ window.fetchCustomers = async function() {
             if (hasChanged) {
                 window.allCustomers = json.data || []; 
                 setCache('customers', window.allCustomers);
-                window.currentFilteredCustomers = window.allCustomers;
+                window.currentFilteredCustomers = [...window.allCustomers];
+                applyCurrentSort();
                 renderCustomers(); 
             }
         }
@@ -34,19 +42,72 @@ window.changePage = (dir) => {
     const tab = activeTab.dataset.tab;
 
     if (tab === 'customers') {
-        const totalPages = Math.ceil(window.currentFilteredCustomers.length / window.itemsPerPage);
+        const totalPages = Math.ceil(window.currentFilteredCustomers.length / window.itemsPerPage) || 1;
         window.currentPage += dir;
         if (window.currentPage < 1) window.currentPage = 1;
-        if (window.currentPage > totalPages) window.currentPage = totalPages || 1;
+        if (window.currentPage > totalPages) window.currentPage = totalPages;
         renderCustomers();
     } else if (tab === 'projects') {
-        const totalPages = Math.ceil(currentFilteredProjects.length / projectItemsPerPage);
-        projectPage += dir;
-        if (projectPage < 1) projectPage = 1;
-        if (projectPage > totalPages) projectPage = totalPages || 1;
+        const totalPages = Math.ceil(window.currentFilteredProjects.length / window.projectItemsPerPage) || 1;
+        window.projectPage += dir;
+        if (window.projectPage < 1) window.projectPage = 1;
+        if (window.projectPage > totalPages) window.projectPage = totalPages;
         renderProjects();
     }
 };
+
+window.sortCustomers = function(field) {
+    if (window.customerSortField === field) {
+        window.customerSortOrder = window.customerSortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        window.customerSortField = field;
+        window.customerSortOrder = 'asc';
+    }
+    
+    // Persist
+    localStorage.setItem('st_pro_cust_sort_field', window.customerSortField);
+    localStorage.setItem('st_pro_cust_sort_order', window.customerSortOrder);
+    
+    applyCurrentSort();
+    window.currentPage = 1;
+    renderCustomers();
+}
+
+function applyCurrentSort() {
+    const field = window.customerSortField;
+    const order = window.customerSortOrder;
+    
+    window.currentFilteredCustomers.sort((a, b) => {
+        let valA = (a[field] || '').toString().toLowerCase();
+        let valB = (b[field] || '').toString().toLowerCase();
+        
+        // Handle numeric values if any
+        if (!isNaN(parseFloat(valA)) && isFinite(valA) && !isNaN(parseFloat(valB)) && isFinite(valB)) {
+            valA = parseFloat(valA);
+            valB = parseFloat(valB);
+        }
+        
+        if (valA < valB) return order === 'asc' ? -1 : 1;
+        if (valA > valB) return order === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+function updateSortIcons() {
+    // Reset all icons
+    document.querySelectorAll('.sortable-row th i').forEach(icon => {
+        icon.setAttribute('data-lucide', 'arrow-up-down');
+        icon.parentElement.classList.remove('active');
+    });
+    
+    const activeIcon = document.getElementById(`sortIcon-${window.customerSortField}`);
+    if (activeIcon) {
+        activeIcon.setAttribute('data-lucide', window.customerSortOrder === 'asc' ? 'arrow-up' : 'arrow-down');
+        activeIcon.parentElement.classList.add('active');
+    }
+    
+    if (window.lucide) lucide.createIcons();
+}
 
 function renderCustomers() {
     const tbody = document.getElementById('customerTableBody');
@@ -89,7 +150,7 @@ function renderCustomers() {
         tbody.appendChild(tr);
     });
     
-    if (window.lucide) lucide.createIcons();
+    updateSortIcons();
 }
 
 window.switchSubView = function(tabId, viewType) {
@@ -104,7 +165,7 @@ window.switchSubView = function(tabId, viewType) {
         if (editView) editView.classList.remove('active');
         setTimeout(() => {
             if (listView) listView.classList.add('active');
-        }, editView ? 50 : 0); // Minimal delay for transition feel
+        }, editView ? 50 : 0); 
     } else {
         if (listView) listView.classList.remove('active');
         setTimeout(() => {
@@ -112,30 +173,21 @@ window.switchSubView = function(tabId, viewType) {
         }, listView ? 50 : 0);
     }
     
-    // Auto-scroll to top of view
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 window.showCustomerEditor = (title, data = null) => {
-    console.log(">> showCustomerEditor Triggered:", { title, hasData: !!data });
-
-    if (!currentUser) {
-        return Toast.fire({ icon: 'warning', title: '請先登入' });
-    }
+    if (!currentUser) return Toast.fire({ icon: 'warning', title: '請先登入' });
     const userRole = (currentUser.level || '').trim();
-    if (userRole === '客戶') {
-        return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
-    }
+    if (userRole === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
     
     const titleEl = document.getElementById('viewTitleCustomer');
     const form = document.getElementById('customerForm');
     
     if (titleEl) titleEl.innerText = title;
     switchSubView('customers', 'edit');
-    
     if (form) form.reset();
     
-    // Clear error
     const custErr = document.getElementById('customerError');
     if (custErr) { custErr.innerText = ''; custErr.classList.remove('active'); }
     
@@ -176,10 +228,7 @@ window.saveCustomer = async function() {
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : ''
     };
 
-    // --- Optimistic UI Update ---
     const originalData = JSON.parse(JSON.stringify(window.allCustomers));
-    
-    // Clear error
     const custErr = document.getElementById('customerError');
     if (custErr) { custErr.innerText = ''; custErr.classList.remove('active'); }
     
@@ -187,11 +236,11 @@ window.saveCustomer = async function() {
         const idx = window.allCustomers.findIndex(c => c.rowIndex == rIndex);
         if (idx !== -1) window.allCustomers[idx] = { ...window.allCustomers[idx], ...body };
     } else {
-        // Temporary row index for new items (will be overwritten by fetch)
         window.allCustomers.unshift({ ...body, rowIndex: -1 });
     }
     
-    window.currentFilteredCustomers = window.allCustomers;
+    window.currentFilteredCustomers = [...window.allCustomers];
+    applyCurrentSort();
     renderCustomers();
     setSyncStatus(true);
 
@@ -203,37 +252,20 @@ window.saveCustomer = async function() {
         });
         const json = await res.json();
         if (json.success) { 
-            Swal.fire({ 
-                html: `
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem;">
-                        <div class="invoice-badge" style="width: 60px; height: 60px; background: rgba(5, 196, 107, 0.1); border-radius: 50%;">
-                            <i data-lucide="check" style="width: 32px; height: 32px; color: #05c46b; stroke-width: 4;"></i>
-                        </div>
-                        <h2 style="font-size: 1.5rem; color: var(--text-dark); margin: 0;">已儲存</h2>
-                    </div>
-                `,
-                timer: 1500, 
-                showConfirmButton: false,
-                didOpen: () => {
-                    if (window.lucide) lucide.createIcons();
-                }
-            });
+            Toast.fire({ icon: 'success', title: '客戶已儲存' });
             switchSubView('customers', 'list');
-            fetchCustomers(); // Refresh to get actual server state/IDs
+            fetchCustomers(); 
         } else {
             throw new Error(json.error);
         }
     } catch (e) { 
-        // Revert UI
         window.allCustomers = originalData;
-        window.currentFilteredCustomers = window.allCustomers;
+        window.currentFilteredCustomers = [...window.allCustomers];
+        applyCurrentSort();
         renderCustomers();
-        
         if (custErr) {
             custErr.innerText = '同步失敗: ' + (e.message || '請重新嘗試');
             custErr.classList.add('active');
-        } else {
-            Toast.fire({ title: '同步失敗', text: '資料已還原，編號：' + (e.message || ''), icon: 'error' }); 
         }
     } finally {
         setSyncStatus(false);
@@ -243,12 +275,11 @@ window.saveCustomer = async function() {
 window.filterCustomers = function(val) {
     const query = String(val).toLowerCase();
     window.currentFilteredCustomers = window.allCustomers.filter(c => {
-        // Global keyword scan across all fields (address, contact, email, etc.)
         return Object.values(c).some(fieldVal => 
             String(fieldVal || '').toLowerCase().includes(query)
         );
     });
-    currentPage = 1;
+    applyCurrentSort();
+    window.currentPage = 1;
     renderCustomers();
 }
-

@@ -17,6 +17,7 @@ function initEventListeners() {
     safeBind('logoutBtn', 'onclick', logout);
     safeBind('bindLineBtn', 'onclick', startLiffBinding);
     safeBind('lineLoginBtn', 'onclick', loginViaLine);
+    safeBind('bindGoogleBtn', 'onclick', bindGoogle);
 
     const socialToggle = document.getElementById('socialToggle');
     if (socialToggle) {
@@ -68,12 +69,12 @@ function initEventListeners() {
     // Customer Pagination
     const itemsInput = document.getElementById('itemsPerPageInput');
     if (itemsInput) {
-        itemsInput.value = itemsPerPage;
+        itemsInput.value = window.itemsPerPage;
         itemsInput.oninput = (e) => {
             const val = parseInt(e.target.value) || 20;
-            itemsPerPage = val;
-            localStorage.setItem('st_pro_items_per_page', itemsPerPage);
-            currentPage = 1;
+            window.itemsPerPage = val;
+            localStorage.setItem('st_pro_items_per_page', window.itemsPerPage);
+            window.currentPage = 1;
             renderCustomers();
         };
         itemsInput.onwheel = (e) => {
@@ -83,9 +84,9 @@ function initEventListeners() {
             if (val < 1) val = 1;
             if (val > 200) val = 200;
             itemsInput.value = val;
-            itemsPerPage = val;
-            localStorage.setItem('st_pro_items_per_page', itemsPerPage);
-            currentPage = 1;
+            window.itemsPerPage = val;
+            localStorage.setItem('st_pro_items_per_page', window.itemsPerPage);
+            window.currentPage = 1;
             renderCustomers();
         };
     }
@@ -93,12 +94,12 @@ function initEventListeners() {
     // Project Pagination
     const projItemsInput = document.getElementById('projItemsPerPageInput');
     if (projItemsInput) {
-        projItemsInput.value = projectItemsPerPage;
+        projItemsInput.value = window.projectItemsPerPage;
         projItemsInput.oninput = (e) => {
             const val = parseInt(e.target.value) || 20;
-            projectItemsPerPage = val;
-            localStorage.setItem('st_pro_project_items_per_page', projectItemsPerPage);
-            projectPage = 1;
+            window.projectItemsPerPage = val;
+            localStorage.setItem('st_pro_project_items_per_page', window.projectItemsPerPage);
+            window.projectPage = 1;
             renderProjects();
         };
         projItemsInput.onwheel = (e) => {
@@ -108,24 +109,17 @@ function initEventListeners() {
             if (val < 1) val = 1;
             if (val > 200) val = 200;
             projItemsInput.value = val;
-            projectItemsPerPage = val;
-            localStorage.setItem('st_pro_project_items_per_page', projectItemsPerPage);
-            projectPage = 1;
+            window.projectItemsPerPage = val;
+            localStorage.setItem('st_pro_project_items_per_page', window.projectItemsPerPage);
+            window.projectPage = 1;
             renderProjects();
         };
     }
 
-    safeBind('prevPageBtn', 'onclick', () => changePage(-1));
-    safeBind('nextPageBtn', 'onclick', () => changePage(1));
-    safeBind('projPrevPageBtn', 'onclick', () => changePage(-1));
-    safeBind('projNextPageBtn', 'onclick', () => changePage(1));
-    
-    const sel = document.getElementById('itemsPerPageSelector');
-    if (sel) sel.onchange = (e) => {
-        itemsPerPage = parseInt(e.target.value);
-        currentPage = 1;
-        renderCustomers();
-    };
+    safeBind('prevPageBtn', 'onclick', () => window.changePage(-1));
+    safeBind('nextPageBtn', 'onclick', () => window.changePage(1));
+    safeBind('projPrevPageBtn', 'onclick', () => window.changePage(-1));
+    safeBind('projNextPageBtn', 'onclick', () => window.changePage(1));
 
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-overlay')) {
