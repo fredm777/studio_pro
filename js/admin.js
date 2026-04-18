@@ -83,7 +83,7 @@ async function handleSettingsSubmit(e) {
 // --- Project & Quotation Logic ---
 
 async function fetchMembers() {
-    if (!currentUser || (currentUser.level || '').trim() !== '管理者') {
+    if (!window.currentUser || (window.currentUser.level || '').trim() !== '管理者') {
         console.warn(">> fetchMembers blocked: insufficient permissions or no user");
         return;
     }
@@ -91,7 +91,7 @@ async function fetchMembers() {
         setSyncStatus(true);
         const res = await fetch(GAS_WEB_APP_URL, { 
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify({ action: 'get_all_members', username: currentUser.username }) 
+            body: JSON.stringify({ action: 'get_all_members', username: window.currentUser.username }) 
         });
         const json = await res.json();
         if (json.success) {
@@ -133,7 +133,7 @@ function filterMembers(query) {
 window.showMemberEditor = (idx) => {
     console.log(">> showMemberEditor Triggered for Index:", idx);
 
-    if (!currentUser) return;
+    if (!window.currentUser) return;
     const m = allMembers.find(x => x.rowIndex == idx);
     if (!m) return console.error("Member not found for row index:", idx);
     
@@ -154,7 +154,7 @@ window.showMemberEditor = (idx) => {
 async function handleMemberUpdateSubmit(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
-    const body = { action: 'update_member_status', adminUser: currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
+    const body = { action: 'update_member_status', adminUser: window.currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
     
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);

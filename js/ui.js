@@ -44,6 +44,26 @@ function initTabs() {
     });
 }
 
+window.switchToTab = function(tabId, sectionId = null) {
+    const btn = document.querySelector(`.tab-link[data-tab="${tabId}"]`);
+    if (btn) {
+        btn.click();
+        if (sectionId) {
+            setTimeout(() => {
+                const target = document.getElementById(sectionId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Highlight the section briefly
+                    target.style.transition = 'background-color 0.5s';
+                    const originalBg = target.style.backgroundColor;
+                    target.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+                    setTimeout(() => target.style.backgroundColor = originalBg, 2000);
+                }
+            }, 200);
+        }
+    }
+};
+
 function initResizableTable() {
     document.querySelectorAll('th').forEach(th => {
         if (th.querySelector('.resizer')) return;

@@ -142,7 +142,9 @@
                     <button id="projectsTabBtn" class="tab-link" data-tab="projects">專案管理</button>
                     <button id="tasksTabBtn" class="tab-link" data-tab="tasks">任務管理</button>
                     <button id="settingsTabBtn" class="tab-link hidden" data-tab="settings">系統設定</button>
-                    <button id="permissionsTabBtn" class="tab-link hidden" data-tab="permissions">權限設定</button>
+                    <button id="permissionsTabBtn" class="tab-link hidden" data-tab="permissions" style="display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="shield-check" style="width:16px; height:16px;" class="icon-circle-star"></i> 權限設定
+                    </button>
                 </nav>
                 
                 <div id="customerActions" class="search-wrapper">
@@ -161,12 +163,12 @@
                         <table>
                             <thead>
                                 <tr class="sortable-row">
-                                    <th onclick="sortCustomers('companyName')">客戶名稱 <i id="sortIcon-companyName" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortCustomers('taxId')">統編 <i id="sortIcon-taxId" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortCustomers('nickname')">客戶簡稱 <i id="sortIcon-nickname" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortCustomers('contact')">聯絡人 <i id="sortIcon-contact" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortCustomers('phone')">聯絡電話 <i id="sortIcon-phone" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortCustomers('address')">地址 <i id="sortIcon-address" data-lucide="arrow-up-down" class="sort-icon"></i></th>
+                                    <th>客戶名稱</th>
+                                    <th>統編</th>
+                                    <th>客戶簡稱</th>
+                                    <th>聯絡人</th>
+                                    <th>聯絡電話</th>
+                                    <th>地址</th>
                                     <th style="text-align:center;">電子發票</th>
                                 </tr>
                             </thead>
@@ -386,10 +388,10 @@
                         </div>
                         <form id="globalSettingsForm">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
-                                <!-- Left Section: Bank Info -->
-                                <div>
+                                <!-- Left Section: Receiving Account -->
+                                <div id="bankSection">
                                     <h4 style="margin: 0 0 1.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                                        <i data-lucide="credit-card" style="width: 18px; color: var(--primary);"></i> 匯款資料分區
+                                        <i data-lucide="credit-card" style="width: 18px; color: var(--primary);"></i> 收款帳號
                                     </h4>
                                     <div class="form-group">
                                         <label>銀行名稱代碼</label>
@@ -408,10 +410,10 @@
                                         <input id="setAccountNum" placeholder="例如：161-001-015-323">
                                     </div>
                                 </div>
-                                <!-- Right Section: Workflow Terms -->
-                                <div>
+                                <!-- Right Section: Workflow -->
+                                <div id="workflowSection">
                                     <h4 style="margin: 0 0 1.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                                        <i data-lucide="file-text" style="width: 18px; color: var(--primary);"></i> 作業流程分區
+                                        <i data-lucide="file-text" style="width: 18px; color: var(--primary);"></i> 作業流程
                                     </h4>
                                     <div class="form-group">
                                         <label>訂購單</label>
@@ -455,11 +457,11 @@
                         <table>
                             <thead>
                                 <tr class="sortable-row">
-                                    <th onclick="sortProjects('custNickname')">客戶簡稱 <i id="sortIcon-custNickname" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortProjects('date')">日期 <i id="sortIcon-date" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortProjects('projectName')">專案名稱 <i id="sortIcon-projectName" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortProjects('pic')">承辦人員 <i id="sortIcon-pic" data-lucide="arrow-up-down" class="sort-icon"></i></th>
-                                    <th onclick="sortProjects('grandTotal')">總計 (含稅) <i id="sortIcon-grandTotal" data-lucide="arrow-up-down" class="sort-icon"></i></th>
+                                    <th>客戶簡稱</th>
+                                    <th>日期</th>
+                                    <th>專案名稱</th>
+                                    <th>承辦人員</th>
+                                    <th>總計 (含稅)</th>
                                 </tr>
                             </thead>
                             <tbody id="projectTableBody"></tbody>
@@ -759,9 +761,32 @@
                             <input type="password" id="profPass2" placeholder="再次輸入以確認">
                         </div>
                     </div>
+                </div>
                 <div id="profPassError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0;"></div>
-                <button type="submit" class="save-btn">儲存</button>
-                <button type="button" onclick="closeProfileModal()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
+                
+                <!-- Admin Only Shortcuts -->
+                <div id="profAdminSection" style="display: none;">
+                    <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark);">主程式功能捷徑</div>
+                    <div class="admin-nav-grid">
+                        <div class="admin-nav-card" onclick="window.switchToTab('settings', 'bankSection')">
+                            <i data-lucide="credit-card"></i>
+                            <span>收款帳號</span>
+                        </div>
+                        <div class="admin-nav-card" onclick="window.switchToTab('settings', 'workflowSection')">
+                            <i data-lucide="file-text"></i>
+                            <span>作業流程</span>
+                        </div>
+                        <div class="admin-nav-card" onclick="window.switchToTab('permissions')">
+                            <i data-lucide="shield-check" class="icon-circle-star"></i>
+                            <span>權限管理</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button type="submit" class="save-btn">儲存資料</button>
+                    <button type="button" onclick="window.closeAllModals()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
+                </div>
             </form>
         </div>
     </div>

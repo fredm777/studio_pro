@@ -23,10 +23,12 @@ function initEventListeners() {
     const socialToggle = document.getElementById('socialToggle');
     if (socialToggle) {
         socialToggle.onclick = () => {
+            console.log(">> socialToggle Clicked");
             const options = document.getElementById('socialOptions');
             if (options) {
-                const isHidden = !options.style.display || options.style.display === 'none';
-                options.style.display = isHidden ? 'flex' : 'none';
+                const isCurrentlyHidden = window.getComputedStyle(options).display === 'none';
+                options.style.display = isCurrentlyHidden ? 'flex' : 'none';
+                console.log(">> socialOptions display set to:", options.style.display);
             }
         };
     }
@@ -179,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await handleLiffRedirect();
         }
         
-        if (!currentUser && document.querySelectorAll('.auth-stage.active').length === 0) {
+        if (!window.currentUser && document.querySelectorAll('.auth-stage.active').length === 0) {
             checkAuth();
         }
         setSyncStatus(false);

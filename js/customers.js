@@ -1,9 +1,9 @@
 // Customer Management - Logic & CRUD
 // ==========================================
 
-// --- Sorting State ---
-window.customerSortField = localStorage.getItem('st_pro_cust_sort_field') || 'companyName';
-window.customerSortOrder = localStorage.getItem('st_pro_cust_sort_order') || 'asc';
+// --- Sorting State --- (Deprecated but kept global vars for compatibility)
+window.customerSortField = 'companyName';
+window.customerSortOrder = 'asc';
 
 window.fetchCustomers = async function() {
     setSyncStatus(true);
@@ -21,7 +21,7 @@ window.fetchCustomers = async function() {
                 window.allCustomers = json.data || []; 
                 setCache('customers', window.allCustomers);
                 window.currentFilteredCustomers = [...window.allCustomers];
-                applyCurrentSort();
+                // applyCurrentSort(); // Disabled sorting
                 window.renderCustomers(); 
             }
         }
@@ -31,8 +31,9 @@ window.fetchCustomers = async function() {
         setSyncStatus(false);
         const loading = document.getElementById('tableLoading');
         if (loading) loading.style.display = 'none';
-        // Reload projects if needed after customer data is ready for name mapping
-        if (document.getElementById('projects').classList.contains('active')) fetchProjects();
+        if (document.getElementById('projects') && document.getElementById('projects').classList.contains('active')) {
+             if (typeof fetchProjects === 'function') fetchProjects();
+        }
     }
 }
 
@@ -42,72 +43,21 @@ window.changePage = (dir) => {
     const tab = activeTab.dataset.tab;
 
     if (tab === 'customers') {
-        const totalPages = Math.ceil(window.currentFilteredCustomers.length / window.itemsPerPage) || 1;
+        const totalItems = window.currentFilteredCustomers ? window.currentFilteredCustomers.length : 0;
+        const totalPages = Math.ceil(totalItems / window.itemsPerPage) || 1;
         window.currentPage += dir;
         if (window.currentPage < 1) window.currentPage = 1;
         if (window.currentPage > totalPages) window.currentPage = totalPages;
         window.renderCustomers();
     } else if (tab === 'projects') {
-        const totalPages = Math.ceil(window.currentFilteredProjects.length / window.projectItemsPerPage) || 1;
+        const totalItems = window.currentFilteredProjects ? window.currentFilteredProjects.length : 0;
+        const totalPages = Math.ceil(totalItems / window.projectItemsPerPage) || 1;
         window.projectPage += dir;
         if (window.projectPage < 1) window.projectPage = 1;
         if (window.projectPage > totalPages) window.projectPage = totalPages;
         window.renderProjects();
     }
 };
-
-window.sortCustomers = function(field) {
-    if (window.customerSortField === field) {
-        window.customerSortOrder = window.customerSortOrder === 'asc' ? 'desc' : 'asc';
-    } else {
-        window.customerSortField = field;
-        window.customerSortOrder = 'asc';
-    }
-    
-    // Persist
-    localStorage.setItem('st_pro_cust_sort_field', window.customerSortField);
-    localStorage.setItem('st_pro_cust_sort_order', window.customerSortOrder);
-    
-    applyCurrentSort();
-    window.currentPage = 1;
-    window.renderCustomers();
-}
-
-function applyCurrentSort() {
-    const field = window.customerSortField;
-    const order = window.customerSortOrder;
-    
-    window.currentFilteredCustomers.sort((a, b) => {
-        let valA = (a[field] || '').toString().toLowerCase();
-        let valB = (b[field] || '').toString().toLowerCase();
-        
-        // Handle numeric values if any
-        if (!isNaN(parseFloat(valA)) && isFinite(valA) && !isNaN(parseFloat(valB)) && isFinite(valB)) {
-            valA = parseFloat(valA);
-            valB = parseFloat(valB);
-        }
-        
-        if (valA < valB) return order === 'asc' ? -1 : 1;
-        if (valA > valB) return order === 'asc' ? 1 : -1;
-        return 0;
-    });
-}
-
-window.updateSortIcons = function() {
-    // Reset all icons
-    document.querySelectorAll('.sortable-row th i').forEach(icon => {
-        icon.setAttribute('data-lucide', 'arrow-up-down');
-        icon.parentElement.classList.remove('active');
-    });
-    
-    const activeIcon = document.getElementById(`sortIcon-${window.customerSortField}`);
-    if (activeIcon) {
-        activeIcon.setAttribute('data-lucide', window.customerSortOrder === 'asc' ? 'arrow-up' : 'arrow-down');
-        activeIcon.parentElement.classList.add('active');
-    }
-    
-    if (window.lucide) lucide.createIcons();
-}
 
 window.renderCustomers = function() {
     const tbody = document.getElementById('customerTableBody');
@@ -119,7 +69,7 @@ window.renderCustomers = function() {
     if (loading) loading.style.display = 'none';
     if (pagCont) pagCont.style.display = 'flex';
     
-    const totalItems = window.currentFilteredCustomers.length;
+    const totalItems = window.currentFilteredCustomers ? window.currentFilteredCustomers.length : 0;
     const totalPages = Math.ceil(totalItems / window.itemsPerPage) || 1;
     if (window.currentPage > totalPages) window.currentPage = totalPages;
     if (window.currentPage < 1) window.currentPage = 1;
@@ -136,7 +86,7 @@ window.renderCustomers = function() {
     const paginatedData = window.currentFilteredCustomers.slice(startIndex, startIndex + window.itemsPerPage);
     
     if (paginatedData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem;">沒有符合的資料</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem;">沒有符合的資料</td></tr>`;
         return;
     }
 
@@ -150,14 +100,13 @@ window.renderCustomers = function() {
         tbody.appendChild(tr);
     });
     
-    window.updateSortIcons();
+    if (window.lucide) lucide.createIcons();
 }
 
 window.switchSubView = function(tabId, viewType) {
     const section = document.getElementById(tabId);
     if (!section) return;
 
-    // viewType: 'list' or 'edit'
     const listView = section.querySelector('.sub-view-stack[id$="ListView"]');
     const editView = section.querySelector('.sub-view-stack[id$="EditView"]');
 
@@ -177,8 +126,8 @@ window.switchSubView = function(tabId, viewType) {
 }
 
 window.showCustomerEditor = (title, data = null) => {
-    if (!currentUser) return Toast.fire({ icon: 'warning', title: '請先登入' });
-    const userRole = (currentUser.level || '').trim();
+    if (!window.currentUser) return Toast.fire({ icon: 'warning', title: '請先登入' });
+    const userRole = (window.currentUser.level || '').trim();
     if (userRole === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
     
     const titleEl = document.getElementById('viewTitleCustomer');
@@ -193,8 +142,6 @@ window.showCustomerEditor = (title, data = null) => {
     
     const rowIdxEl = document.getElementById('rowIndex');
     if (rowIdxEl) rowIdxEl.value = data ? data.rowIndex : '';
-    const custIdEl = document.getElementById('customerId');
-    if (custIdEl) custIdEl.value = data ? data.customerId : '';
     
     if (data) {
         if (document.getElementById('companyName')) document.getElementById('companyName').value = data.companyName || '';
@@ -217,7 +164,6 @@ window.saveCustomer = async function() {
     const body = {
         action: rIndex ? 'update_customer' : 'add_customer',
         rowIndex: rIndex ? parseInt(rIndex) : null,
-        customerId: document.getElementById('customerId') ? document.getElementById('customerId').value : '',
         companyName: document.getElementById('companyName').value,
         taxId: document.getElementById('taxId').value,
         nickname: document.getElementById('nickname').value,
@@ -232,7 +178,7 @@ window.saveCustomer = async function() {
     const custErr = document.getElementById('customerError');
     if (custErr) { custErr.innerText = ''; custErr.classList.remove('active'); }
     
-    if (rIndex) {
+    if (rIndex && parseInt(rIndex) !== -1) {
         const idx = window.allCustomers.findIndex(c => c.rowIndex == rIndex);
         if (idx !== -1) window.allCustomers[idx] = { ...window.allCustomers[idx], ...body };
     } else {
@@ -240,7 +186,6 @@ window.saveCustomer = async function() {
     }
     
     window.currentFilteredCustomers = [...window.allCustomers];
-    applyCurrentSort();
     window.renderCustomers();
     setSyncStatus(true);
 
@@ -261,7 +206,6 @@ window.saveCustomer = async function() {
     } catch (e) { 
         window.allCustomers = originalData;
         window.currentFilteredCustomers = [...window.allCustomers];
-        applyCurrentSort();
         window.renderCustomers();
         if (custErr) {
             custErr.innerText = '同步失敗: ' + (e.message || '請重新嘗試');
@@ -279,7 +223,6 @@ window.filterCustomers = function(val) {
             String(fieldVal || '').toLowerCase().includes(query)
         );
     });
-    applyCurrentSort();
     window.currentPage = 1;
     window.renderCustomers();
 }

@@ -1257,3 +1257,60 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     border-color: #cbd5e1;
     background: #f8fafc;
 }
+/* --- Profile Modal Admin Shortcuts --- */
+#profAdminSection {
+    border-top: 1.5px solid var(--border);
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+}
+
+.admin-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.admin-nav-card {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-nav-card:hover {
+    background: white;
+    border-color: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.admin-nav-card i {
+    width: 24px;
+    height: 24px;
+    color: var(--primary);
+    transition: transform 0.3s;
+}
+
+.admin-nav-card:hover i {
+    transform: scale(1.1);
+}
+
+.admin-nav-card span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* Custom Circle-Star Icon Style */
+.icon-circle-star {
+    border-radius: 50%;
+    padding: 2px;
+    border: 1.5px solid currentColor;
+}

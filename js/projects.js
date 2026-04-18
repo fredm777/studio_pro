@@ -5,9 +5,9 @@ window.currentFilteredProjects = [];
 window.projectPage = 1;
 window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 20;
 
-// --- Sorting State ---
-window.projectSortField = localStorage.getItem('st_pro_proj_sort_field') || 'date';
-window.projectSortOrder = localStorage.getItem('st_pro_proj_sort_order') || 'desc';
+// --- Sorting State --- (Deprecated but kept for compat)
+window.projectSortField = 'date';
+window.projectSortOrder = 'desc';
 
 window.fetchProjects = async function() {
     // 1. Load from cache first for instant UI
@@ -15,7 +15,6 @@ window.fetchProjects = async function() {
     if (cached) {
         window.allProjects = cached;
         window.currentFilteredProjects = [...window.allProjects];
-        window.applyProjectSort();
         window.renderProjects();
     }
 
@@ -35,7 +34,6 @@ window.fetchProjects = async function() {
             window.allProjects = json.projects || [];
             setCache('projects', window.allProjects);
             window.currentFilteredProjects = [...window.allProjects];
-            window.applyProjectSort();
             window.renderProjects();
             if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
         }
@@ -46,65 +44,6 @@ window.fetchProjects = async function() {
     }
 }
 
-window.sortProjects = function(field) {
-    if (window.projectSortField === field) {
-        window.projectSortOrder = window.projectSortOrder === 'asc' ? 'desc' : 'asc';
-    } else {
-        window.projectSortField = field;
-        window.projectSortOrder = 'asc';
-    }
-    
-    // Persist to cache
-    localStorage.setItem('st_pro_proj_sort_field', window.projectSortField);
-    localStorage.setItem('st_pro_proj_sort_order', window.projectSortOrder);
-    
-    window.applyProjectSort();
-    window.projectPage = 1;
-    window.renderProjects();
-}
-
-window.applyProjectSort = function() {
-    const field = window.projectSortField;
-    const order = window.projectSortOrder;
-    
-    window.currentFilteredProjects.sort((a, b) => {
-        let valA, valB;
-        
-        if (field === 'custNickname') {
-            const custA = window.allCustomers.find(c => c.customerId === a.customerId);
-            const custB = window.allCustomers.find(c => c.customerId === b.customerId);
-            valA = custA ? (custA.nickname || custA.companyName) : a.customerId;
-            valB = custB ? (custB.nickname || custB.companyName) : b.customerId;
-        } else if (field === 'grandTotal') {
-            valA = parseFloat(a.total) || 0;
-            valB = parseFloat(b.total) || 0;
-        } else {
-            valA = (a[field] || '').toString().toLowerCase();
-            valB = (b[field] || '').toString().toLowerCase();
-        }
-        
-        if (valA < valB) return order === 'asc' ? -1 : 1;
-        if (valA > valB) return order === 'asc' ? 1 : -1;
-        return 0;
-    });
-}
-
-window.updateProjectSortIcons = function() {
-    // Reset all icons in project table
-    document.querySelectorAll('#projects table thead i').forEach(icon => {
-        icon.setAttribute('data-lucide', 'arrow-up-down');
-        icon.parentElement.classList.remove('active');
-    });
-    
-    const activeIcon = document.getElementById(`sortIcon-${window.projectSortField}`);
-    if (activeIcon) {
-        activeIcon.setAttribute('data-lucide', window.projectSortOrder === 'asc' ? 'arrow-up' : 'arrow-down');
-        activeIcon.parentElement.classList.add('active');
-    }
-    
-    if (window.lucide) lucide.createIcons();
-}
-
 window.renderProjects = function() {
     const tbody = document.getElementById('projectTableBody');
     if (!tbody) return;
@@ -113,7 +52,7 @@ window.renderProjects = function() {
     const loading = document.getElementById('projectLoading');
     if (loading) loading.style.display = 'none';
 
-    if (window.currentFilteredProjects.length === 0) {
+    if (!window.currentFilteredProjects || window.currentFilteredProjects.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 3rem;">尚未建立專案，點擊下方按鈕開始</td></tr>`;
         const pag = document.getElementById('projectPaginationContainer');
         if (pag) pag.style.display = 'none';
@@ -133,7 +72,7 @@ window.renderProjects = function() {
     if (info) info.innerText = `第 ${window.projectPage} / ${totalPages || 1} 頁 (共 ${window.currentFilteredProjects.length} 筆)`;
 
     pagedEntries.forEach(proj => {
-        const cust = window.allCustomers.find(c => c.customerId === proj.customerId);
+        const cust = window.allCustomers ? window.allCustomers.find(c => c.customerId === proj.customerId) : null;
         const custDisp = cust ? (cust.nickname || cust.companyName) : proj.customerId;
         const dateStr = proj.date || '';
         const totalDisp = proj.total ? Number(proj.total).toLocaleString() : '0';
@@ -150,26 +89,27 @@ window.renderProjects = function() {
         tbody.appendChild(tr);
     });
     
-    window.updateProjectSortIcons();
+    if (window.lucide) lucide.createIcons();
 }
 
 window.showQuotationEditor = function(title, data = null) {
-    switchSubView('projects', 'edit');
+    if (typeof switchSubView === 'function') switchSubView('projects', 'edit');
     const form = document.getElementById('quotationForm');
-    form.reset();
-    document.getElementById('quotationTitle').innerText = title;
-    document.getElementById('quotationItemsBody').innerHTML = '';
+    if (form) form.reset();
+    if (document.getElementById('quotationTitle')) document.getElementById('quotationTitle').innerText = title;
+    if (document.getElementById('quotationItemsBody')) document.getElementById('quotationItemsBody').innerHTML = '';
     
     // Clear suggests
-    document.getElementById('autocompleteSuggestions').style.display = 'none';
+    const suggest = document.getElementById('autocompleteSuggestions');
+    if (suggest) suggest.style.display = 'none';
 
     if (data) {
         // Edit Mode
-        document.getElementById('projRowIndex').value = data.rowIndex || '';
-        document.getElementById('projId').value = data.projectId || '';
-        document.getElementById('qProjName').value = data.projectName || '';
-        document.getElementById('qPic').value = data.pic || '';
-        document.getElementById('qDate').value = data.date || '';
+        if (document.getElementById('projRowIndex')) document.getElementById('projRowIndex').value = data.rowIndex || '';
+        if (document.getElementById('projId')) document.getElementById('projId').value = data.projectId || '';
+        if (document.getElementById('qProjName')) document.getElementById('qProjName').value = data.projectName || '';
+        if (document.getElementById('qPic')) document.getElementById('qPic').value = data.pic || '';
+        if (document.getElementById('qDate')) document.getElementById('qDate').value = data.date || '';
         
         if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = data.days || '';
         if (document.getElementById('qWfEdit')) document.getElementById('qWfEdit').value = data.revCount || '';
@@ -179,29 +119,29 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('qBankData')) document.getElementById('qBankData').value = data.bankData || '';
         
         const isCompleted = data.isCompleted === true || String(data.isCompleted).toLowerCase() === 'true';
-        document.getElementById('projIsCompleted').value = isCompleted;
+        if (document.getElementById('projIsCompleted')) document.getElementById('projIsCompleted').value = isCompleted;
         if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(isCompleted);
         
-        selectCustomerById(data.customerId);
+        if (typeof selectCustomerById === 'function') selectCustomerById(data.customerId);
         
-        if (typeof currentUser !== 'undefined' && currentUser) {
-            if (currentUser.phone) document.getElementById('qStudioPhone').innerText = currentUser.phone;
-            if (currentUser.email) document.getElementById('qStudioEmail').innerText = currentUser.email;
+        if (window.currentUser) {
+            if (window.currentUser.phone && document.getElementById('qStudioPhone')) document.getElementById('qStudioPhone').innerText = window.currentUser.phone;
+            if (window.currentUser.email && document.getElementById('qStudioEmail')) document.getElementById('qStudioEmail').innerText = window.currentUser.email;
         }
         
         fetchProjectItems(data.projectId);
     } else {
         // New Mode
-        document.getElementById('projRowIndex').value = '';
-        document.getElementById('projId').value = generateProjectId();
-        document.getElementById('projIsCompleted').value = 'false';
+        if (document.getElementById('projRowIndex')) document.getElementById('projRowIndex').value = '';
+        if (document.getElementById('projId')) document.getElementById('projId').value = generateProjectId();
+        if (document.getElementById('projIsCompleted')) document.getElementById('projIsCompleted').value = 'false';
         if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(false);
-        document.getElementById('qPic').value = currentUser ? (currentUser.nickname || currentUser.username) : '';
-        document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
+        if (document.getElementById('qPic')) document.getElementById('qPic').value = window.currentUser ? (window.currentUser.nickname || window.currentUser.username) : '';
+        if (document.getElementById('qDate')) document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
         
-        if (typeof currentUser !== 'undefined' && currentUser) {
-            if (currentUser.phone) document.getElementById('qStudioPhone').innerText = currentUser.phone;
-            if (currentUser.email) document.getElementById('qStudioEmail').innerText = currentUser.email;
+        if (window.currentUser) {
+            if (window.currentUser.phone && document.getElementById('qStudioPhone')) document.getElementById('qStudioPhone').innerText = window.currentUser.phone;
+            if (window.currentUser.email && document.getElementById('qStudioEmail')) document.getElementById('qStudioEmail').innerText = window.currentUser.email;
         }
         
         addQuotationRow(); 
@@ -231,6 +171,7 @@ window.updateProjectCompletedUI = function(isCompleted) {
 
 window.toggleProjectCompleted = function() {
     const el = document.getElementById('projIsCompleted');
+    if (!el) return;
     const isCompleted = el.value === 'true';
     el.value = (!isCompleted).toString();
     updateProjectCompletedUI(!isCompleted);
@@ -255,7 +196,8 @@ window.handleAddProjectTask = function() {
             }
         });
     } else {
-        document.getElementById('tasksTabBtn').click();
+        const tBtn = document.getElementById('tasksTabBtn');
+        if (tBtn) tBtn.click();
         setTimeout(() => {
             const filter = document.getElementById('taskProjectFilter');
             if (filter) filter.value = projId;
@@ -315,6 +257,7 @@ async function loadSettingsPreview() {
 
 function addQuotationRow(data = null) {
     const tbody = document.getElementById('quotationItemsBody');
+    if (!tbody) return;
     const rowIdx = tbody.children.length + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -337,30 +280,20 @@ function calcQuotation() {
     const rows = document.querySelectorAll('#quotationItemsBody tr');
     rows.forEach((row, idx) => {
         row.cells[0].innerText = idx + 1; 
-        const price = parseFloat(row.querySelector('.i-price').value) || 0;
-        const qty = parseFloat(row.querySelector('.i-qty').value) || 0;
+        const priceField = row.querySelector('.i-price');
+        const qtyField = row.querySelector('.i-qty');
+        const price = priceField ? parseFloat(priceField.value) || 0 : 0;
+        const qty = qtyField ? parseFloat(qtyField.value) || 0 : 0;
         const total = price * qty;
-        row.querySelector('.i-total').value = total;
+        const totalField = row.querySelector('.i-total');
+        if (totalField) totalField.value = total;
         subtotal += total;
     });
     const tax = Math.round(subtotal * 0.05);
     const total = subtotal + tax;
-    document.getElementById('qSubtotal').innerText = subtotal.toLocaleString();
-    document.getElementById('qTax').innerText = tax.toLocaleString();
-    document.getElementById('qTotal').innerText = total.toLocaleString();
-}
-
-window.selectCustomerById = function(cid) {
-    const cust = window.allCustomers.find(c => c.customerId === cid);
-    if (!cust) return;
-    document.getElementById('qCustName').value = cust.companyName || '';
-    document.getElementById('qTaxId').value = cust.taxId || '';
-    document.getElementById('qContact').value = cust.contact || '';
-    document.getElementById('qPhone').value = String(cust.phone || '').replace("'", "");
-    document.getElementById('qEmail').value = cust.email || '';
-    document.getElementById('qCustSearch').value = cust.companyName;
-    document.getElementById('autocompleteSuggestions').style.display = 'none';
-    document.getElementById('qCustSearch').dataset.selectedId = cid;
+    if (document.getElementById('qSubtotal')) document.getElementById('qSubtotal').innerText = subtotal.toLocaleString();
+    if (document.getElementById('qTax')) document.getElementById('qTax').innerText = tax.toLocaleString();
+    if (document.getElementById('qTotal')) document.getElementById('qTotal').innerText = total.toLocaleString();
 }
 
 async function handleQuotationSubmit(e) {
@@ -389,13 +322,19 @@ async function handleQuotationSubmit(e) {
 
     const items = [];
     document.querySelectorAll('#quotationItemsBody tr').forEach(row => {
+        const nameF = row.querySelector('.i-name');
+        const contF = row.querySelector('.i-content');
+        const priceF = row.querySelector('.i-price');
+        const qtyF = row.querySelector('.i-qty');
+        const totalF = row.querySelector('.i-total');
+
         items.push({
             index: row.cells[0].innerText,
-            name: row.querySelector('.i-name').value,
-            content: row.querySelector('.i-content').value,
-            price: parseFloat(row.querySelector('.i-price').value),
-            qty: parseFloat(row.querySelector('.i-qty').value),
-            subtotal: parseFloat(row.querySelector('.i-total').value)
+            name: nameF ? nameF.value : '',
+            content: contF ? contF.value : '',
+            price: priceF ? parseFloat(priceF.value) || 0 : 0,
+            qty: qtyF ? parseFloat(qtyF.value) || 0 : 0,
+            subtotal: totalF ? parseFloat(totalF.value) || 0 : 0
         });
     });
 
@@ -412,9 +351,11 @@ async function handleQuotationSubmit(e) {
             if (window._redirectAfterSaveToTasks) {
                 window._redirectAfterSaveToTasks = false;
                 switchSubView('projects', 'list');
-                document.getElementById('tasksTabBtn').click();
+                const tBtn = document.getElementById('tasksTabBtn');
+                if (tBtn) tBtn.click();
                 setTimeout(() => {
-                    document.getElementById('taskProjectFilter').value = project.projectId;
+                    const filter = document.getElementById('taskProjectFilter');
+                    if (filter) filter.value = project.projectId;
                     if (typeof filterTasksByProject === 'function') filterTasksByProject();
                     if (typeof showTaskEditorPage === 'function') showTaskEditorPage();
                 }, 500);
@@ -434,7 +375,7 @@ async function handleQuotationSubmit(e) {
 window.filterProjects = function(val) {
     const query = String(val).toLowerCase();
     window.currentFilteredProjects = (window.allProjects || []).filter(p => {
-        const cust = window.allCustomers.find(c => c.customerId === p.customerId);
+        const cust = window.allCustomers ? window.allCustomers.find(c => c.customerId === p.customerId) : null;
         const custName = cust ? (cust.nickname || cust.companyName) : (p.customerId || '');
         return (p.projectName || '').toLowerCase().includes(query) ||
                custName.toLowerCase().includes(query) ||
@@ -445,15 +386,14 @@ window.filterProjects = function(val) {
                (cust ? (cust.taxId || '').toLowerCase().includes(query) : false) ||
                (cust ? (cust.address || '').toLowerCase().includes(query) : false);
     });
-    applyProjectSort();
     window.projectPage = 1;
-    renderProjects();
+    window.renderProjects();
 };
 
 window.preparePrint = function() {
-    const dateVal = document.getElementById('qDate').value; 
-    const custName = document.getElementById('qCustName').value || '客戶';
-    const projName = document.getElementById('qProjName').value || '未命名專案';
+    const dateVal = document.getElementById('qDate') ? document.getElementById('qDate').value : ''; 
+    const custName = document.getElementById('qCustName') ? document.getElementById('qCustName').value : '客戶';
+    const projName = document.getElementById('qProjName') ? document.getElementById('qProjName').value : '未命名專案';
     let yymmdd = '';
     if (dateVal) {
         const parts = dateVal.split('-');

@@ -1,10 +1,10 @@
-// Auth and Profile Logic v2.0.1
+// Auth and Profile Logic v2.0.2
 // ==========================================
 
 function checkAuth() {
     const session = localStorage.getItem('st_pro_session');
     if (session) {
-        try { currentUser = JSON.parse(session); enterApp(); } catch (e) { showAuth(); }
+        try { window.currentUser = JSON.parse(session); enterApp(); } catch (e) { showAuth(); }
     } else { showAuth(); }
 }
 
@@ -27,14 +27,14 @@ function enterApp() {
 
     if (authOverlay) authOverlay.style.display = 'none';
     if (appEl) appEl.classList.remove('hidden');
-    if (!currentUser) {
+    if (!window.currentUser) {
         showAuth();
         return;
     }
     
-    if (displayEl) displayEl.innerText = (currentUser.nickname || currentUser.username || "使用者");
+    if (displayEl) displayEl.innerText = (window.currentUser.nickname || window.currentUser.username || "使用者");
     
-    const userLevel = (currentUser.level || '').trim();
+    const userLevel = (window.currentUser.level || '').trim();
 
     if (userLevel === '管理者' || userLevel === '管理員') {
         if (settingsBtn) settingsBtn.classList.remove('hidden');
@@ -65,7 +65,7 @@ function enterApp() {
         if (customerActions) customerActions.style.display = 'none';
     }
     
-    fetchCustomers();
+    if (typeof fetchCustomers === 'function') fetchCustomers();
 }
 
 window.switchAuthStage = (stage, clearErrors = true) => {
@@ -125,10 +125,10 @@ async function handleLogin(e) {
         const json = await res.json();
         
         if (json.success) {
-            currentUser = json.user;
-            localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
+            window.currentUser = json.user;
+            localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
             enterApp();
-            Swal.fire({ icon: 'success', title: '登入成功', text: `歡迎回來, ${currentUser.nickname || currentUser.username}`, timer: 1500, showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: '登入成功', text: `歡迎回來, ${window.currentUser.nickname || window.currentUser.username}`, timer: 1500, showConfirmButton: false });
         } else {
             if (loginErr) {
                 loginErr.innerText = json.error || '帳號或密碼錯誤';
@@ -138,42 +138,21 @@ async function handleLogin(e) {
             }
         }
     } catch (err) {
-        if (loginErr) {
-            loginErr.innerText = '連線失敗，請檢查網路';
-            loginErr.classList.add('active');
-        } else {
-            Swal.fire({ icon: 'error', title: '連線失敗', text: '請檢查網路連線' });
-        }
+        console.error("Login Error:", err);
+        if (loginErr) { loginErr.innerText = '網路連線失敗'; loginErr.classList.add('active'); }
     } finally {
         if (btn) btn.classList.remove('btn-loading');
         setSyncStatus(false);
     }
 }
 
-// --- LINE Integration ---
-
-window.loginViaLine = async function() {
-    setSyncStatus(true);
-    try {
-        await liff.init({ liffId: LINE_LIFF_ID });
-        if (!liff.isLoggedIn()) {
-            liff.login({ redirectUri: window.location.origin + window.location.pathname });
-        } else {
-            await handleLiffLogin();
-        }
-    } catch (e) {
-        console.error("LIFF Init Error:", e);
-        Swal.fire('錯誤', '無法啟動 LINE 登入模組', 'error');
-    } finally { setSyncStatus(false); }
-}
-
 window.startLiffBinding = async function() {
-    if (!currentUser) return;
+    if (!window.currentUser) return;
     setSyncStatus(true);
     try {
         await liff.init({ liffId: LINE_LIFF_ID });
         // Store current user to restore after redirect
-        localStorage.setItem('st_pro_binding_user', JSON.stringify(currentUser));
+        localStorage.setItem('st_pro_binding_user', JSON.stringify(window.currentUser));
         if (!liff.isLoggedIn()) {
             liff.login({ redirectUri: window.location.origin + window.location.pathname });
         } else {
@@ -193,7 +172,7 @@ window.handleLiffRedirect = async function() {
             const bindingUser = localStorage.getItem('st_pro_binding_user');
             if (bindingUser) {
                 localStorage.removeItem('st_pro_binding_user');
-                currentUser = JSON.parse(bindingUser);
+                window.currentUser = JSON.parse(bindingUser);
                 await handleLiffBinding();
             } else {
                 await handleLiffLogin();
@@ -214,8 +193,8 @@ async function handleLiffLogin() {
     });
     const json = await res.json();
     if (json.success) {
-        currentUser = json.user;
-        localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
+        window.currentUser = json.user;
+        localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
         enterApp();
         Swal.fire({ icon: 'success', title: 'LINE 登入成功', timer: 1500 });
     } else {
@@ -229,14 +208,14 @@ async function handleLiffBinding() {
     
     const res = await fetch(GAS_WEB_APP_URL, {
         method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'bind_line', username: currentUser.username, lineId })
+        body: JSON.stringify({ action: 'bind_line', username: window.currentUser.username, lineId })
     });
     const json = await res.json();
     if (json.success) {
-        currentUser = json.user;
-        localStorage.setItem('st_pro_session', JSON.stringify(currentUser));
+        window.currentUser = json.user;
+        localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
         enterApp();
-        openProfileModal();
+        window.openProfileModal();
         Swal.fire({ icon: 'success', title: 'LINE 綁定成功', timer: 1500 });
     } else {
         Swal.fire('綁定失敗', json.error || '此 LINE 帳號已被其他使用者綁定', 'error');
@@ -247,26 +226,36 @@ async function handleLiffBinding() {
 
 window.openProfileModal = function() {
     window.closeAllModals();
-    if (!currentUser) return;
+    if (!window.currentUser) return;
     const modal = document.getElementById('profileModal');
     if (modal) modal.classList.add('active');
-    if (document.getElementById('profUser')) document.getElementById('profUser').value = currentUser.username;
-    if (document.getElementById('profNick')) document.getElementById('profNick').value = currentUser.nickname || '';
-    if (document.getElementById('profEmail')) document.getElementById('profEmail').value = currentUser.email || '';
-    let phone = String(currentUser.phone || '');
+    
+    // Toggle Admin section
+    const adminSec = document.getElementById('profAdminSection');
+    const userLevel = (window.currentUser.level || '').trim();
+    if (adminSec) {
+        adminSec.style.display = (userLevel === '管理者' || userLevel === '管理員') ? 'block' : 'none';
+    }
+
+    if (document.getElementById('profUser')) document.getElementById('profUser').value = window.currentUser.username;
+    if (document.getElementById('profNick')) document.getElementById('profNick').value = window.currentUser.nickname || '';
+    if (document.getElementById('profEmail')) document.getElementById('profEmail').value = window.currentUser.email || '';
+    let phone = String(window.currentUser.phone || '');
     if (phone.startsWith("'")) phone = phone.slice(1);
     document.getElementById('profPhone').value = phone;
+    
     const p1 = document.getElementById('profPass1');
     const p2 = document.getElementById('profPass2');
     if (p1) { p1.value = ''; p1.type = 'password'; }
     if (p2) p2.value = '';
+    
     const passErr = document.getElementById('profPassError');
     if (passErr) { passErr.innerText = ''; passErr.classList.remove('active'); }
     
     // Status Logic
-    updateBindingUI('line', currentUser.lineId);
-    updateBindingUI('google', currentUser.googleId);
-
+    updateBindingUI('line', window.currentUser.lineId);
+    updateBindingUI('google', window.currentUser.googleId);
+    
     if (window.lucide) lucide.createIcons();
 }
 
@@ -300,7 +289,7 @@ window.handleProfileUpdateSubmit = async function(e) {
         return;
     }
     const body = { 
-        action: 'update_profile', username: currentUser.username, 
+        action: 'update_profile', username: window.currentUser.username, 
         nickname: document.getElementById('profNick').value, 
         email: document.getElementById('profEmail').value, 
         phone: document.getElementById('profPhone').value.startsWith("'") ? document.getElementById('profPhone').value : "'" + document.getElementById('profPhone').value,
@@ -312,21 +301,30 @@ window.handleProfileUpdateSubmit = async function(e) {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
         if (json.success) { 
-            currentUser = json.user; 
-            localStorage.setItem('st_pro_session', JSON.stringify(currentUser)); 
+            window.currentUser = json.user; 
+            localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser)); 
             const displayEl = document.getElementById('displayUser');
-            if (displayEl) displayEl.innerText = currentUser.nickname || currentUser.username;
+            if (displayEl) displayEl.innerText = window.currentUser.nickname || window.currentUser.username;
             Swal.fire({ icon: 'success', title: '資料已更新', timer: 1500, showConfirmButton: false });
-            closeProfileModal(); 
+            window.closeAllModals(); 
         } else if (passErr) { passErr.innerText = json.error || '更新失敗'; passErr.classList.add('active'); }
     } catch (e) { if (passErr) { passErr.innerText = '連線失敗'; passErr.classList.add('active'); } }
     finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
 }
 
 window.logout = function() { 
+    console.log(">> User Logging Out...");
     localStorage.removeItem('st_pro_session'); 
     window.currentUser = null; 
+    
+    // Hard UI reset
+    window.closeAllModals();
     showAuth();
+    
+    // Clear display info
+    const displayEl = document.getElementById('displayUser');
+    if (displayEl) displayEl.innerText = "使用者";
+    
     Toast.fire({ title: '期待下次與您見面', icon: 'success', timer: 1500 });
 }
 
@@ -339,23 +337,6 @@ window.togglePassword = (id) => {
         if (window.lucide) lucide.createIcons();
     }
 };
-
-window.bindGoogle = async function() {
-    Swal.fire({
-        title: 'Google 帳號綁定',
-        text: '即將引導您完成 Google 帳號授權，以利未來同步雲端試算表。',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: '開始綁定',
-        cancelButtonText: '稍後再說'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Toast.fire({ icon: 'info', title: '功能開發中，敬請期待' });
-        }
-    });
-}
-
-window.bindGoogle = bindGoogle;
 
 async function loginViaGoogle() {
     console.log(">> loginViaGoogle Triggered");
@@ -373,3 +354,18 @@ async function loginViaGoogle() {
 }
 
 window.loginViaGoogle = loginViaGoogle;
+
+window.bindGoogle = async function() {
+    Swal.fire({
+        title: 'Google 帳號綁定',
+        text: '即將引導您完成 Google 帳號授權，以利未來同步雲端試算表。',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: '開始綁定',
+        cancelButtonText: '稍後再說'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Toast.fire({ icon: 'info', title: '功能開發中，敬請期待' });
+        }
+    });
+}
