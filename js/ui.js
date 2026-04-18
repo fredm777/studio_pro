@@ -77,8 +77,9 @@ function initResizableTable() {
 
         const onMouseMove = (e) => {
             const dx = e.pageX - x;
-            th.style.width = `${w + dx}px`;
-            th.style.minWidth = `${w + dx}px`; // Important for table-layout
+            const newWidth = Math.max(100, w + dx);
+            th.style.width = `${newWidth}px`;
+            th.style.minWidth = `${newWidth}px`; // Important for table-layout
         };
 
         const onMouseUp = () => {

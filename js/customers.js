@@ -86,7 +86,7 @@ window.renderCustomers = function() {
     const paginatedData = window.currentFilteredCustomers.slice(startIndex, startIndex + window.itemsPerPage);
     
     if (paginatedData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem;">沒有符合的資料</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem;">沒有符合的資料</td></tr>`;
         return;
     }
 
@@ -95,7 +95,7 @@ window.renderCustomers = function() {
         const isInvoice = (item.invoiceInfo === 'v' || item.invoiceInfo === 'V');
         const invoiceHtml = isInvoice ? '<span class="invoice-badge"><i data-lucide="check"></i></span>' : '';
         
-        tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.nickname || ''}</td><td>${item.contact || ''}</td><td>${item.phone || ''}</td><td>${item.address || ''}</td><td style="text-align:center;">${invoiceHtml}</td>`;
+        tr.innerHTML = `<td>${item.companyName || ''}</td><td>${item.taxId || ''}</td><td>${item.contact || ''}</td><td>${item.phone || ''}</td><td style="text-align:center;">${invoiceHtml}</td>`;
         tr.ondblclick = () => showCustomerEditor('客戶明細與編輯', item);
         tbody.appendChild(tr);
     });

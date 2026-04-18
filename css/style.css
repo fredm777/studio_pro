@@ -159,7 +159,7 @@ textarea::-webkit-resizer {
     background: rgba(6, 199, 85, 0.05); 
     color: var(--primary); 
     border-color: var(--primary);
-    transform: translateY(-1px); 
+    transform: translateY(-2px); 
     box-shadow: 0 4px 12px rgba(6, 199, 85, 0.1); 
 }
 .line-btn svg { width: 22px; height: 22px; }
@@ -445,7 +445,12 @@ header {
     padding: 0.625rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.875rem; cursor: pointer;
     border: 1px solid var(--border); background: white; color: var(--text-muted);
 }
-.logout-btn:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+.logout-btn:hover { 
+    background: #fee2e2; 
+    color: #ef4444; 
+    border-color: #fca5a5;
+    transform: translateY(-2px);
+}
 
 .sub-nav-bar {
     position: sticky;
@@ -535,14 +540,19 @@ th {
     font-size: 0.8125rem; font-weight: 700; color: var(--text-muted);
     text-transform: uppercase; border-bottom: 2px solid var(--border);
     position: relative;
-    white-space: nowrap; /* Force column to fit headers/content */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 100px;
 }
 
 td { 
     padding: 1.25rem 1.5rem; 
     border-bottom: 1px solid #f1f5f9; 
     font-size: 0.9375rem; 
-    white-space: nowrap; /* Align with user request for dynamic width */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .table-container {
@@ -563,7 +573,7 @@ td {
 .customers-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto; /* Browser calculates best dynamic width */
+    table-layout: fixed; /* Allow columns to be smaller than their content */
 }
 tbody tr:hover { background: #f9fafb; cursor: pointer; }
 
@@ -660,7 +670,7 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     background: #f8fafc;
     color: var(--primary);
     border-color: var(--primary);
-    transform: translateX(-3px);
+    transform: translateY(-2px);
 }
 
 .edit-card {
@@ -940,30 +950,34 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     background: #f8fafc !important;
 }
 
+.task-item.drag-over-top {
+    position: relative;
+}
 .task-item.drag-over-top::before {
     content: '';
     position: absolute;
-    top: 0;
+    top: -2px;
     left: 0;
-    right: 0;
+    width: 100%;
     height: 3px;
-    background: var(--primary);
-    z-index: 100;
-    transform: translateY(-50%);
-    box-shadow: 0 0 8px rgba(0, 200, 0, 0.4);
+    background: #00C800;
+    z-index: 10;
+    pointer-events: none;
 }
 
+.task-item.drag-over-bottom {
+    position: relative;
+}
 .task-item.drag-over-bottom::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: -2px;
     left: 0;
-    right: 0;
+    width: 100%;
     height: 3px;
-    background: var(--primary);
-    z-index: 100;
-    transform: translateY(50%);
-    box-shadow: 0 0 8px rgba(0, 200, 0, 0.4);
+    background: #00C800;
+    z-index: 10;
+    pointer-events: none;
 }
 
 /* Quotation Footer */
@@ -1228,6 +1242,7 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 
 .action-btn-sub:hover, .logout-btn:hover, .icon-btn:hover {
     background: #F1F5F9;
+    transform: translateY(-2px);
 }
 
 .action-btn-sub:active, .logout-btn:active, .icon-btn:active, .main-btn:active, .primary-btn:active {
@@ -1279,7 +1294,7 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 
 .google-primary-btn:hover {
     background: #3367d6 !important;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(66, 133, 244, 0.3) !important;
 }
 
@@ -1381,93 +1396,125 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     box-shadow: 0 0 0 4px rgba(0, 200, 0, 0.08);
 }
 
-/* Binding Cards */
-.bind-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-radius: 16px;
-    border: 1.5px solid var(--border);
-    margin-bottom: 12px;
-    background: white;
-    transition: all 0.2s;
+/* Premium Profile Modal Styles */
+#profileModal .modal-card {
+    max-width: 440px;
+    padding: 32px 24px;
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
-.bind-card-line {
-    border-color: #00C800;
-}
-.bind-card-google {
-    border-color: #4285F4;
-}
-
-.bind-card .info {
+#profileModal .binding-container {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 12px;
 }
 
-.bind-card .icon-box {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+#profileModal .bind-card {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 14px 16px;
+    margin-bottom: 0;
+    box-shadow: none;
+}
+
+#profileModal .bind-card-line { border-color: #00C800; }
+#profileModal .bind-card-google { border-color: #4285F4; }
+
+#profileModal .bind-card .icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+}
+
+#profileModal .bind-card .info { gap: 16px; }
+
+#profileModal .bind-btn-blue {
+    background: #0085FF !important;
+    box-shadow: 0 4px 12px rgba(0, 133, 255, 0.25) !important;
+    padding: 8px 20px !important;
+    border-radius: 100px !important;
+}
+
+/* Rounded Inputs with light grey background */
+#profileForm .compact-form-row {
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 16px;
 }
 
-.bind-card .status-icon {
-    width: 16px;
-    height: 16px;
+#profileForm label {
+    width: 65px;
+    font-size: 0.875rem;
+    font-weight: 700;
     color: var(--text-muted);
-    opacity: 0.6;
 }
 
-.bind-btn-blue {
-    background: #0085FF !important;
-    color: white !important;
-    border-radius: 100px !important;
-    padding: 6px 16px !important;
-    font-size: 0.8125rem !important;
-    font-weight: 700 !important;
-    border: none !important;
-    box-shadow: 0 4px 10px rgba(0, 133, 255, 0.2) !important;
+#profileForm input {
+    flex: 1;
+    background: #f4f7f9; /* Light grey pill */
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 10px 16px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 0.9375rem;
+    transition: all 0.2s;
 }
 
-.bind-btn-grey {
-    background: #64748b !important;
-    color: white !important;
-    border-radius: 100px !important;
-    padding: 6px 16px !important;
-    font-size: 0.8125rem !important;
-    font-weight: 700 !important;
-    border: none !important;
+#profileForm input:focus {
+    background: white;
+    border-color: #00C800;
+    box-shadow: 0 4px 10px rgba(0, 200, 0, 0.05);
 }
 
-/* Compact Shortcuts Grid */
-.compact-nav-grid {
+/* Navigation Grid Refining */
+#profileModal .compact-nav-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 15px;
+    gap: 12px;
+    margin: 24px 0;
 }
 
-.nav-shortcut-card {
+#profileModal .nav-shortcut-card {
     background: #f8fafc;
-    border-radius: 14px;
-    padding: 16px 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: 0.2s;
+    border-radius: 16px;
+    padding: 18px 8px;
+    border: 1px solid transparent;
 }
 
-.nav-shortcut-card:hover {
+#profileModal .nav-shortcut-card:hover {
     background: white;
-    box-shadow: var(--shadow-sm);
+    border-color: #f1f5f9;
     transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+#profileModal .nav-shortcut-card i {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+    color: var(--text-dark);
+}
+
+#profileModal .nav-shortcut-card span {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+/* Footer Buttons */
+#profileModal .primary-btn {
+    background: linear-gradient(135deg, #00C800 0%, #00B400 100%) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 20px rgba(0, 200, 0, 0.2) !important;
+}
+
+#profileModal .secondary-btn {
+    background: #f1f5f9 !important;
+    border-radius: 16px !important;
 }
 
 .nav-shortcut-card i {

@@ -70,6 +70,9 @@ window.updateTaskProjectFilter = function() {
     const filterSelect = document.getElementById('taskProjectFilter');
     if (!filterSelect) return;
     
+    // Helper to truncate long strings
+    const truncate = (str, len) => (str && str.length > len) ? str.substring(0, len) + "..." : str;
+
     const currVal = filterSelect.value;
     let html = '<option value="">顯示所有專案之任務</option>';
     
@@ -79,7 +82,8 @@ window.updateTaskProjectFilter = function() {
     projs.forEach(p => {
         const cust = custs.find(c => c.customerId === p.customerId);
         const custName = cust ? (cust.nickname || cust.companyName) : '';
-        const label = custName ? `${p.projectName} (${custName})` : p.projectName;
+        const truncProjectName = truncate(p.projectName, 8);
+        const label = custName ? `${truncProjectName} (${custName})` : truncProjectName;
         html += `<option value="${p.projectId}">${label}</option>`;
     });
     
@@ -221,7 +225,7 @@ function initDragAndDrop(listElement) {
             if (this === draggedItem) return;
             
             const rect = this.getBoundingClientRect();
-            const midpoint = (rect.top + rect.bottom) / 2;
+            const midpoint = rect.top + (rect.height / 2);
             
             if (e.clientY < midpoint) {
                 this.classList.add('drag-over-top');
@@ -241,7 +245,7 @@ function initDragAndDrop(listElement) {
             if (this === draggedItem) return;
 
             const rect = this.getBoundingClientRect();
-            const midpoint = (rect.top + rect.bottom) / 2;
+            const midpoint = rect.top + (rect.height / 2);
             
             if (e.clientY < midpoint) {
                 listElement.insertBefore(draggedItem, this);
@@ -363,7 +367,8 @@ window.showTaskEditorPage = function(task = null) {
         
         const cust = custs.find(c => c.customerId === p.customerId);
         const custNickname = cust ? (cust.nickname || cust.companyName) : '';
-        html += `<option value="${p.projectId}">${p.projectName} (${custNickname})</option>`;
+        const truncName = (p.projectName && p.projectName.length > 8) ? p.projectName.substring(0, 8) + "..." : p.projectName;
+        html += `<option value="${p.projectId}">${truncName} (${custNickname})</option>`;
     });
     pSelect.innerHTML = html;
 
@@ -382,7 +387,7 @@ window.showTaskEditorPage = function(task = null) {
         window.setTaskEditorStatus(task.isCompleted === true || String(task.isCompleted).toLowerCase() === 'true');
     } else {
         // New Mode
-        title.innerText = '新增任務';
+        title.innerText = '+ 新增';
         document.getElementById('taskRowIndex').value = '';
         document.getElementById('taskIdField').value = 'T-' + Date.now();
         document.getElementById('taskOrderWeight').value = '';

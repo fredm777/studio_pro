@@ -161,6 +161,9 @@ function initEventListeners() {
     });
 }
 
+// Icon Cache to prevent redundant fetches
+const iconCache = new Map();
+
 // Custom SVG Loader for Studio Pro Branding Icons
 window.replaceIcons = async function() {
     const icons = document.querySelectorAll('[data-lucide]');
@@ -177,6 +180,8 @@ window.replaceIcons = async function() {
         'drag': 'drag',
         'plus': 'plus',
         'pencil': 'pencil',
+        'google': 'Google',
+        'line': 'LINE',
         'search': 'search',
         'settings': 'settings',
         'credit-card': 'account',
@@ -185,7 +190,9 @@ window.replaceIcons = async function() {
         'users': 'users',
         'layers': 'projects',
         'briefcase': 'projects',
+        'projects': 'projects',
         'list-todo': 'tasks',
+        'tasks': 'tasks',
         'calendar': 'calendar',
         'clock': 'clock',
         'printer': 'printer',
@@ -195,33 +202,47 @@ window.replaceIcons = async function() {
     };
 
     for (const icon of icons) {
+        // Skip elements that were already successfully replaced (now they are SVG containers)
+        if (icon.getAttribute('data-brand-loaded') === 'true') continue;
+
         let name = icon.getAttribute('data-lucide');
         if (!name) continue;
         
-        // Use mapping if exists
         const mappedName = nameMapping[name] || name;
+        const iconPath = `assets/icons/${mappedName}.svg`;
         
         try {
-            const response = await fetch(`assets/icons/${mappedName}.svg`);
-            if (response.ok) {
-                const svgText = await response.text();
-                const container = document.createElement('span');
-                container.className = icon.className;
-                container.style.cssText = icon.style.cssText;
-                container.innerHTML = svgText;
+            let svgText;
+            if (iconCache.has(mappedName)) {
+                svgText = iconCache.get(mappedName);
+            } else {
+                const response = await fetch(iconPath);
+                if (response.ok) {
+                    svgText = await response.text();
+                    iconCache.set(mappedName, svgText);
+                }
+            }
+
+            if (svgText) {
+                // Non-destructive replacement: keeps original element but replaces its content
+                // Or: keep data-lucide and add a marker
+                icon.innerHTML = svgText;
+                icon.style.display = 'inline-flex';
+                icon.style.alignItems = 'center';
+                icon.style.justifyContent = 'center';
+                icon.style.width = icon.style.width || '18px';
+                icon.style.height = icon.style.height || '18px';
+                icon.setAttribute('data-brand-loaded', 'true');
                 
-                const svgEl = container.querySelector('svg');
+                const svgEl = icon.querySelector('svg');
                 if (svgEl) {
                     svgEl.style.width = '100%';
                     svgEl.style.height = '100%';
                     svgEl.style.display = 'block';
                 }
-                icon.parentNode.replaceChild(container, icon);
             } else {
-                // Fallback to Lucide if local hand-drawn asset not found
-                if (window.lucide) {
-                    lucide.createIcons();
-                }
+                // Fallback to Lucide
+                if (window.lucide) lucide.createIcons();
             }
         } catch (err) {
             console.error(`Error loading icon ${name}:`, err);

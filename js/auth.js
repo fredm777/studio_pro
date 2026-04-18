@@ -317,18 +317,18 @@ function updateBindingUI(type, id) {
     if (!statusText || !bindBtn) return;
     
     if (id) {
-        statusText.innerHTML = `<i data-lucide="bound" class="status-icon"></i> 已綁定`;
-        statusText.style.color = 'var(--primary)';
+        statusText.innerHTML = `<i data-lucide="bound" class="status-icon" style="color: #0085FF;"></i> 已綁定`;
         bindBtn.innerText = '解除綁定';
         bindBtn.className = 'bind-btn-grey';
-        bindBtn.dataset.bound = 'true';
+        bindBtn.onclick = () => window.unbindSocialAccount(type);
     } else {
-        statusText.innerHTML = `<i data-lucide="unbound" class="status-icon"></i> 尚未綁定`;
-        statusText.style.color = 'var(--text-muted)';
+        statusText.innerHTML = `<i data-lucide="unbound" class="status-icon" style="color: #94a3b8;"></i> 尚未綁定`;
         bindBtn.innerText = '綁定帳號';
         bindBtn.className = 'bind-btn-blue';
-        bindBtn.dataset.bound = 'false';
+        bindBtn.onclick = () => window.bindSocialAccount(type);
     }
+    
+    // Refresh icons for new HTML
     if (window.replaceIcons) window.replaceIcons();
 }
 

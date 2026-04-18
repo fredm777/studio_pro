@@ -127,7 +127,7 @@
             <div class="header-content">
                 <div class="brand"><h1>Studio Pro</h1></div>
                 <div class="user-controls">
-                    <div class="user-info" id="userInfoTrigger">
+                    <div class="user-info" id="userInfoTrigger" style="position: relative; z-index: 1000; cursor: pointer; padding: 4px 8px;">
                         <span id="displayUser"></span>
                     </div>
                     <button id="logoutBtn" class="logout-btn">登出</button>
@@ -145,10 +145,10 @@
                     <!-- <button id="permissionsTabBtn" class="tab-link hidden" data-tab="permissions">權限設定</button> -->
                 </nav>
                 
-                <div id="customerActions" class="search-wrapper">
+                <div id="customerActions" class="search-wrapper" style="display: flex; align-items: center; gap: 12px;">
                     <input type="text" id="searchInput" placeholder="輸入關鍵字搜尋" 
-                           style="width:150px; padding:0.6rem 1rem; border-radius:10px; border:1px solid var(--border);">
-                    <button id="addCustomerBtn" class="primary-btn" style="width: auto; padding: 0.6rem 1.5rem; margin-left:0.75rem; display: flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width:18px;height:18px;"></i> 新增資料</button>
+                           style="width: 220px; padding:0.6rem 1rem; border-radius:10px; border:1px solid var(--border);">
+                    <button id="addCustomerBtn" class="primary-btn" style="width: auto; padding: 0.6rem 1.5rem; display: flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width:18px;height:18px;"></i> 新增</button>
                 </div>
             </div>
         </div>
@@ -163,10 +163,8 @@
                                 <tr class="sortable-row">
                                     <th>客戶名稱</th>
                                     <th>統編</th>
-                                    <th>客戶簡稱</th>
                                     <th>聯絡人</th>
                                     <th>聯絡電話</th>
-                                    <th>地址</th>
                                     <th style="text-align:center;">電子發票</th>
                                 </tr>
                             </thead>
@@ -247,10 +245,12 @@
                                     已完成
                                 </button>
                             </div>
-                            <select id="taskProjectFilter" onchange="filterTasksByProject()" style="padding: 0.5rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: white; font-size: 0.9rem;">
-                                <option value="">載入中...</option>
-                            </select>
-                            <button class="primary-btn" onclick="showTaskEditorPage()" style="width: auto; padding: 0.6rem 1.5rem;"><i data-lucide="plus" style="width: 16px; margin-right: 4px; pointer-events: none;"></i> 新增任務</button>
+                            <div class="search-wrapper" style="display: flex; align-items: center; gap: 12px;">
+                                <select id="taskProjectFilter" onchange="filterTasksByProject()" style="width: 280px; padding: 0.5rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: white; font-size: 0.9rem;">
+                                    <option value="">載入中...</option>
+                                </select>
+                                <button class="primary-btn" onclick="showTaskEditorPage()" style="width: auto; padding: 0.6rem 1.5rem;"><i data-lucide="plus" style="width: 16px; margin-right: 4px; pointer-events: none;"></i> 新增</button>
+                            </div>
                         </div>
                     </div>
 
@@ -267,7 +267,7 @@
                         <button class="back-btn" onclick="switchSubView('tasks', 'list')">
                             <i data-lucide="chevron-left"></i> 返回任務列表
                         </button>
-                        <h2 id="taskEditorTitle">新增任務</h2>
+                        <h2 id="taskEditorTitle">+ 新增</h2>
                     </div>
 
                     <div class="edit-card">
@@ -447,15 +447,15 @@
                 <!-- Projects List View -->
                 <div id="projectsListView" class="sub-view-stack active">
                     <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
-                        <button class="save-btn" style="width: auto; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 6px;" onclick="showQuotationEditor('新增專案報價單')">
-                            <i data-lucide="plus" style="width:18px;height:18px;"></i> 新增專案報價單
+                        <button class="save-btn" style="width: auto; min-width: 120px; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showQuotationEditor('新增')">
+                            <i data-lucide="plus" style="width:18px;height:18px;"></i> 新增
                         </button>
                     </div>
                     <div class="grid-container" style="margin-top:0;">
                         <table>
                             <thead>
                                 <tr class="sortable-row">
-                                    <th>客戶簡稱</th>
+                                    <th>客戶名稱</th>
                                     <th>日期</th>
                                     <th>專案名稱</th>
                                     <th>承辦人員</th>
@@ -506,7 +506,7 @@
                             .remove-btn-dense:hover { opacity: 1; }
                             th { position: relative; }
                             .resizer { position: absolute; right: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize; user-select: none; z-index: 10; transition: background 0.2s;}
-                            .resizer:hover, .resizing .resizer { background-color: rgba(37, 99, 235, 0.5); }
+                            .resizer:hover, .resizing .resizer { background-color: transparent; }
                             </style>
 
                             <div class="quote-sheet-wrapper" id="quotePrintArea">
@@ -584,7 +584,7 @@
                                         <tr>
                                             <td colspan="6" style="padding: 0; background: #fafafa;">
                                                 <button type="button" onclick="addQuotationRow()" style="width:100%; border:none; background:transparent; padding: 8px; cursor:pointer; color: #2563eb; font-weight:600; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                                    <i data-lucide="plus" style="width:16px;height:16px;"></i> 新增報價項目列
+                                                    <i data-lucide="plus" style="width:16px;height:16px;"></i> 新增
                                                 </button>
                                             </td>
                                         </tr>
@@ -684,32 +684,38 @@
                                 </button>
                                 <button type="button" class="save-btn" onclick="handleQuotationSubmit(event)" style="flex: 1;">儲存報價單</button>
                                 <button type="button" class="primary-btn flex-grow" onclick="handleAddProjectTask()" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: auto; background: var(--bg-hover); color: var(--primary); border: 1px solid var(--primary);">
-                                    <i data-lucide="tasks" style="width: 18px; height: 18px;"></i> 新增任務
+                                    <i data-lucide="tasks" style="width: 18px; height: 18px;"></i> 新增
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-            </section>
-        </main>
-    </div>
 
-    <!-- Modals (Profile, Customer, Member) - Keep existing logic IDs -->
+    
+
+    <!-- Scripts -->
+    <script src="js/config.js?v=2.0.6"></script>
+    <script src="js/auth.js?v=2.0.6"></script>
+    <script src="js/ui.js?v=2.0.6"></script>
+    <script src="js/customers.js?v=2.0.6"></script>
+    <script src="js/projects.js?v=2.0.6"></script>
+    <script src="js/tasks.js?v=2.0.6"></script>
+    <script src="js/admin.js?v=2.0.6"></script>
+    <script src="js/main.js?v=2.0.6"></script>
     <div id="profileModal" class="modal-overlay">
         <div class="modal-card">
             <button class="close-modal" onclick="closeModal('profileModal')"><i data-lucide="x"></i></button>
-            <h3>修改個人資料</h3>
             
-            <div class="binding-container" style="margin-bottom: 20px;">
+            <div class="binding-container">
                 <!-- LINE Binding -->
                 <div class="bind-card bind-card-line">
                     <div class="info">
                         <div class="icon-box" style="background: #06C755;">
                             <svg viewBox="0 0 320 320" style="width:18px;height:18px;"><g id="Layer_2" data-name="Layer 2"><g id="LINE_LOGO" data-name="LINE LOGO"><path style="fill:#fff;" d="M266.66,144.92c0-47.74-47.86-86.58-106.69-86.58S53.28,97.18,53.28,144.92c0,42.8,38,78.65,89.22,85.42,3.48.75,8.21,2.29,9.4,5.26,1.08,2.7.71,6.93.35,9.65,0,0-1.25,7.53-1.52,9.13-.47,2.7-2.15,10.55,9.24,5.76s61.44-36.18,83.82-61.95h0C259.25,181.24,266.66,164,266.66,144.92Z"/><path d="M231.16,172.49h-30a2,2,0,0,1-2-2v0h0V123.94h0v0a2,2,0,0,1,2-2h30a2,2,0,0,1,2,2v7.57a2,2,0,0,1-2,2H210.79v7.85h20.37a2,2,0,0,1,2,2V151a2,2,0,0,1-2,2H210.79v7.86h20.37a2,2,0,0,1,2,2v7.56A2,2,0,0,1,231.16,172.49Z" style="fill:#06C755"/><path d="M120.29,172.49a2,2,0,0,0,2-2v-7.56a2,2,0,0,0-2-2H99.92v-37a2,2,0,0,0-2-2H90.32a2,2,0,0,0-2,2v46.53h0v0a2,2,0,0,0,2,2h30Z" style="fill:#06C755"/><rect x="128.73" y="121.85" width="11.64" height="50.64" rx="2.04" style="fill:#06C755"/><path d="M189.84,121.85h-7.56a2,2,0,0,0-2,2v27.66l-21.3-28.77a1.2,1.2,0,0,0-.17-.21v0l-.12-.12,0,0-.11-.09-.06,0-.11-.08-.06,0-.11-.06-.07,0-.11,0-.07,0-.12,0-.08,0-.12,0h-.08l-.11,0h-7.71a2,2,0,0,0-2,2v46.56a2,2,0,0,0,2,2h7.57a2,2,0,0,0,2-2V142.81l21.33,28.8a2,2,0,0,0,.52.52h0l.12.08.06,0,.1.05.1,0,.07,0,.14,0h0a2.42,2.42,0,0,0,.54.07h7.52a2,2,0,0,0,2-2V123.89A2,2,0,0,0,189.84,121.85Z" style="fill:#06C755"/></g></g></svg>
                         </div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.9375rem; color: var(--text-dark);">LINE 快速登入</div>
-                            <div id="lineStatusText" style="font-size: 0.75rem; color: var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="circle-slash" class="status-icon"></i> 讀取中...</div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <div style="font-weight: 700; font-size: 1.05rem; color: #1e293b; opacity: 0.85;">LINE 快速登入</div>
+                            <div id="lineStatusText" style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); display:flex; align-items:center; gap:6px;">尚未綁定</div>
                         </div>
                     </div>
                     <button type="button" id="bindLineBtn" class="bind-btn-blue">綁定帳號</button>
@@ -727,23 +733,23 @@
                                 <path style="fill:#34a853;" d="M47.6,49.8c-10.9,9.8-29,6-35.1-7.2l8.7-4.2c3.4,7.5,13.9,9.7,20.1,4.1L47.6,49.8z"/>
                             </svg>
                         </div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.9375rem; color: var(--text-dark);">Google 快速登入</div>
-                            <div id="googleStatusText" style="font-size: 0.75rem; color: var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="circle-slash" class="status-icon"></i> 讀取中...</div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <div style="font-weight: 700; font-size: 1.05rem; color: #1e293b; opacity: 0.85;">Google 快速登入</div>
+                            <div id="googleStatusText" style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); display:flex; align-items:center; gap:6px;">尚未綁定</div>
                         </div>
                     </div>
                     <button type="button" id="bindGoogleBtn" class="bind-btn-blue">綁定帳號</button>
                 </div>
             </div>
 
-            <form id="profileForm">
+            <form id="profileForm" style="margin-top: 24px;">
                 <div class="compact-form-row">
                     <label>帳號</label>
-                    <input type="text" id="profUser" readonly style="color: var(--text-muted);">
+                    <input type="text" id="profUser" readonly>
                 </div>
                 <div class="compact-form-row">
                     <label>暱稱</label>
-                    <input type="text" id="profNick" placeholder="請輸入暱稱" class="fw-bold" style="border: 1.5px solid #00C800; background: white;">
+                    <input type="text" id="profNick" placeholder="請輸入暱稱">
                 </div>
                 <div class="compact-form-row">
                     <label>E-mail</label>
@@ -765,7 +771,7 @@
                 <div id="profPassError" class="auth-error-inline" style="margin-bottom: 12px; margin-top: 0;"></div>
                 
                 <!-- Admin Only Shortcuts -->
-                <div id="profAdminSection" style="display: none; border-top: 1px solid #f1f5f9; padding-top: 15px; margin-top: 15px;">
+                <div id="profAdminSection" style="display: none;">
                     <div class="compact-nav-grid">
                         <div class="nav-shortcut-card" onclick="window.switchToTab('settings', 'bankSection')">
                             <i data-lucide="credit-card"></i>
@@ -789,17 +795,5 @@
             </form>
         </div>
     </div>
-
-    <!-- Removed taskModal from here -->
-
-    <!-- Scripts -->
-    <script src="js/config.js?v=2.0.6"></script>
-    <script src="js/auth.js?v=2.0.6"></script>
-    <script src="js/ui.js?v=2.0.6"></script>
-    <script src="js/customers.js?v=2.0.6"></script>
-    <script src="js/projects.js?v=2.0.6"></script>
-    <script src="js/tasks.js?v=2.0.6"></script>
-    <script src="js/admin.js?v=2.0.6"></script>
-    <script src="js/main.js?v=2.0.6"></script>
 </body>
 </html>

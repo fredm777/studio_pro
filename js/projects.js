@@ -73,7 +73,7 @@ window.renderProjects = function() {
 
     pagedEntries.forEach(proj => {
         const cust = window.allCustomers ? window.allCustomers.find(c => c.customerId === proj.customerId) : null;
-        const custDisp = cust ? (cust.nickname || cust.companyName) : proj.customerId;
+        const custDisp = cust ? (cust.companyName || cust.nickname) : proj.customerId;
         const dateStr = proj.date || '';
         const totalDisp = proj.total ? Number(proj.total).toLocaleString() : '0';
 
@@ -136,11 +136,11 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('projId')) document.getElementById('projId').value = generateProjectId();
         if (document.getElementById('projIsCompleted')) document.getElementById('projIsCompleted').value = 'false';
         if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(false);
-        if (document.getElementById('qPic')) document.getElementById('qPic').value = window.currentUser ? (window.currentUser.nickname || window.currentUser.username) : '';
+        const userName = window.currentUser ? (window.currentUser.nickname || window.currentUser.username) : '';
+        if (document.getElementById('qPic')) document.getElementById('qPic').value = userName;
         if (document.getElementById('qDate')) document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
         
         if (window.currentUser) {
-            if (window.currentUser.nickname && document.getElementById('qPic')) document.getElementById('qPic').value = window.currentUser.nickname;
             if (window.currentUser.phone && document.getElementById('qStudioPhone')) document.getElementById('qStudioPhone').innerText = window.currentUser.phone;
             if (window.currentUser.email && document.getElementById('qStudioEmail')) document.getElementById('qStudioEmail').innerText = window.currentUser.email;
         }
@@ -422,7 +422,10 @@ window.initQuotationAutocomplete = function() {
         const matches = (window.allCustomers || []).filter(c => 
             (c.nickname || '').toLowerCase().includes(val) || 
             (c.companyName || '').toLowerCase().includes(val) ||
-            (c.contactPerson || '').toLowerCase().includes(val)
+            (c.contactPerson || '').toLowerCase().includes(val) ||
+            (c.taxId || '').toLowerCase().includes(val) ||
+            (c.phone || '').toLowerCase().includes(val) ||
+            (c.email || '').toLowerCase().includes(val)
         ).slice(0, 10);
 
         if (matches.length === 0) {
@@ -432,8 +435,8 @@ window.initQuotationAutocomplete = function() {
 
         suggest.innerHTML = matches.map(c => `
             <div class="suggestion-item" onclick="window.selectCustomerById('${c.customerId}')" style="padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
-                <div style="font-weight: 600; color: var(--text-dark);">${c.nickname || c.companyName}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">${c.contactPerson || ''} ${c.phone || ''}</div>
+                <div style="font-weight: 600; color: var(--text-dark);">${c.companyName}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${c.contactPerson || ''} ${c.taxId || ''} ${c.phone || ''}</div>
             </div>
         `).join('');
         suggest.style.display = 'block';
@@ -461,13 +464,13 @@ window.selectCustomerById = function(id) {
     const suggest = document.getElementById('autocompleteSuggestions');
 
     if (input) {
-        input.value = cust.companyName || cust.nickname;
+        input.value = cust.companyName;
         input.dataset.selectedId = cust.customerId;
     }
     if (displayId) displayId.value = cust.customerId;
     if (displayName) displayName.value = cust.companyName || cust.nickname;
     if (displayTax) displayTax.value = cust.taxId || '';
-    if (displayContact) displayContact.value = cust.contactPerson || '';
+    if (displayContact) displayContact.value = cust.contact || '';
     if (displayPhone) displayPhone.value = cust.phone || '';
     if (displayEmail) displayEmail.value = cust.email || '';
 
