@@ -58,8 +58,6 @@ function initEventListeners() {
         };
     }
     
-    // Note: ModalOverlay specific listeners removed as it's now a sub-view
-
     // Profile Modal outside-click
     const pModal = document.getElementById('profileModal');
     if (pModal) {
@@ -133,14 +131,11 @@ function initEventListeners() {
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            // 1. Close Modals
             const activeModals = document.querySelectorAll('.modal-overlay.active');
             if (activeModals.length > 0) {
                 activeModals.forEach(m => m.classList.remove('active'));
                 return;
             }
-
-            // 2. Back to List if in Edit mode
             const activeTab = document.querySelector('.tab-link.active');
             if (activeTab) {
                 const tabId = activeTab.dataset.tab;
@@ -166,11 +161,81 @@ function initEventListeners() {
     });
 }
 
+// Custom SVG Loader for Studio Pro Branding Icons
+window.replaceIcons = async function() {
+    const icons = document.querySelectorAll('[data-lucide]');
+    const nameMapping = {
+        'trash-2': 'trash',
+        'trash': 'trash',
+        'check': 'checked',
+        'square-check': 'checked',
+        'square': 'unchecked',
+        'x': 'close',
+        'eye-off': 'eye off',
+        'eye': 'eye',
+        'grip-vertical': 'drag',
+        'drag': 'drag',
+        'plus': 'plus',
+        'pencil': 'pencil',
+        'search': 'search',
+        'settings': 'settings',
+        'credit-card': 'account',
+        'file-text': 'process',
+        'star': 'star',
+        'users': 'users',
+        'layers': 'projects',
+        'briefcase': 'projects',
+        'list-todo': 'tasks',
+        'calendar': 'calendar',
+        'clock': 'clock',
+        'printer': 'printer',
+        'circle-slash': 'unbound', 
+        'bound': 'bound',
+        'unbound': 'unbound'
+    };
+
+    for (const icon of icons) {
+        let name = icon.getAttribute('data-lucide');
+        if (!name) continue;
+        
+        // Use mapping if exists
+        const mappedName = nameMapping[name] || name;
+        
+        try {
+            const response = await fetch(`assets/icons/${mappedName}.svg`);
+            if (response.ok) {
+                const svgText = await response.text();
+                const container = document.createElement('span');
+                container.className = icon.className;
+                container.style.cssText = icon.style.cssText;
+                container.innerHTML = svgText;
+                
+                const svgEl = container.querySelector('svg');
+                if (svgEl) {
+                    svgEl.style.width = '100%';
+                    svgEl.style.height = '100%';
+                    svgEl.style.display = 'block';
+                }
+                icon.parentNode.replaceChild(container, icon);
+            } else {
+                // Fallback to Lucide if local hand-drawn asset not found
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            }
+        } catch (err) {
+            console.error(`Error loading icon ${name}:`, err);
+        }
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log(">> System Init: v1.9 Release Starting...");
     try { initEventListeners(); } catch(e) { console.error("Event Init Error:", e); }
     try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
-    if (window.lucide) { lucide.createIcons(); }
+    
+    // Initial Icon Replacement
+    window.replaceIcons();
 
     const initApp = async () => {
         setSyncStatus(true);

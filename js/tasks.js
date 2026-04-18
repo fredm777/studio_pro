@@ -136,7 +136,7 @@ function renderTasksList(draggable = false) {
                 <i data-lucide="inbox" style="width: 48px; height: 48px; opacity: 0.2; margin-bottom: 1rem;"></i>
                 <p>尚無符合條件的任務紀錄</p>
             </li>`;
-            if (window.lucide) lucide.createIcons();
+            if (window.replaceIcons) window.replaceIcons();
             return;
         }
         
@@ -164,16 +164,16 @@ function renderTasksList(draggable = false) {
             const dtFormatted = formatTaskDateTime(t.taskDate, t.taskTime);
             const displayTime = dtFormatted ? `<span style="font-size: 0.75rem; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${dtFormatted}</span>` : '';
             
-            const checkIcon = t.isCompleted ? 'check-circle-2' : 'circle';
-            const checkColor = t.isCompleted ? 'color: #06C755;' : 'color: #cbd5e1;';
+            const checkIcon = t.isCompleted ? 'checked' : 'unchecked';
+            const checkColor = t.isCompleted ? 'color: var(--primary);' : 'color: #cbd5e1;';
             const textStyle = t.isCompleted ? 'text-decoration: line-through; color: var(--text-muted); opacity: 0.7;' : 'color: var(--text-main); font-weight: 500;';
             
             li.innerHTML = `
                 <div class="drag-handle" style="display:flex; align-items:center; justify-content:center; width:24px; height:24px; color: #cbd5e1; cursor: grab;">
-                    <i data-lucide="grip-vertical" style="width:16px;height:16px;"></i>
+                    <i data-lucide="drag"></i>
                 </div>
                 <div class="task-check-wrapper" onclick="toggleTaskCompletion(${t.rowIndex})" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:28px; height:28px; ${checkColor}">
-                    <i data-lucide="${checkIcon}" style="width:20px;height:20px;"></i>
+                    <i data-lucide="${checkIcon}"></i>
                 </div>
                 <div class="task-content-area" style="flex: 1; display:flex; flex-direction:column; gap: 4px; ${textStyle}">
                     <div style="font-size: 0.9375rem;">${displayTaskName}</div>
@@ -181,8 +181,8 @@ function renderTasksList(draggable = false) {
                         ${displayTime}
                     </div>
                 </div>
-                <button type="button" class="action-btn-sub" onclick="deleteTask(${t.rowIndex})" title="刪除" style="border:none; background:none; color: #94a3b8; cursor:pointer;">
-                    <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+                <button type="button" class="action-btn-sub" onclick="deleteTask(${t.rowIndex})" title="刪除">
+                    <i data-lucide="trash"></i>
                 </button>
             `;
             
@@ -194,7 +194,7 @@ function renderTasksList(draggable = false) {
             list.appendChild(li);
         });
         
-        if (window.lucide) lucide.createIcons();
+        if (window.replaceIcons) window.replaceIcons();
         if (draggable) initDragAndDrop(list);
     }
 }
@@ -324,15 +324,15 @@ window.setTaskEditorStatus = function(isCompleted) {
         if (isCompleted) {
             iCont.classList.remove('active');
             cCont.classList.add('active');
-            cCont.querySelector('i').setAttribute('data-lucide', 'square-check');
-            iCont.querySelector('i').setAttribute('data-lucide', 'square');
+            cCont.querySelector('i').setAttribute('data-lucide', 'checked');
+            iCont.querySelector('i').setAttribute('data-lucide', 'unchecked');
         } else {
             iCont.classList.add('active');
             cCont.classList.remove('active');
-            cCont.querySelector('i').setAttribute('data-lucide', 'square');
-            iCont.querySelector('i').setAttribute('data-lucide', 'square');
+            cCont.querySelector('i').setAttribute('data-lucide', 'unchecked');
+            iCont.querySelector('i').setAttribute('data-lucide', 'unchecked');
         }
-        if (window.lucide) lucide.createIcons();
+        if (window.replaceIcons) window.replaceIcons();
     }
 }
 

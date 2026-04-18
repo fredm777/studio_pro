@@ -199,19 +199,19 @@
                     <div class="edit-card">
                         <form id="customerForm">
                             <input type="hidden" id="rowIndex">
-                            <div style="display: flex; gap: 1.5rem; margin-bottom: 0.5rem;">
-                                <div class="form-group" style="flex: 1;"><label>客戶名稱</label><input id="companyName" required placeholder="例如：飛翔技術有限公司"></div>
-                                <div class="form-group" style="flex: 1;"><label>統編</label><input id="taxId" placeholder="8位數字"></div>
+                            <div class="flex-row mb-1">
+                                <div class="form-group flex-grow"><label>客戶名稱</label><input id="companyName" required placeholder="例如：飛翔技術有限公司"></div>
+                                <div class="form-group flex-grow"><label>統編</label><input id="taxId" placeholder="8位數字"></div>
                             </div>
-                            <div style="display: flex; gap: 1.5rem; margin-bottom: 0.5rem;">
-                                <div class="form-group" style="flex: 1;"><label>客戶簡稱</label><input id="nickname" placeholder="內部報表使用"></div>
-                                <div class="form-group" style="flex: 1;"><label>聯絡人</label><input id="contact" placeholder="負責窗口姓名"></div>
+                            <div class="flex-row mb-1">
+                                <div class="form-group flex-grow"><label>客戶簡稱</label><input id="nickname" placeholder="內部報表使用"></div>
+                                <div class="form-group flex-grow"><label>聯絡人</label><input id="contact" placeholder="負責窗口姓名"></div>
                             </div>
-                            <div style="display: flex; gap: 1.5rem; margin-bottom: 0.5rem;">
-                                <div class="form-group" style="flex: 1;"><label>聯絡電話</label><input id="phone" placeholder="電話或手機"></div>
-                                <div class="form-group" style="flex: 1;"><label>電子信箱</label><input id="email" type="email" placeholder="receiving@example.com"></div>
+                            <div class="flex-row mb-1">
+                                <div class="form-group flex-grow"><label>聯絡電話</label><input id="phone" placeholder="電話或手機"></div>
+                                <div class="form-group flex-grow"><label>電子信箱</label><input id="email" type="email" placeholder="receiving@example.com"></div>
                             </div>
-                            <div class="form-group" style="margin-bottom: 1.5rem;"><label>地址</label><input id="address" style="width: 100%;" placeholder="發票寄送地址"></div>
+                            <div class="form-group mb-2"><label>地址</label><input id="address" placeholder="發票寄送地址"></div>
                             
                             <div style="background: #f8fafc; padding: 1.25rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--border);">
                                 <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -233,13 +233,13 @@
             <section id="tasks" class="tab-content sub-view-container">
                 <!-- Tasks List View -->
                 <div id="tasksListView" class="sub-view-stack active">
-                    <div class="header-split" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div class="flex-row justify-between mb-2">
                         <div>
                             <h2 style="margin: 0;">專案任務管理</h2>
-                            <span style="font-size: 0.85rem; color: var(--text-muted);">拖曳左側六點圖標以排序次序</span>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">拖曳左側手把圖標以排序次序</span>
                         </div>
-                        <div style="display: flex; gap: 1rem; align-items: center;">
-                            <div class="status-filter-group" style="display: flex; gap: 0.5rem; background: #f1f5f9; padding: 4px; border-radius: 10px;">
+                        <div class="flex-row">
+                            <div class="flex-row" style="background: #f1f5f9; padding: 4px; border-radius: 10px; gap: 4px;">
                                 <button type="button" class="filter-pill active" id="filterIncomplete" onclick="toggleStatusFilter('incomplete')">
                                     未完成
                                 </button>
@@ -247,7 +247,7 @@
                                     已完成
                                 </button>
                             </div>
-                            <select id="taskProjectFilter" onchange="filterTasksByProject()" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: white;">
+                            <select id="taskProjectFilter" onchange="filterTasksByProject()" style="padding: 0.5rem 1rem; border-radius: 10px; border: 1px solid var(--border); background: white; font-size: 0.9rem;">
                                 <option value="">載入中...</option>
                             </select>
                             <button class="primary-btn" onclick="showTaskEditorPage()" style="width: auto; padding: 0.6rem 1.5rem;"><i data-lucide="plus" style="width: 16px; margin-right: 4px; pointer-events: none;"></i> 新增任務</button>
@@ -674,17 +674,17 @@
                             </div>
 
                             <div id="quotationError" class="auth-error-inline"></div>
-                            <div class="form-actions" style="display: flex; gap: 1rem; max-width: 1000px; margin: 0 auto; margin-top: 1rem;">
-                                <button type="button" id="quoteCompletedBtn" class="back-btn" onclick="toggleProjectCompleted()" style="flex: 1; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <div class="form-actions flex-row mt-2" style="max-width: 1000px; margin-left: auto; margin-right: auto;">
+                                <button type="button" id="quoteCompletedBtn" class="back-btn flex-grow" onclick="toggleProjectCompleted()" style="border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 8px;">
                                     <span class="invoice-badge" id="quoteCompletedBadge" style="display: inline-flex; position: static; width: 22px; height: 22px; box-shadow: none; border: 1px solid var(--border); background: transparent; transition: all 0.2s;"><i data-lucide="check" style="width:14px;height:14px;color:white;"></i></span>
                                     <span id="quoteCompletedText">未完結</span>
                                 </button>
-                                <button type="button" class="back-btn" onclick="preparePrint()" style="flex: 1; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;" title="列印或轉存 PDF">
+                                <button type="button" class="back-btn flex-grow" onclick="preparePrint()" style="border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;" title="列印或轉存 PDF">
                                     <i data-lucide="printer" style="width: 18px; height: 18px;"></i>
                                 </button>
                                 <button type="button" class="save-btn" onclick="handleQuotationSubmit(event)" style="flex: 1;">儲存報價單</button>
-                                <button type="button" class="primary-btn" onclick="handleAddProjectTask()" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; width: auto; background: var(--bg-hover); color: var(--primary); border: 1px solid var(--primary);">
-                                    <i data-lucide="list-todo" style="width: 18px; height: 18px;"></i> 新增任務
+                                <button type="button" class="primary-btn flex-grow" onclick="handleAddProjectTask()" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: auto; background: var(--bg-hover); color: var(--primary); border: 1px solid var(--primary);">
+                                    <i data-lucide="tasks" style="width: 18px; height: 18px;"></i> 新增任務
                                 </button>
                             </div>
                         </form>
@@ -697,27 +697,28 @@
     <!-- Modals (Profile, Customer, Member) - Keep existing logic IDs -->
     <div id="profileModal" class="modal-overlay">
         <div class="modal-card">
+            <button class="close-modal" onclick="closeModal('profileModal')"><i data-lucide="x"></i></button>
             <h3>修改個人資料</h3>
             
-            <div class="binding-container" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div class="binding-container" style="margin-bottom: 20px;">
                 <!-- LINE Binding -->
-                <div style="background: var(--bg-main); border-radius: 12px; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #06C755; border-radius: 8px;">
+                <div class="bind-card bind-card-line">
+                    <div class="info">
+                        <div class="icon-box" style="background: #06C755;">
                             <svg viewBox="0 0 320 320" style="width:18px;height:18px;"><g id="Layer_2" data-name="Layer 2"><g id="LINE_LOGO" data-name="LINE LOGO"><path style="fill:#fff;" d="M266.66,144.92c0-47.74-47.86-86.58-106.69-86.58S53.28,97.18,53.28,144.92c0,42.8,38,78.65,89.22,85.42,3.48.75,8.21,2.29,9.4,5.26,1.08,2.7.71,6.93.35,9.65,0,0-1.25,7.53-1.52,9.13-.47,2.7-2.15,10.55,9.24,5.76s61.44-36.18,83.82-61.95h0C259.25,181.24,266.66,164,266.66,144.92Z"/><path d="M231.16,172.49h-30a2,2,0,0,1-2-2v0h0V123.94h0v0a2,2,0,0,1,2-2h30a2,2,0,0,1,2,2v7.57a2,2,0,0,1-2,2H210.79v7.85h20.37a2,2,0,0,1,2,2V151a2,2,0,0,1-2,2H210.79v7.86h20.37a2,2,0,0,1,2,2v7.56A2,2,0,0,1,231.16,172.49Z" style="fill:#06C755"/><path d="M120.29,172.49a2,2,0,0,0,2-2v-7.56a2,2,0,0,0-2-2H99.92v-37a2,2,0,0,0-2-2H90.32a2,2,0,0,0-2,2v46.53h0v0a2,2,0,0,0,2,2h30Z" style="fill:#06C755"/><rect x="128.73" y="121.85" width="11.64" height="50.64" rx="2.04" style="fill:#06C755"/><path d="M189.84,121.85h-7.56a2,2,0,0,0-2,2v27.66l-21.3-28.77a1.2,1.2,0,0,0-.17-.21v0l-.12-.12,0,0-.11-.09-.06,0-.11-.08-.06,0-.11-.06-.07,0-.11,0-.07,0-.12,0-.08,0-.12,0h-.08l-.11,0h-7.71a2,2,0,0,0-2,2v46.56a2,2,0,0,0,2,2h7.57a2,2,0,0,0,2-2V142.81l21.33,28.8a2,2,0,0,0,.52.52h0l.12.08.06,0,.1.05.1,0,.07,0,.14,0h0a2.42,2.42,0,0,0,.54.07h7.52a2,2,0,0,0,2-2V123.89A2,2,0,0,0,189.84,121.85Z" style="fill:#06C755"/></g></g></svg>
                         </div>
-                        <div style="display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark);">LINE 快速登入</div>
-                            <div id="lineStatusText" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 4px;">讀取中...</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9375rem; color: var(--text-dark);">LINE 快速登入</div>
+                            <div id="lineStatusText" style="font-size: 0.75rem; color: var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="circle-slash" class="status-icon"></i> 讀取中...</div>
                         </div>
                     </div>
-                    <button type="button" id="bindLineBtn" class="primary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; background: #06C755; border: none; height: 36px;">綁定帳號</button>
+                    <button type="button" id="bindLineBtn" class="bind-btn-blue">綁定帳號</button>
                 </div>
 
                 <!-- Google Binding -->
-                <div style="background: var(--bg-main); border-radius: 12px; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: white; border: 1px solid var(--border); border-radius: 8px;">
+                <div class="bind-card bind-card-google">
+                    <div class="info">
+                        <div class="icon-box" style="background: white; border: 1px solid var(--border);">
                             <svg viewBox="0 0 65.7 65.8" style="width:20px;height:20px;">
                                 <circle style="fill:#ffffff;" cx="32.8" cy="32.8" r="32.8"/>
                                 <path style="fill:#4285f4;" d="M55.3,32.8c0,6.5-2.9,12.8-7.7,17l-6.3-7.3c1.7-1.5,3-3.4,3.7-5.6H33.3v-8.1h21.6C55.2,30.1,55.3,31.4,55.3,32.8z"/>
@@ -726,64 +727,64 @@
                                 <path style="fill:#34a853;" d="M47.6,49.8c-10.9,9.8-29,6-35.1-7.2l8.7-4.2c3.4,7.5,13.9,9.7,20.1,4.1L47.6,49.8z"/>
                             </svg>
                         </div>
-                        <div style="display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark);">Google 快速登入</div>
-                            <div id="googleStatusText" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 4px;">讀取中...</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9375rem; color: var(--text-dark);">Google 快速登入</div>
+                            <div id="googleStatusText" style="font-size: 0.75rem; color: var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="circle-slash" class="status-icon"></i> 讀取中...</div>
                         </div>
                     </div>
-                    <button type="button" id="bindGoogleBtn" class="google-primary-btn">綁定帳號</button>
+                    <button type="button" id="bindGoogleBtn" class="bind-btn-blue">綁定帳號</button>
                 </div>
             </div>
 
             <form id="profileForm">
-                <div style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;"><label>帳號</label><input type="text" id="profUser" readonly style="background: #f8fafc; color: var(--text-muted);"></div>
-                    <div class="form-group" style="flex: 1;"><label>暱稱</label><input type="text" id="profNick" placeholder="暱稱"></div>
+                <div class="compact-form-row">
+                    <label>帳號</label>
+                    <input type="text" id="profUser" readonly style="color: var(--text-muted);">
+                </div>
+                <div class="compact-form-row">
+                    <label>暱稱</label>
+                    <input type="text" id="profNick" placeholder="請輸入暱稱" class="fw-bold" style="border: 1.5px solid #00C800; background: white;">
+                </div>
+                <div class="compact-form-row">
+                    <label>E-mail</label>
+                    <input type="email" id="profEmail" placeholder="請輸入 Email">
+                </div>
+                <div class="compact-form-row">
+                    <label>手機號碼</label>
+                    <input type="text" id="profPhone" placeholder="09XX-XXXXXX">
+                </div>
+                <div class="compact-form-row">
+                    <label>修改密碼</label>
+                    <input type="password" id="profPass1" placeholder="輸入新密碼">
+                </div>
+                <div class="compact-form-row">
+                    <label>再次輸入</label>
+                    <input type="password" id="profPass2" placeholder="再次輸入以確認">
                 </div>
                 
-                <div style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex: 1;"><label>Email</label><input type="email" id="profEmail" placeholder="Email"></div>
-                    <div class="form-group" style="flex: 1;"><label>手機號碼</label><input type="text" id="profPhone" placeholder="手機號碼"></div>
-                </div>
-                
-                <div style="border-top: 1px solid var(--border); margin: 1.5rem 0; padding-top: 1rem;">
-                    <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; color: var(--text-dark);">修改密碼</div>
-                    <div style="display: flex; gap: 1rem;">
-                        <div class="form-group" style="flex: 1;">
-                            <div class="password-wrapper">
-                                <input type="password" id="profPass1" placeholder="輸入新密碼">
-                                <span class="toggle-password" onclick="togglePassword('profPass1')"><i data-lucide="eye"></i></span>
-                            </div>
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <input type="password" id="profPass2" placeholder="再次輸入以確認">
-                        </div>
-                    </div>
-                </div>
-                <div id="profPassError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0;"></div>
+                <div id="profPassError" class="auth-error-inline" style="margin-bottom: 12px; margin-top: 0;"></div>
                 
                 <!-- Admin Only Shortcuts -->
-                <div id="profAdminSection" style="display: none;">
-                    <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-dark);">主程式功能捷徑</div>
-                    <div class="admin-nav-grid">
-                        <div class="admin-nav-card" onclick="window.switchToTab('settings', 'bankSection')">
+                <div id="profAdminSection" style="display: none; border-top: 1px solid #f1f5f9; padding-top: 15px; margin-top: 15px;">
+                    <div class="compact-nav-grid">
+                        <div class="nav-shortcut-card" onclick="window.switchToTab('settings', 'bankSection')">
                             <i data-lucide="credit-card"></i>
                             <span>收款帳號</span>
                         </div>
-                        <div class="admin-nav-card" onclick="window.switchToTab('settings', 'workflowSection')">
+                        <div class="nav-shortcut-card" onclick="window.switchToTab('settings', 'workflowSection')">
                             <i data-lucide="file-text"></i>
                             <span>作業流程</span>
                         </div>
-                        <div class="admin-nav-card" onclick="window.switchToTab('permissions')">
+                        <div class="nav-shortcut-card" onclick="window.switchToTab('permissions')">
                             <i data-lucide="star"></i>
                             <span>權限管理</span>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 2rem;">
-                    <button type="submit" class="save-btn">儲存資料</button>
-                    <button type="button" onclick="window.closeAllModals()" style="margin-top:0.5rem; background:none; border:none; width:100%; cursor:pointer; color: var(--text-muted); font-weight: 500;">取消</button>
+                <div style="display: flex; gap: 1rem; margin-top: 24px;">
+                    <button type="submit" class="primary-btn" style="flex: 1; height: 44px; border-radius: 12px; font-size: 1rem;">儲存修改</button>
+                    <button type="button" class="secondary-btn" onclick="closeModal('profileModal')" style="flex: 1; height: 44px; border-radius: 12px; font-size: 1rem; background: #f1f5f9; color: var(--text-muted); border: none;">取消</button>
                 </div>
             </form>
         </div>

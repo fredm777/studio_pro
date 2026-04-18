@@ -315,15 +315,21 @@ function updateBindingUI(type, id) {
     const bindBtn = document.getElementById(`bind${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
     const statusText = document.getElementById(`${type}StatusText`);
     if (!statusText || !bindBtn) return;
+    
     if (id) {
-        statusText.innerHTML = `<i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> 已綁定`;
-        statusText.style.color = type === 'line' ? '#06C755' : '#4285F4';
-        bindBtn.style.display = 'none';
+        statusText.innerHTML = `<i data-lucide="bound" class="status-icon"></i> 已綁定`;
+        statusText.style.color = 'var(--primary)';
+        bindBtn.innerText = '解除綁定';
+        bindBtn.className = 'bind-btn-grey';
+        bindBtn.dataset.bound = 'true';
     } else {
-        statusText.innerHTML = `<i data-lucide="x-circle" style="width:14px;height:14px;"></i> 尚未綁定`;
+        statusText.innerHTML = `<i data-lucide="unbound" class="status-icon"></i> 尚未綁定`;
         statusText.style.color = 'var(--text-muted)';
-        bindBtn.style.display = 'block';
+        bindBtn.innerText = '綁定帳號';
+        bindBtn.className = 'bind-btn-blue';
+        bindBtn.dataset.bound = 'false';
     }
+    if (window.replaceIcons) window.replaceIcons();
 }
 
 window.handleProfileUpdateSubmit = async function(e) {

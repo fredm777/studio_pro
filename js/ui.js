@@ -38,8 +38,9 @@ function initTabs() {
                 renderCustomers();
             }
             
-            // Re-init resizers for new tab content
+            // Re-init resizers and icons for new tab content
             initResizableTable();
+            if (window.replaceIcons) window.replaceIcons();
         };
     });
 }

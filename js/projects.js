@@ -140,6 +140,7 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('qDate')) document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
         
         if (window.currentUser) {
+            if (window.currentUser.nickname && document.getElementById('qPic')) document.getElementById('qPic').value = window.currentUser.nickname;
             if (window.currentUser.phone && document.getElementById('qStudioPhone')) document.getElementById('qStudioPhone').innerText = window.currentUser.phone;
             if (window.currentUser.email && document.getElementById('qStudioEmail')) document.getElementById('qStudioEmail').innerText = window.currentUser.email;
         }
@@ -453,22 +454,22 @@ window.selectCustomerById = function(id) {
     const input = document.getElementById('qCustSearch');
     const displayId = document.getElementById('qCustId');
     const displayName = document.getElementById('qCustName');
-    const displayTax = document.getElementById('qCustTaxId');
-    const displayAddr = document.getElementById('qCustAddress');
-    const displayContact = document.getElementById('qCustPerson');
-    const displayPhone = document.getElementById('qCustPhone');
+    const displayTax = document.getElementById('qTaxId');
+    const displayContact = document.getElementById('qContact');
+    const displayPhone = document.getElementById('qPhone');
+    const displayEmail = document.getElementById('qEmail');
     const suggest = document.getElementById('autocompleteSuggestions');
 
     if (input) {
-        input.value = cust.nickname || cust.companyName;
+        input.value = cust.companyName || cust.nickname;
         input.dataset.selectedId = cust.customerId;
     }
     if (displayId) displayId.value = cust.customerId;
     if (displayName) displayName.value = cust.companyName || cust.nickname;
     if (displayTax) displayTax.value = cust.taxId || '';
-    if (displayAddr) displayAddr.value = cust.address || '';
     if (displayContact) displayContact.value = cust.contactPerson || '';
     if (displayPhone) displayPhone.value = cust.phone || '';
+    if (displayEmail) displayEmail.value = cust.email || '';
 
     if (suggest) suggest.style.display = 'none';
 };
