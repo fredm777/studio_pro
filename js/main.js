@@ -4,16 +4,16 @@ function initEventListeners() {
         if (el) el[event] = handler;
     };
 
-    safeBind('loginForm', 'onsubmit', handleLogin);
-    safeBind('registerForm', 'onsubmit', handleRegister);
+    safeBind('loginForm', 'onsubmit', window.handleLogin);
+    safeBind('registerForm', 'onsubmit', window.handleRegister);
     
     // Live Validation for Registration
     const regUserInput = document.getElementById('regUser');
     const regEmailInput = document.getElementById('regEmail');
-    if (regUserInput) regUserInput.onblur = () => checkAvailability('username', regUserInput.value);
-    if (regEmailInput) regEmailInput.onblur = () => checkAvailability('email', regEmailInput.value);
+    if (regUserInput) regUserInput.onblur = () => window.checkAvailability('username', regUserInput.value);
+    if (regEmailInput) regEmailInput.onblur = () => window.checkAvailability('email', regEmailInput.value);
 
-    safeBind('verifyForm', 'onsubmit', handleVerify);
+    safeBind('verifyForm', 'onsubmit', window.handleVerify);
     safeBind('logoutBtn', 'onclick', window.logout);
     safeBind('bindLineBtn', 'onclick', window.startLiffBinding);
     safeBind('lineLoginBtn', 'onclick', window.loginViaLine);
@@ -39,9 +39,9 @@ function initEventListeners() {
     
     safeBind('userInfoTrigger', 'onclick', window.openProfileModal);
     safeBind('profileForm', 'onsubmit', window.handleProfileUpdateSubmit);
-    safeBind('memberForm', 'onsubmit', handleMemberUpdateSubmit);
-    safeBind('globalSettingsForm', 'onsubmit', handleSettingsSubmit);
-    safeBind('quotationForm', 'onsubmit', handleQuotationSubmit);
+    safeBind('memberForm', 'onsubmit', window.handleMemberUpdateSubmit);
+    safeBind('globalSettingsForm', 'onsubmit', window.handleSettingsSubmit);
+    safeBind('quotationForm', 'onsubmit', window.handleQuotationSubmit);
     
     // Initialize specific components
     initQuotationAutocomplete();
@@ -68,7 +68,7 @@ function initEventListeners() {
         };
     }
     
-    safeBind('forgotForm', 'onsubmit', handleForgotSubmit);
+    safeBind('forgotForm', 'onsubmit', window.handleForgotSubmit);
 
     // Customer Pagination
     const itemsInput = document.getElementById('itemsPerPageInput');

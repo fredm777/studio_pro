@@ -1,4 +1,4 @@
-// Auth and Profile Logic v2.0.2
+// Auth and Profile Logic v2.0.3
 // ==========================================
 
 function checkAuth() {
@@ -11,8 +11,10 @@ function checkAuth() {
 function enterApp() {
     const authOverlay = document.getElementById('authOverlay');
     const appEl = document.getElementById('app');
-    
-    if (authOverlay) authOverlay.classList.add('fade-out');
+    if (authOverlay) {
+        authOverlay.classList.add('fade-out');
+        setTimeout(() => authOverlay.style.display = 'none', 500);
+    }
     if (appEl) {
         appEl.classList.remove('hidden');
         appEl.classList.add('fade-in');
@@ -25,47 +27,32 @@ function enterApp() {
     const projectsBtn = document.getElementById('projectsTabBtn');
     const customerActions = document.getElementById('customerActions');
 
-    if (authOverlay) authOverlay.style.display = 'none';
-    if (appEl) appEl.classList.remove('hidden');
-    if (!window.currentUser) {
-        showAuth();
-        return;
-    }
+    if (!window.currentUser) { showAuth(); return; }
     
     if (displayEl) displayEl.innerText = (window.currentUser.nickname || window.currentUser.username || "使用者");
     
     const userLevel = (window.currentUser.level || '').trim();
 
     if (userLevel === '管理者' || userLevel === '管理員') {
-        if (settingsBtn) settingsBtn.classList.remove('hidden');
-        if (permissionsBtn) permissionsBtn.classList.remove('hidden');
         if (tasksBtn) tasksBtn.classList.remove('hidden');
-        if (customersBtn) {
-            customersBtn.classList.remove('hidden');
-            customersBtn.click();
-        }
+        if (customersBtn) { customersBtn.classList.remove('hidden'); customersBtn.click(); }
         if (customerActions) customerActions.style.display = 'flex';
     } else if (userLevel === '操作人員') {
         if (settingsBtn) settingsBtn.classList.add('hidden');
         if (permissionsBtn) permissionsBtn.classList.add('hidden');
         if (tasksBtn) tasksBtn.classList.remove('hidden');
-        if (customersBtn) {
-            customersBtn.classList.remove('hidden');
-            customersBtn.click();
-        }
+        if (customersBtn) { customersBtn.classList.remove('hidden'); customersBtn.click(); }
         if (customerActions) customerActions.style.display = 'flex';
     } else {
         if (settingsBtn) settingsBtn.classList.add('hidden');
         if (permissionsBtn) permissionsBtn.classList.add('hidden');
         if (tasksBtn) tasksBtn.classList.add('hidden');
-        if (customersBtn) {
-            customersBtn.classList.remove('hidden');
-            customersBtn.click();
-        }
+        if (customersBtn) { customersBtn.classList.remove('hidden'); customersBtn.click(); }
         if (customerActions) customerActions.style.display = 'none';
     }
     
     if (typeof fetchCustomers === 'function') fetchCustomers();
+    if (window.lucide) lucide.createIcons();
 }
 
 window.switchAuthStage = (stage, clearErrors = true) => {
@@ -84,61 +71,45 @@ window.switchAuthStage = (stage, clearErrors = true) => {
 function showAuth(initialErrorMsg = null) {
     const authOverlay = document.getElementById('authOverlay');
     const appEl = document.getElementById('app');
-    
     if (authOverlay) {
         authOverlay.classList.remove('fade-out');
         authOverlay.style.display = 'flex';
     }
     if (appEl) appEl.classList.add('hidden');
-    
     switchAuthStage('login', !initialErrorMsg);
-    
     if (initialErrorMsg) {
         const lineErr = document.getElementById('lineAuthError');
-        if (lineErr) {
-            lineErr.innerText = initialErrorMsg;
-            lineErr.classList.add('active');
-        }
+        if (lineErr) { lineErr.innerText = initialErrorMsg; lineErr.classList.add('active'); }
     }
 }
 
 async function handleLogin(e) {
     if (e) e.preventDefault();
     const btn = e.target ? e.target.querySelector('button[type="submit"]') : null;
-    const username = document.getElementById('loginUser').value || '';
-    const password = document.getElementById('loginPass').value || '';
+    const username = (document.getElementById('loginUser').value || '').trim();
+    const password = (document.getElementById('loginPass').value || '').trim();
     
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
-    
     const loginErr = document.getElementById('loginMainError');
     if (loginErr) { loginErr.innerText = ''; loginErr.classList.remove('active'); }
 
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'login', username, password })
         });
-        
         const json = await res.json();
-        
         if (json.success) {
             window.currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
             enterApp();
             Swal.fire({ icon: 'success', title: '登入成功', text: `歡迎回來, ${window.currentUser.nickname || window.currentUser.username}`, timer: 1500, showConfirmButton: false });
-        } else {
-            if (loginErr) {
-                loginErr.innerText = json.error || '帳號或密碼錯誤';
-                loginErr.classList.add('active');
-            } else {
-                Swal.fire({ icon: 'error', title: '登入失敗', text: json.error || '帳號或密碼錯誤' });
-            }
+        } else if (loginErr) {
+            loginErr.innerText = json.error || '帳號或密碼錯誤';
+            loginErr.classList.add('active');
         }
     } catch (err) {
-        console.error("Login Error:", err);
         if (loginErr) { loginErr.innerText = '網路連線失敗'; loginErr.classList.add('active'); }
     } finally {
         if (btn) btn.classList.remove('btn-loading');
@@ -146,26 +117,126 @@ async function handleLogin(e) {
     }
 }
 
+window.handleRegister = async function(e) {
+    if (e) e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const username = document.getElementById('regUser').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPass').value.trim();
+    const errEl = document.getElementById('registerMainError');
+    if (errEl) { errEl.innerText = ''; errEl.classList.remove('active'); }
+
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'register', username, email, password })
+        });
+        const json = await res.json();
+        if (json.success) {
+            window.registeredUsername = username;
+            window.verifyContext = 'register';
+            switchAuthStage('verify');
+            Toast.fire({ icon: 'info', title: '請檢查電子郵件中的驗證碼' });
+        } else if (errEl) {
+            errEl.innerText = json.error || '註冊失敗';
+            errEl.classList.add('active');
+        }
+    } catch (e) { if (errEl) { errEl.innerText = '連線失敗'; errEl.classList.add('active'); } }
+    finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
+}
+
+window.handleForgotSubmit = async function(e) {
+    if (e) e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const email = document.getElementById('forgotEmail').value.trim();
+    const errEl = document.getElementById('forgotError');
+    if (errEl) { errEl.innerText = ''; errEl.classList.remove('active'); }
+
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'forgot_password', email })
+        });
+        const json = await res.json();
+        if (json.success) {
+            window.registeredUsername = json.username;
+            window.verifyContext = 'forgot';
+            switchAuthStage('verify');
+            Toast.fire({ icon: 'info', title: '重設代碼已發送至您的信箱' });
+        } else if (errEl) {
+            errEl.innerText = json.error || '發送失敗';
+            errEl.classList.add('active');
+        }
+    } catch (e) { if (errEl) { errEl.innerText = '連線失敗'; errEl.classList.add('active'); } }
+    finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
+}
+
+window.handleVerify = async function(e) {
+    if (e) e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const code = document.getElementById('vCodeInput').value.trim();
+    const errEl = document.getElementById('verifyError');
+    if (errEl) { errEl.innerText = ''; errEl.classList.remove('active'); }
+
+    if (btn) btn.classList.add('btn-loading');
+    setSyncStatus(true);
+    try {
+        const body = { action: 'verify', username: window.registeredUsername, code, context: window.verifyContext };
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        if (json.success) {
+            if (window.verifyContext === 'register') {
+                Swal.fire({ icon: 'success', title: '驗證成功', text: '帳號已啟用，請由管理員審核級別後即可使用。', confirmButtonText: '確定' }).then(() => switchAuthStage('login'));
+            } else {
+                Swal.fire({ icon: 'success', title: '密碼重設成功', text: `您的新密碼為: ${json.tempPassword}\n請登入後立即修改密碼。`, confirmButtonText: '確定' }).then(() => switchAuthStage('login'));
+            }
+        } else if (errEl) {
+            errEl.innerText = json.error || '驗證碼錯誤';
+            errEl.classList.add('active');
+        }
+    } catch (e) { if (errEl) { errEl.innerText = '連線失敗'; errEl.classList.add('active'); } }
+    finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
+}
+
+window.checkAvailability = async function(type, val) {
+    if (!val) return;
+    const errEl = document.getElementById(type === 'username' ? 'regUserError' : 'regEmailError');
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'check_availability', type, val })
+        });
+        const json = await res.json();
+        if (!json.success && errEl) {
+            errEl.innerText = json.error;
+            errEl.classList.add('active');
+        } else if (errEl) {
+            errEl.innerText = '';
+            errEl.classList.remove('active');
+        }
+    } catch (e) {}
+}
+
 window.startLiffBinding = async function() {
     if (!window.currentUser) return;
     setSyncStatus(true);
     try {
         await liff.init({ liffId: LINE_LIFF_ID });
-        // Store current user to restore after redirect
         localStorage.setItem('st_pro_binding_user', JSON.stringify(window.currentUser));
-        if (!liff.isLoggedIn()) {
-            liff.login({ redirectUri: window.location.origin + window.location.pathname });
-        } else {
-            await handleLiffBinding();
-        }
-    } catch (e) {
-        console.error("LIFF Binding Error:", e);
-        Swal.fire('錯誤', '無法啟動 LINE 綁定模組', 'error');
-    } finally { setSyncStatus(false); }
+        if (!liff.isLoggedIn()) liff.login({ redirectUri: window.location.origin + window.location.pathname });
+        else await handleLiffBinding();
+    } catch (e) { Swal.fire('錯誤', '無法啟動 LINE 綁定模組', 'error'); }
+    finally { setSyncStatus(false); }
 }
 
 window.handleLiffRedirect = async function() {
-    setSyncStatus(true);
     try {
         await liff.init({ liffId: LINE_LIFF_ID });
         if (liff.isLoggedIn()) {
@@ -174,41 +245,30 @@ window.handleLiffRedirect = async function() {
                 localStorage.removeItem('st_pro_binding_user');
                 window.currentUser = JSON.parse(bindingUser);
                 await handleLiffBinding();
-            } else {
-                await handleLiffLogin();
-            }
+            } else await handleLiffLogin();
         }
-    } catch (e) {
-        console.error("LIFF Redirect Error:", e);
-    } finally { setSyncStatus(false); }
+    } catch (e) { console.error("LIFF Redirect Error:", e); }
 }
 
 async function handleLiffLogin() {
     const profile = await liff.getProfile();
-    const lineId = profile.userId;
-    
     const res = await fetch(GAS_WEB_APP_URL, {
         method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'line_login', lineId })
+        body: JSON.stringify({ action: 'line_login', lineId: profile.userId })
     });
     const json = await res.json();
     if (json.success) {
         window.currentUser = json.user;
         localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
         enterApp();
-        Swal.fire({ icon: 'success', title: 'LINE 登入成功', timer: 1500 });
-    } else {
-        showAuth(json.error || '此 LINE 帳號尚未綁定任何系統帳號');
-    }
+    } else showAuth(json.error);
 }
 
 async function handleLiffBinding() {
     const profile = await liff.getProfile();
-    const lineId = profile.userId;
-    
     const res = await fetch(GAS_WEB_APP_URL, {
         method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'bind_line', username: window.currentUser.username, lineId })
+        body: JSON.stringify({ action: 'bind_line', username: window.currentUser.username, lineId: profile.userId })
     });
     const json = await res.json();
     if (json.success) {
@@ -217,12 +277,8 @@ async function handleLiffBinding() {
         enterApp();
         window.openProfileModal();
         Swal.fire({ icon: 'success', title: 'LINE 綁定成功', timer: 1500 });
-    } else {
-        Swal.fire('綁定失敗', json.error || '此 LINE 帳號已被其他使用者綁定', 'error');
-    }
+    } else Swal.fire('失敗', json.error, 'error');
 }
-
-// --- Profile & Modal Logic ---
 
 window.openProfileModal = function() {
     window.closeAllModals();
@@ -230,19 +286,17 @@ window.openProfileModal = function() {
     const modal = document.getElementById('profileModal');
     if (modal) modal.classList.add('active');
     
-    // Toggle Admin section
+    // Admin Shortcut Logic
     const adminSec = document.getElementById('profAdminSection');
     const userLevel = (window.currentUser.level || '').trim();
-    if (adminSec) {
-        adminSec.style.display = (userLevel === '管理者' || userLevel === '管理員') ? 'block' : 'none';
-    }
+    if (adminSec) adminSec.style.display = (userLevel === '管理者' || userLevel === '管理員') ? 'block' : 'none';
 
     if (document.getElementById('profUser')) document.getElementById('profUser').value = window.currentUser.username;
     if (document.getElementById('profNick')) document.getElementById('profNick').value = window.currentUser.nickname || '';
     if (document.getElementById('profEmail')) document.getElementById('profEmail').value = window.currentUser.email || '';
     let phone = String(window.currentUser.phone || '');
     if (phone.startsWith("'")) phone = phone.slice(1);
-    document.getElementById('profPhone').value = phone;
+    if (document.getElementById('profPhone')) document.getElementById('profPhone').value = phone;
     
     const p1 = document.getElementById('profPass1');
     const p2 = document.getElementById('profPass2');
@@ -252,10 +306,8 @@ window.openProfileModal = function() {
     const passErr = document.getElementById('profPassError');
     if (passErr) { passErr.innerText = ''; passErr.classList.remove('active'); }
     
-    // Status Logic
     updateBindingUI('line', window.currentUser.lineId);
     updateBindingUI('google', window.currentUser.googleId);
-    
     if (window.lucide) lucide.createIcons();
 }
 
@@ -263,7 +315,6 @@ function updateBindingUI(type, id) {
     const bindBtn = document.getElementById(`bind${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
     const statusText = document.getElementById(`${type}StatusText`);
     if (!statusText || !bindBtn) return;
-
     if (id) {
         statusText.innerHTML = `<i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> 已綁定`;
         statusText.style.color = type === 'line' ? '#06C755' : '#4285F4';
@@ -275,23 +326,19 @@ function updateBindingUI(type, id) {
     }
 }
 
-window.closeProfileModal = () => document.getElementById('profileModal').classList.remove('active');
-
 window.handleProfileUpdateSubmit = async function(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const pass1 = document.getElementById('profPass1').value;
     const pass2 = document.getElementById('profPass2').value;
     const passErr = document.getElementById('profPassError');
-    if (passErr) { passErr.innerText = ''; passErr.classList.remove('active'); }
     if (pass1 && pass1 !== pass2) {
         if (passErr) { passErr.innerText = '兩次密碼不一致'; passErr.classList.add('active'); }
         return;
     }
     const body = { 
         action: 'update_profile', username: window.currentUser.username, 
-        nickname: document.getElementById('profNick').value, 
-        email: document.getElementById('profEmail').value, 
+        nickname: document.getElementById('profNick').value, email: document.getElementById('profEmail').value, 
         phone: document.getElementById('profPhone').value.startsWith("'") ? document.getElementById('profPhone').value : "'" + document.getElementById('profPhone').value,
         newPassword: pass1 || null
     };
@@ -301,8 +348,7 @@ window.handleProfileUpdateSubmit = async function(e) {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
         if (json.success) { 
-            window.currentUser = json.user; 
-            localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser)); 
+            window.currentUser = json.user; localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser)); 
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = window.currentUser.nickname || window.currentUser.username;
             Swal.fire({ icon: 'success', title: '資料已更新', timer: 1500, showConfirmButton: false });
@@ -313,18 +359,12 @@ window.handleProfileUpdateSubmit = async function(e) {
 }
 
 window.logout = function() { 
-    console.log(">> User Logging Out...");
     localStorage.removeItem('st_pro_session'); 
     window.currentUser = null; 
-    
-    // Hard UI reset
     window.closeAllModals();
     showAuth();
-    
-    // Clear display info
-    const displayEl = document.getElementById('displayUser');
-    if (displayEl) displayEl.innerText = "使用者";
-    
+    const d = document.getElementById('displayUser');
+    if (d) d.innerText = "使用者";
     Toast.fire({ title: '期待下次與您見面', icon: 'success', timer: 1500 });
 }
 
@@ -338,34 +378,10 @@ window.togglePassword = (id) => {
     }
 };
 
-async function loginViaGoogle() {
-    console.log(">> loginViaGoogle Triggered");
-    Swal.fire({
-        title: 'Google 登入',
-        text: 'Google 登入功能正在串接中，請先使用帳號密碼登入或使用 LINE 登入。',
-        icon: 'info',
-        confirmButtonText: '了解',
-        confirmButtonColor: 'var(--primary)',
-        customClass: {
-            popup: 'swal2-popup',
-            title: 'swal2-title'
-        }
-    });
+window.loginViaGoogle = async function() {
+    Swal.fire({ icon: 'info', title: 'Google 登入開發中', confirmButtonColor: 'var(--primary)' });
 }
 
-window.loginViaGoogle = loginViaGoogle;
-
 window.bindGoogle = async function() {
-    Swal.fire({
-        title: 'Google 帳號綁定',
-        text: '即將引導您完成 Google 帳號授權，以利未來同步雲端試算表。',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: '開始綁定',
-        cancelButtonText: '稍後再說'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Toast.fire({ icon: 'info', title: '功能開發中，敬請期待' });
-        }
-    });
+    Swal.fire({ icon: 'info', title: 'Google 綁定開發中', showCancelButton: true });
 }

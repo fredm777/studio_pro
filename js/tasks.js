@@ -39,7 +39,6 @@ window.fetchTasks = async function() {
  */
 function initializeTaskWeight(t) {
     if (!t.orderWeight) {
-        // Fallback: Use current date or rowIndex as starting point
         const now = new Date();
         const baseTime = now.getTime();
         t.orderWeight = baseTime + (t.rowIndex || 0) * 1000;
@@ -47,6 +46,24 @@ function initializeTaskWeight(t) {
         if (!t.taskTime) t.taskTime = "09:00";
     }
     return t;
+}
+
+/**
+ * Format date and time for display: yyyy-mm-dd hh:mm (24h)
+ */
+function formatTaskDateTime(dateStr, timeStr) {
+    if (!dateStr) return '';
+    let time = (timeStr || '').trim();
+    // Handle cases where time might be a full ISO string
+    if (time.includes('T')) {
+        const d = new Date(time);
+        if (!isNaN(d.getTime())) {
+            time = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+        }
+    }
+    // Ensure HH:mm format
+    if (time.length > 5) time = time.substring(0, 5);
+    return `${dateStr} ${time}`;
 }
 
 window.updateTaskProjectFilter = function() {
@@ -144,7 +161,8 @@ function renderTasksList(draggable = false) {
             const custName = customer ? (customer.nickname || customer.companyName) : '未知';
             
             const displayTaskName = `${custName}_${t.taskName || ''}`;
-            const displayTime = t.taskDate ? `<span style="font-size: 0.75rem; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${t.taskDate} ${t.taskTime || ''}</span>` : '';
+            const dtFormatted = formatTaskDateTime(t.taskDate, t.taskTime);
+            const displayTime = dtFormatted ? `<span style="font-size: 0.75rem; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${dtFormatted}</span>` : '';
             
             const checkIcon = t.isCompleted ? 'check-circle-2' : 'circle';
             const checkColor = t.isCompleted ? 'color: #06C755;' : 'color: #cbd5e1;';
@@ -189,34 +207,49 @@ function initDragAndDrop(listElement) {
             draggedItem = this;
             setTimeout(() => this.style.opacity = '0.5', 0);
         });
+        
         item.addEventListener('dragend', function() {
             this.style.opacity = '1';
             draggedItem = null;
+            listElement.querySelectorAll('.task-item').forEach(i => {
+                i.classList.remove('drag-over-top', 'drag-over-bottom');
+            });
         });
-        item.addEventListener('dragover', e => e.preventDefault());
-        item.addEventListener('dragenter', function(e) {
+        
+        item.addEventListener('dragover', function(e) {
             e.preventDefault();
-            this.classList.add('drag-over-marker');
+            if (this === draggedItem) return;
+            
+            const rect = this.getBoundingClientRect();
+            const midpoint = (rect.top + rect.bottom) / 2;
+            
+            if (e.clientY < midpoint) {
+                this.classList.add('drag-over-top');
+                this.classList.remove('drag-over-bottom');
+            } else {
+                this.classList.add('drag-over-bottom');
+                this.classList.remove('drag-over-top');
+            }
         });
+        
         item.addEventListener('dragleave', function() {
-            this.classList.remove('drag-over-marker');
+            this.classList.remove('drag-over-top', 'drag-over-bottom');
         });
+        
         item.addEventListener('drop', function(e) {
-            this.classList.remove('drag-over-marker');
+            this.classList.remove('drag-over-top', 'drag-over-bottom');
             if (this === draggedItem) return;
 
-            const allItems = Array.from(listElement.querySelectorAll('.task-item'));
-            const draggedIdx = allItems.indexOf(draggedItem);
-            const targetIdx = allItems.indexOf(this);
+            const rect = this.getBoundingClientRect();
+            const midpoint = (rect.top + rect.bottom) / 2;
             
-            // Move item in DOM
-            if (draggedIdx < targetIdx) {
-                listElement.insertBefore(draggedItem, this.nextSibling);
-            } else {
+            if (e.clientY < midpoint) {
                 listElement.insertBefore(draggedItem, this);
+            } else {
+                listElement.insertBefore(draggedItem, this.nextSibling);
             }
             
-            // Re-calculate weights based on neighbors
+            // Re-calculate weights
             calculateNewWeight(draggedItem);
         });
     });

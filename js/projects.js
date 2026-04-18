@@ -296,7 +296,7 @@ function calcQuotation() {
     if (document.getElementById('qTotal')) document.getElementById('qTotal').innerText = total.toLocaleString();
 }
 
-async function handleQuotationSubmit(e) {
+window.handleQuotationSubmit = async function(e) {
     if (e) e.preventDefault();
     setSyncStatus(true);
 
@@ -404,3 +404,71 @@ window.preparePrint = function() {
     window.print();
     setTimeout(() => { document.title = originalTitle; }, 1000);
 }
+
+window.initQuotationAutocomplete = function() {
+    console.log(">> Initializing Quotation Autocomplete");
+    const input = document.getElementById('qCustSearch');
+    const suggest = document.getElementById('autocompleteSuggestions');
+    if (!input || !suggest) return;
+
+    input.oninput = (e) => {
+        const val = e.target.value.trim().toLowerCase();
+        if (!val) {
+            suggest.style.display = 'none';
+            return;
+        }
+
+        const matches = (window.allCustomers || []).filter(c => 
+            (c.nickname || '').toLowerCase().includes(val) || 
+            (c.companyName || '').toLowerCase().includes(val) ||
+            (c.contactPerson || '').toLowerCase().includes(val)
+        ).slice(0, 10);
+
+        if (matches.length === 0) {
+            suggest.style.display = 'none';
+            return;
+        }
+
+        suggest.innerHTML = matches.map(c => `
+            <div class="suggestion-item" onclick="window.selectCustomerById('${c.customerId}')" style="padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+                <div style="font-weight: 600; color: var(--text-dark);">${c.nickname || c.companyName}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${c.contactPerson || ''} ${c.phone || ''}</div>
+            </div>
+        `).join('');
+        suggest.style.display = 'block';
+    };
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !suggest.contains(e.target)) {
+            suggest.style.display = 'none';
+        }
+    });
+};
+
+window.selectCustomerById = function(id) {
+    const cust = (window.allCustomers || []).find(c => c.customerId === id);
+    if (!cust) return;
+
+    const input = document.getElementById('qCustSearch');
+    const displayId = document.getElementById('qCustId');
+    const displayName = document.getElementById('qCustName');
+    const displayTax = document.getElementById('qCustTaxId');
+    const displayAddr = document.getElementById('qCustAddress');
+    const displayContact = document.getElementById('qCustPerson');
+    const displayPhone = document.getElementById('qCustPhone');
+    const suggest = document.getElementById('autocompleteSuggestions');
+
+    if (input) {
+        input.value = cust.nickname || cust.companyName;
+        input.dataset.selectedId = cust.customerId;
+    }
+    if (displayId) displayId.value = cust.customerId;
+    if (displayName) displayName.value = cust.companyName || cust.nickname;
+    if (displayTax) displayTax.value = cust.taxId || '';
+    if (displayAddr) displayAddr.value = cust.address || '';
+    if (displayContact) displayContact.value = cust.contactPerson || '';
+    if (displayPhone) displayPhone.value = cust.phone || '';
+
+    if (suggest) suggest.style.display = 'none';
+};

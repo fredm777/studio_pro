@@ -141,10 +141,8 @@
                     <button id="customersTabBtn" class="tab-link active" data-tab="customers">客戶資料庫</button>
                     <button id="projectsTabBtn" class="tab-link" data-tab="projects">專案管理</button>
                     <button id="tasksTabBtn" class="tab-link" data-tab="tasks">任務管理</button>
-                    <button id="settingsTabBtn" class="tab-link hidden" data-tab="settings">系統設定</button>
-                    <button id="permissionsTabBtn" class="tab-link hidden" data-tab="permissions" style="display: flex; align-items: center; gap: 6px;">
-                        <i data-lucide="shield-check" style="width:16px; height:16px;" class="icon-circle-star"></i> 權限設定
-                    </button>
+                    <!-- <button id="settingsTabBtn" class="tab-link hidden" data-tab="settings">系統設定</button> -->
+                    <!-- <button id="permissionsTabBtn" class="tab-link hidden" data-tab="permissions">權限設定</button> -->
                 </nav>
                 
                 <div id="customerActions" class="search-wrapper">
@@ -243,10 +241,10 @@
                         <div style="display: flex; gap: 1rem; align-items: center;">
                             <div class="status-filter-group" style="display: flex; gap: 0.5rem; background: #f1f5f9; padding: 4px; border-radius: 10px;">
                                 <button type="button" class="filter-pill active" id="filterIncomplete" onclick="toggleStatusFilter('incomplete')">
-                                    <i data-lucide="square"></i> 未完成
+                                    未完成
                                 </button>
                                 <button type="button" class="filter-pill active" id="filterComplete" onclick="toggleStatusFilter('complete')">
-                                    <i data-lucide="check-square"></i> 已完成
+                                    已完成
                                 </button>
                             </div>
                             <select id="taskProjectFilter" onchange="filterTasksByProject()" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: white;">
@@ -777,7 +775,7 @@
                             <span>作業流程</span>
                         </div>
                         <div class="admin-nav-card" onclick="window.switchToTab('permissions')">
-                            <i data-lucide="shield-check" class="icon-circle-star"></i>
+                            <i data-lucide="star"></i>
                             <span>權限管理</span>
                         </div>
                     </div>

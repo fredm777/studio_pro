@@ -125,12 +125,18 @@ textarea::-webkit-resizer {
 
 .line-btn {
     width: 100%; padding: 0.75rem; border-radius: 12px;
-    background: white; color: #06C755; border: 1px solid #06C755;
+    background: white; color: var(--text-dark); border: 1px solid var(--border);
     font-weight: 700;
     display: flex; align-items: center; justify-content: center; gap: 0.75rem;
     cursor: pointer; transition: 0.2s; font-size: 0.9375rem;
 }
-.line-btn:hover { background: rgba(6, 199, 85, 0.05); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6, 199, 85, 0.1); }
+.line-btn:hover { 
+    background: rgba(6, 199, 85, 0.05); 
+    color: #06C755; 
+    border-color: #06C755;
+    transform: translateY(-1px); 
+    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.1); 
+}
 .line-btn svg { width: 22px; height: 22px; }
 
 .auth-hint {
@@ -164,11 +170,6 @@ textarea::-webkit-resizer {
 
 .auth-error-inline.active {
     display: block;
-}
-
-@keyframes fadeInSlide {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .auth-header {
@@ -491,12 +492,6 @@ main {
 .placeholder-container p { font-size: 0.9375rem; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.search-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
 
 .grid-container {
     background: white; border-radius: 16px; border: 1px solid var(--border);
@@ -900,17 +895,28 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     background: #f8fafc !important;
 }
 
-.task-item.drag-over-marker::after {
+.task-item.drag-over-top::before {
     content: '';
     position: absolute;
-    bottom: -2.5px;
-    left: 1rem;
-    right: 1rem;
+    top: -2px;
+    left: 0;
+    right: 0;
     height: 4px;
-    background: var(--primary);
-    border-radius: 10px;
-    z-index: 10;
-    box-shadow: 0 0 10px var(--primary-glow);
+    background: #06C755;
+    z-index: 100;
+    box-shadow: 0 0 8px rgba(6, 199, 85, 0.4);
+}
+
+.task-item.drag-over-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #06C755;
+    z-index: 100;
+    box-shadow: 0 0 8px rgba(6, 199, 85, 0.4);
 }
 
 /* Quotation Footer */
@@ -1130,35 +1136,31 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 }
 
 .filter-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: transparent;
+    padding: 0.5rem 1.25rem;
+    border-radius: 100px;
+    background: #f1f5f9;
     color: var(--text-muted);
-}
-
-.filter-pill i {
-    width: 16px;
-    height: 16px;
-    stroke-width: 2.5;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    white-space: nowrap;
 }
 
 .filter-pill.active {
-    background: white;
-    color: #06C755; /* Use success color for active state */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary-border);
+    box-shadow: var(--shadow-sm);
 }
 
 .filter-pill:hover:not(.active) {
-    background: rgba(255,255,255,0.5);
-    color: var(--text-main);
+    background: #e2e8f0;
+    color: var(--text-dark);
 }
 
 .google-auth-btn {
@@ -1166,8 +1168,8 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     padding: 0.75rem; 
     border-radius: 12px;
     background: white; 
-    color: #444; 
-    border: 1px solid #dadce0;
+    color: var(--text-dark); 
+    border: 1px solid var(--border);
     font-weight: 700;
     display: flex; 
     align-items: center; 
@@ -1176,12 +1178,15 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     cursor: pointer; 
     transition: 0.2s; 
     font-size: 0.9375rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .google-auth-btn:hover {
     background: #f8fbff;
     border-color: #4285F4;
+    color: #4285F4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.1);
+}
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(66, 133, 244, 0.1);
 }

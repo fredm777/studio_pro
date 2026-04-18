@@ -45,7 +45,7 @@ async function fetchSettings() {
     finally { setSyncStatus(false); }
 }
 
-async function handleSettingsSubmit(e) {
+window.handleSettingsSubmit = async function(e) {
     e.preventDefault();
     setSyncStatus(true);
     
@@ -151,7 +151,7 @@ window.showMemberEditor = (idx) => {
     if (window.lucide) lucide.createIcons();
 };
 
-async function handleMemberUpdateSubmit(e) {
+window.handleMemberUpdateSubmit = async function(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const body = { action: 'update_member_status', adminUser: window.currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
