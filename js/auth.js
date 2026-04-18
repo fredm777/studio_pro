@@ -228,7 +228,7 @@ window.startLiffBinding = async function() {
     if (!window.currentUser) return;
     setSyncStatus(true);
     try {
-        await liff.init({ liffId: LINE_LIFF_ID });
+        await liff.init({ liffId: LIFF_ID });
         localStorage.setItem('st_pro_binding_user', JSON.stringify(window.currentUser));
         if (!liff.isLoggedIn()) liff.login({ redirectUri: window.location.origin + window.location.pathname });
         else await handleLiffBinding();
@@ -238,7 +238,7 @@ window.startLiffBinding = async function() {
 
 window.handleLiffRedirect = async function() {
     try {
-        await liff.init({ liffId: LINE_LIFF_ID });
+        await liff.init({ liffId: LIFF_ID });
         if (liff.isLoggedIn()) {
             const bindingUser = localStorage.getItem('st_pro_binding_user');
             if (bindingUser) {
@@ -358,7 +358,7 @@ window.handleProfileUpdateSubmit = async function(e) {
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = window.currentUser.nickname || window.currentUser.username;
             Swal.fire({ icon: 'success', title: '資料已更新', timer: 1500, showConfirmButton: false });
-            window.closeAllModals(); 
+            window.closeModal('profileModal');
         } else if (passErr) { passErr.innerText = json.error || '更新失敗'; passErr.classList.add('active'); }
     } catch (e) { if (passErr) { passErr.innerText = '連線失敗'; passErr.classList.add('active'); } }
     finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
@@ -385,6 +385,7 @@ window.togglePassword = (id) => {
 };
 
 window.bindSocialAccount = function(type) {
+    window.closeModal('profileModal');
     if (type === 'line') window.startLiffBinding();
     else if (type === 'google') window.bindGoogle();
 };

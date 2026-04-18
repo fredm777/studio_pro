@@ -142,8 +142,8 @@ window.showCustomerEditor = (title, data = null) => {
     
     const rowIdxEl = document.getElementById('rowIndex');
     const custIdEl = document.getElementById('customerId');
-    if (rowIdxEl) rowIdxEl.value = data ? data.rowIndex : '';
-    if (custIdEl) custIdEl.value = data ? data.customerId : '';
+    if (rowIdxEl) rowIdxEl.value = data ? (data.rowIndex || '') : '';
+    if (custIdEl) custIdEl.value = data ? (data.customerId || '') : '';
     
     if (data) {
         if (document.getElementById('companyName')) document.getElementById('companyName').value = data.companyName || '';
@@ -172,9 +172,9 @@ window.saveCustomer = async function() {
         contact: document.getElementById('contact').value,
         phone: document.getElementById('phone').value.startsWith("'") ? document.getElementById('phone').value : "'" + document.getElementById('phone').value,
         email: document.getElementById('email').value,
-        address: document.getElementById('address').value,
+        address: document.getElementById('address').value || '',
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : '',
-        customerId: document.getElementById('customerId').value
+        customerId: document.getElementById('customerId').value || ''
     };
 
     const originalData = JSON.parse(JSON.stringify(window.allCustomers));
@@ -201,8 +201,8 @@ window.saveCustomer = async function() {
         const json = await res.json();
         if (json.success) { 
             Toast.fire({ icon: 'success', title: '客戶已儲存' });
-            switchSubView('customers', 'list');
-            fetchCustomers(); 
+            window.switchSubView('customers', 'list');
+            if (typeof window.fetchCustomers === 'function') window.fetchCustomers(); 
         } else {
             throw new Error(json.error);
         }

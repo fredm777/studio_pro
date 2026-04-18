@@ -61,9 +61,18 @@ function showNavHint(msg) {
 
 window.closeAllModals = () => {
     try {
-        console.log(">> Closing all active modals...");
         document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
     } catch (e) { console.error("closeAllModals error:", e); }
+};
+
+window.closeModal = (id) => {
+    const m = document.getElementById(id);
+    if (m) m.classList.remove('active');
+};
+
+window.openModal = (id) => {
+    const m = document.getElementById(id);
+    if (m) m.classList.add('active');
 };
 
 window.logError = (ctx, err) => {

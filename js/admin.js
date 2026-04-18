@@ -45,7 +45,7 @@ async function fetchSettings() {
     finally { setSyncStatus(false); }
 }
 
-window.handleSettingsSubmit = async function(e) {
+window.handleGlobalSettingsSubmit = async function(e) {
     e.preventDefault();
     setSyncStatus(true);
     

@@ -426,7 +426,7 @@ window.submitTaskEditor = async function (event) {
 
         const task = {
             taskId: document.getElementById('taskIdField').value,
-            projectId: document.getElementById('taskProjectId').value,
+            projectId: document.getElementById('taskProjectId').value || '',
             taskName: document.getElementById('taskName').value.trim(),
             isCompleted: document.getElementById('taskIsCompleted').value === 'true',
             orderWeight: parseFloat(document.getElementById('taskOrderWeight').value) || Date.now(),

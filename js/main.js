@@ -37,7 +37,7 @@ function initEventListeners() {
     safeBind('addProjectBtn', 'onclick', () => showQuotationEditor('新增'));
     safeBind('addTaskBtn', 'onclick', () => window.showTaskEditorPage());
     const custForm = document.getElementById('customerForm');
-    if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
+    if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); window.saveCustomer(); };
     
     safeBind('userInfoTrigger', 'onclick', window.openProfileModal);
     safeBind('profileForm', 'onsubmit', window.handleProfileUpdateSubmit);

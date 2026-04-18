@@ -1099,60 +1099,63 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 /* --- Print CSS for PDF Generation --- */
 @media print {
     @page { 
-        margin: 0; 
+        margin: 10mm; 
     }
     
-    html, body {
-        height: 100%;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: white !important;
+    /* Hide all main UI elements */
+    #login-screen, .app-header, #nav-bar, .sub-nav-bar, .app-header-right, #syncProgressBar, #syncBadge { 
+        display: none !important; 
     }
     
-    body * {
-        visibility: hidden;
-    }
-    
-    #quotePrintArea, #quotePrintArea * {
-        visibility: visible;
-    }
-
-    #quotePrintArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        visibility: visible;
-        background: white !important;
-    }
-    
-    .quotation-card {
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
+    /* Reset containers to fill page */
+    .app-container, .app-main, #main-content { 
+        margin: 0 !important; 
+        padding: 0 !important; 
         width: 100% !important;
-        max-width: 100% !important;
     }
     
-    /* Shrink the overall font sizing cleanly without transform deformation */
-    .quote-sheet-wrapper {
-        font-size: 11px !important; 
+    /* Hide all tabs except projects */
+    .tab-content { display: none !important; }
+    #projects { display: block !important; }
+    
+    /* In projects, hide the list and reveal the quotation view */
+    #projects .sub-view-stack { display: none !important; }
+    #projectsEditView { display: block !important; }
+    #projectsEditView .view-header { display: none !important; }
+    
+    .quotation-card { 
+        border: none !important; 
+        box-shadow: none !important; 
+        padding: 0 !important; 
+        margin: 0 !important; 
     }
-
-    /* Ensure workflow and totals are visible */
-    .quotation-workflow-grid, .quotation-footer-grid {
-        display: grid !important;
+    
+    /* Form specifics */
+    #quotationForm .form-actions, .no-print, button, .pagination-container { 
+        display: none !important; 
+    }
+    
+    #quotePrintArea {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
         visibility: visible !important;
     }
 
-    /* Hide UI elements */
-    .no-print, #quotePrintArea .btn, button, .pagination-container, .sub-nav-bar {
-        display: none !important;
+    #quotePrintArea * {
+        visibility: visible !important;
     }
     
+    .quote-sheet-wrapper {
+        font-size: 13px !important; 
+        margin: 0 !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Input/Textarea cleanup for print */
     #quotePrintArea input, #quotePrintArea textarea {
         background: transparent !important;
         resize: none !important;
