@@ -11,38 +11,14 @@ function initTabs() {
                 // Always reset to list view when switching main tabs
                 switchSubView(tabId, 'list');
             }
-            
-            // Contextual Button Toggle (Align Actions to Sub-Nav)
-            const customerActions = document.getElementById('customerActions');
-            const searchInput = document.getElementById('searchInput');
-            const addCustBtn = document.getElementById('addCustomerBtn');
-            const addProjBtn = document.getElementById('addProjectBtn');
-            const taskFilters = document.getElementById('taskFilters');
-            
-            if (customerActions) {
-                customerActions.style.display = (tabId === 'customers' || tabId === 'projects' || tabId === 'tasks') ? 'flex' : 'none';
-                
-                // Hide search in Tasks as requested
-                if (searchInput) {
-                    searchInput.style.display = (tabId === 'tasks') ? 'none' : 'block';
-                }
-                
-                // Toggle specific buttons
-                if (addCustBtn) addCustBtn.style.display = (tabId === 'customers') ? 'block' : 'none';
-                if (addProjBtn) addProjBtn.classList.toggle('hidden', tabId !== 'projects');
-                if (taskFilters) taskFilters.classList.toggle('hidden', tabId !== 'tasks');
-            }
-            
-            // Clear search when switching
-            if (searchInput) searchInput.value = '';
-            
+
+            // Section-specific logic
             if (tabId === 'permissions') {
                 fetchMembers();
             } else if (tabId === 'settings') {
                 if (typeof fetchSettings === 'function') fetchSettings();
             } else if (tabId === 'tasks') {
                 if (typeof fetchTasks === 'function') fetchTasks();
-                // Ensure projects are loaded for the filter dropdown
                 if (!window.allProjects || window.allProjects.length === 0) {
                     if (typeof fetchProjects === 'function') fetchProjects();
                 }
@@ -51,7 +27,7 @@ function initTabs() {
             } else {
                 renderCustomers();
             }
-            
+
             // Re-init resizers and icons for new tab content
             initResizableTable();
             if (window.replaceIcons) window.replaceIcons();
@@ -59,7 +35,7 @@ function initTabs() {
     });
 }
 
-window.switchToTab = function(tabId, sectionId = null) {
+window.switchToTab = function (tabId, sectionId = null) {
     const btn = document.querySelector(`.tab-link[data-tab="${tabId}"]`);
     if (btn) {
         btn.click();
@@ -79,9 +55,9 @@ window.switchToTab = function(tabId, sectionId = null) {
     }
 };
 
-window.routeFromProfile = function(targetTab, targetSubView) {
+window.routeFromProfile = function (targetTab, targetSubView) {
     if (typeof closeModal === 'function') closeModal('profileModal');
-    
+
     // Switch main tab
     const btn = document.querySelector(`.tab-link[data-tab="${targetTab}"]`);
     if (btn) {
@@ -90,25 +66,25 @@ window.routeFromProfile = function(targetTab, targetSubView) {
         // Fallback for hidden/removed tabs (Settings, Permissions)
         document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
+
         const section = document.getElementById(targetTab);
         if (section) section.classList.add('active');
-        
+
         const customerActions = document.getElementById('customerActions');
         if (customerActions) customerActions.style.display = 'none';
-        
+
         if (targetTab === 'settings' && typeof fetchSettings === 'function') fetchSettings();
         if (targetTab === 'permissions' && typeof fetchMembers === 'function') fetchMembers();
     }
-    
+
     setTimeout(() => {
         if (targetTab === 'settings') {
             document.querySelectorAll('.admin-sub-tab').forEach(t => t.classList.remove('active'));
             const targetEl = document.getElementById(targetSubView);
             if (targetEl) targetEl.classList.add('active');
         } else if (targetTab === 'permissions') {
-             // permissions defaults to the list view initially, but ensure it's forced if needed
-             if (typeof switchSubView === 'function') switchSubView('permissions', 'list');
+            // permissions defaults to the list view initially, but ensure it's forced if needed
+            if (typeof switchSubView === 'function') switchSubView('permissions', 'list');
         }
     }, 150);
 }
@@ -151,7 +127,7 @@ function initResizableTable() {
             const colIndex = Array.from(th.parentNode.children).indexOf(th);
             const table = th.closest('table');
             const rows = table.querySelectorAll('tr');
-            
+
             // Create a temporary span to measure text width accurately
             const tester = document.createElement('span');
             tester.style.visibility = 'hidden';
@@ -180,17 +156,17 @@ function initResizableTable() {
 function initBackgroundParallax() {
     const overlay = document.getElementById('authOverlay');
     if (!overlay) return;
-    
+
     console.log(">> Initializing Premium Parallax Background...");
-    
+
     overlay.addEventListener('mousemove', (e) => {
         const { clientX: x, clientY: y } = e;
         const { innerWidth: w, innerHeight: h } = window;
-        
+
         // Calculate normalized position (-1 to 1)
         const nx = (x / w) * 2 - 1;
         const ny = (y / h) * 2 - 1;
-        
+
         // Update CSS variables for smooth movement
         overlay.style.setProperty('--mx', nx.toFixed(3));
         overlay.style.setProperty('--my', ny.toFixed(3));
@@ -201,7 +177,7 @@ function checkModalIntegrity() {
     // Only profileModal remains as a permanent modal in DOM
     const criticalModals = ['profileModal'];
     const missing = criticalModals.filter(id => !document.getElementById(id));
-    
+
     if (missing.length > 0) {
         console.error(">> [DOM CRITICAL ERROR] Modals missing from DOM:", missing);
     } else {
@@ -213,7 +189,7 @@ function checkModalIntegrity() {
 window.addEventListener('beforeprint', () => {
     // Auto-expand all textareas inside the quotation print area so they don't get cropped
     document.querySelectorAll('#quotePrintArea textarea').forEach(el => {
-        el.style.height = 'auto'; 
+        el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
     });
 });

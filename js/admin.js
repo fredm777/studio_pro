@@ -31,15 +31,29 @@ async function fetchSettings() {
         if (json.success && json.settings) {
             const s = json.settings;
             if (document.getElementById('setBankName')) document.getElementById('setBankName').value = s.bank_name || '';
+            if (document.getElementById('setBankCode')) document.getElementById('setBankCode').value = s.bank_code || '';
             if (document.getElementById('setBankBranch')) document.getElementById('setBankBranch').value = s.bank_branch || '';
+            if (document.getElementById('setBranchCode')) document.getElementById('setBranchCode').value = s.branch_code || '';
             if (document.getElementById('setAccountName')) document.getElementById('setAccountName').value = s.account_name || '';
             if (document.getElementById('setAccountNum')) document.getElementById('setAccountNum').value = s.account_num || '';
             
             if (document.getElementById('setWfOrder')) document.getElementById('setWfOrder').value = s.wf_order || '';
+            if (document.getElementById('setWfOrderLbl')) document.getElementById('setWfOrderLbl').value = s.wf_order_lbl || '訂購單說明';
+            
             if (document.getElementById('setWfDeposit')) document.getElementById('setWfDeposit').value = s.wf_deposit || '';
+            if (document.getElementById('setWfDepositLbl')) document.getElementById('setWfDepositLbl').value = s.wf_deposit_lbl || '訂金規則';
+            
             if (document.getElementById('setWfDraft')) document.getElementById('setWfDraft').value = s.wf_draft || '';
+            if (document.getElementById('setWfDraftLbl')) document.getElementById('setWfDraftLbl').value = s.wf_draft_lbl || '初稿天數';
+            
             if (document.getElementById('setWfEdit')) document.getElementById('setWfEdit').value = s.wf_edit || '';
+            if (document.getElementById('setWfEditLbl')) document.getElementById('setWfEditLbl').value = s.wf_edit_lbl || '修改次數說明';
+            
             if (document.getElementById('setWfDelivery')) document.getElementById('setWfDelivery').value = s.wf_delivery || '';
+            if (document.getElementById('setWfDeliveryLbl')) document.getElementById('setWfDeliveryLbl').value = s.wf_delivery_lbl || '交付內容說明';
+            
+            if (document.getElementById('setWfRemark')) document.getElementById('setWfRemark').value = s.wf_remark || '';
+            if (document.getElementById('setWfRemarkLbl')) document.getElementById('setWfRemarkLbl').value = s.wf_remark_lbl || '其他說明';
         }
     } catch(e) { console.error("Fetch Settings Error:", e); }
     finally { setSyncStatus(false); }
@@ -51,16 +65,32 @@ window.handleGlobalSettingsSubmit = async function(e) {
     
     const settings = {
         bank_name: document.getElementById('setBankName').value,
+        bank_code: ensureStringLiteral(document.getElementById('setBankCode').value),
         bank_branch: document.getElementById('setBankBranch').value,
+        branch_code: ensureStringLiteral(document.getElementById('setBranchCode').value),
         account_name: document.getElementById('setAccountName').value,
-        account_num: document.getElementById('setAccountNum').value,
+        account_num: ensureStringLiteral(document.getElementById('setAccountNum').value),
         
         wf_order: document.getElementById('setWfOrder').value,
+        wf_order_lbl: document.getElementById('setWfOrderLbl').value,
         wf_deposit: document.getElementById('setWfDeposit').value,
+        wf_deposit_lbl: document.getElementById('setWfDepositLbl').value,
         wf_draft: document.getElementById('setWfDraft').value,
+        wf_draft_lbl: document.getElementById('setWfDraftLbl').value,
         wf_edit: document.getElementById('setWfEdit').value,
-        wf_delivery: document.getElementById('setWfDelivery').value
+        wf_edit_lbl: document.getElementById('setWfEditLbl').value,
+        wf_delivery: document.getElementById('setWfDelivery').value,
+        wf_delivery_lbl: document.getElementById('setWfDeliveryLbl').value,
+        wf_remark: document.getElementById('setWfRemark') ? document.getElementById('setWfRemark').value : '',
+        wf_remark_lbl: document.getElementById('setWfRemarkLbl') ? document.getElementById('setWfRemarkLbl').value : ''
     };
+
+    function ensureStringLiteral(val) {
+        if (!val) return '';
+        // If starts with 0 and is numeric, prepend ' for Google Sheets
+        if (val.startsWith('0')) return "'" + val;
+        return val;
+    }
     
     try {
         const res = await fetch(GAS_WEB_APP_URL, {

@@ -7,10 +7,10 @@ const GOOGLE_CLIENT_ID = '577878473391-6iemk2lgh8ah2kc0j3m22mdspu2lvhco.apps.goo
 window.allCustomers = [];
 window.currentFilteredCustomers = [];
 window.currentPage = 1;
-window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 20;
+window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 7;
 
 window.projectPage = 1;
-window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 20;
+window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 7;
 
 window.allMembers = [];
 window.allProjects = []; // Added here as a base

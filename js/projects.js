@@ -148,6 +148,7 @@ window.showQuotationEditor = function(title, data = null) {
         addQuotationRow(); 
         loadSettingsPreview(); 
     }
+    if (window.lucide) lucide.createIcons();
 }
 
 window.updateProjectCompletedUI = function(isCompleted) {
@@ -240,18 +241,41 @@ async function loadSettingsPreview() {
         const json = await res.json();
         if (json.success) {
             const s = json.settings;
+            
+            // Utility to strip leading quote for UI display
+            const clean = (val) => {
+                const str = String(val || '');
+                return str.startsWith("'") ? str.slice(1) : str;
+            };
+
             if (document.getElementById('qBankData')) {
-                const bname = s.bank_name ? s.bank_name : '';
-                const bbranch = s.bank_branch ? s.bank_branch : '';
-                const aname = s.account_name ? s.account_name : '';
-                const anum = s.account_num ? s.account_num : '';
-                document.getElementById('qBankData').value = `銀行：${bname} ${bbranch}\n戶名：${aname}\n帳號：${anum}`;
+                const bname = clean(s.bank_name);
+                const bcode = clean(s.bank_code);
+                const bbranch = clean(s.bank_branch);
+                const brcode = clean(s.branch_code);
+                const aname = clean(s.account_name);
+                const anum = clean(s.account_num);
+                
+                // Format: 銀行 (代碼) \n 分行 (代碼) \n 戶名 \n 帳號
+                document.getElementById('qBankData').value = `${bname} (${bcode})\n${bbranch} (${brcode})\n${aname}\n${anum}`;
             }
-            if (document.getElementById('qWfOrder')) document.getElementById('qWfOrder').value = s.wf_order || '';
-            if (document.getElementById('qWfDeposit')) document.getElementById('qWfDeposit').value = s.wf_deposit || '';
-            if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = s.wf_draft || '';
-            if (document.getElementById('qWfEdit')) document.getElementById('qWfEdit').value = s.wf_edit || '';
-            if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = s.wf_delivery || '';
+            if (document.getElementById('qWfOrder')) document.getElementById('qWfOrder').value = clean(s.wf_order);
+            if (document.getElementById('qWfOrderLbl')) document.getElementById('qWfOrderLbl').innerText = clean(s.wf_order_lbl) || '訂購單說明';
+            
+            if (document.getElementById('qWfDeposit')) document.getElementById('qWfDeposit').value = clean(s.wf_deposit);
+            if (document.getElementById('qWfDepositLbl')) document.getElementById('qWfDepositLbl').innerText = clean(s.wf_deposit_lbl) || '訂金規則';
+            
+            if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = clean(s.wf_draft);
+            if (document.getElementById('qWfDraftLbl')) document.getElementById('qWfDraftLbl').innerText = clean(s.wf_draft_lbl) || '初稿天數';
+            
+            if (document.getElementById('qWfEdit')) document.getElementById('qWfEdit').value = clean(s.wf_edit);
+            if (document.getElementById('qWfEditLbl')) document.getElementById('qWfEditLbl').innerText = clean(s.wf_edit_lbl) || '修改次數說明';
+            
+            if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = clean(s.wf_delivery);
+            if (document.getElementById('qWfDeliveryLbl')) document.getElementById('qWfDeliveryLbl').innerText = clean(s.wf_delivery_lbl) || '交付內容說明';
+            
+            if (document.getElementById('qWfRemark')) document.getElementById('qWfRemark').value = clean(s.wf_remark);
+            if (document.getElementById('qWfRemarkLbl')) document.getElementById('qWfRemarkLbl').innerText = clean(s.wf_remark_lbl) || '其他說明';
         }
     } catch(e) {}
 }
@@ -262,7 +286,7 @@ function addQuotationRow(data = null) {
     const rowIdx = tbody.children.length + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td class="text-center">${rowIdx}</td>
+        <td class="text-center" style="cursor: pointer;" title="連點兩下刪除此列" ondblclick="if(confirm('確定要刪除此列項目？')) { this.closest('tr').remove(); calcQuotation(); }">${rowIdx}</td>
         <td><input class="i-name" placeholder="項目名稱" value="${data ? data.name : ''}"></td>
         <td><textarea class="i-content" placeholder="細項詳述..." rows="1" style="resize:vertical;">${data ? data.content : ''}</textarea></td>
         <td><input type="number" class="i-price text-right" value="${data ? data.price : ''}" oninput="calcQuotation()"></td>
@@ -301,6 +325,8 @@ window.handleQuotationSubmit = async function(e) {
     if (e) e.preventDefault();
     setSyncStatus(true);
 
+    const ensureLit = (val) => (val && String(val).startsWith('0')) ? "'" + val : val;
+
     const project = {
         rowIndex: document.getElementById('projRowIndex').value,
         projectId: document.getElementById('projId').value,
@@ -313,7 +339,7 @@ window.handleQuotationSubmit = async function(e) {
         total: parseFloat(document.getElementById('qTotal').innerText.replace(/,/g, '')),
         wfOrder: document.getElementById('qWfOrder') ? document.getElementById('qWfOrder').value : '',
         wfDeposit: document.getElementById('qWfDeposit') ? document.getElementById('qWfDeposit').value : '',
-        bankData: document.getElementById('qBankData') ? document.getElementById('qBankData').value : '',
+        bankData: document.getElementById('qBankData') ? ensureLit(document.getElementById('qBankData').value) : '',
         days: document.getElementById('qWfDraft') ? document.getElementById('qWfDraft').value : '',
         revCount: document.getElementById('qWfEdit') ? document.getElementById('qWfEdit').value : '',
         remark: "",
@@ -409,10 +435,26 @@ window.preparePrint = function() {
         const parts = dateVal.split('-');
         if (parts.length === 3) yymmdd = parts[0].slice(2) + parts[1] + parts[2];
     }
+    // Update print-only status label
+    const printStatus = document.getElementById('qPrintStatus');
+    if (printStatus) {
+        printStatus.innerText = document.getElementById('quoteCompletedText').innerText;
+    }
+
+    if (window.lucide) lucide.createIcons();
+
     const originalTitle = document.title;
     document.title = `${yymmdd}_${custName}_${projName}`;
-    window.print();
-    setTimeout(() => { document.title = originalTitle; }, 1000);
+    
+    // Tiny delay to ensure title and icons are ready for the print engine
+    setTimeout(() => {
+        document.body.classList.add('printing');
+        window.print();
+        setTimeout(() => { 
+            document.title = originalTitle; 
+            document.body.classList.remove('printing');
+        }, 1000);
+    }, 250);
 }
 
 window.initQuotationAutocomplete = function() {

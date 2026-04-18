@@ -147,9 +147,16 @@ window.showCustomerEditor = (title, data = null) => {
     
     if (data) {
         if (document.getElementById('companyName')) document.getElementById('companyName').value = data.companyName || '';
-        if (document.getElementById('taxId')) document.getElementById('taxId').value = data.taxId || '';
+        
+        // Tax ID handling
+        let taxId = String(data.taxId || '');
+        if (taxId.startsWith("'")) taxId = taxId.slice(1);
+        if (document.getElementById('taxId')) document.getElementById('taxId').value = taxId;
+        
         if (document.getElementById('nickname')) document.getElementById('nickname').value = data.nickname || '';
         if (document.getElementById('contact')) document.getElementById('contact').value = data.contact || '';
+        
+        // Phone handling
         let phone = String(data.phone || '');
         if (phone.startsWith("'")) phone = phone.slice(1);
         if (document.getElementById('phone')) document.getElementById('phone').value = phone;
@@ -163,14 +170,22 @@ window.showCustomerEditor = (title, data = null) => {
 
 window.saveCustomer = async function() {
     const rIndex = document.getElementById('rowIndex').value;
+    const companyName = document.getElementById('companyName').value;
+    let taxId = document.getElementById('taxId').value;
+    let phone = document.getElementById('phone').value;
+
+    // Auto prepend ' if starts with 0 to preserve leading zeros in Sheets
+    if (taxId.startsWith('0')) taxId = "'" + taxId;
+    if (phone.startsWith('0')) phone = "'" + phone;
+
     const body = {
         action: rIndex ? 'update_customer' : 'add_customer',
         rowIndex: rIndex ? parseInt(rIndex) : null,
-        companyName: document.getElementById('companyName').value,
-        taxId: document.getElementById('taxId').value,
+        companyName,
+        taxId,
         nickname: document.getElementById('nickname').value,
         contact: document.getElementById('contact').value,
-        phone: document.getElementById('phone').value.startsWith("'") ? document.getElementById('phone').value : "'" + document.getElementById('phone').value,
+        phone,
         email: document.getElementById('email').value,
         address: document.getElementById('address').value || '',
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : '',

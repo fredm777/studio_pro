@@ -6,7 +6,7 @@ function initEventListeners() {
 
     safeBind('loginForm', 'onsubmit', window.handleLogin);
     safeBind('registerForm', 'onsubmit', window.handleRegister);
-    
+
     // Live Validation for Registration
     const regUserInput = document.getElementById('regUser');
     const regEmailInput = document.getElementById('regEmail');
@@ -32,34 +32,39 @@ function initEventListeners() {
             }
         };
     }
-    
+
     safeBind('addCustomerBtn', 'onclick', () => showCustomerEditor('新增客戶資料'));
-    safeBind('addProjectBtn', 'onclick', () => showQuotationEditor('新增'));
-    safeBind('addTaskBtn', 'onclick', () => window.showTaskEditorPage());
+    safeBind('addProjectBtn', 'onclick', () => showQuotationEditor('建立新報價單'));
+    safeBind('addTaskBtn', 'onclick', () => window.addNewTaskInline());
     const custForm = document.getElementById('customerForm');
     if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); window.saveCustomer(); };
-    
+
     safeBind('userInfoTrigger', 'onclick', window.openProfileModal);
     safeBind('profileForm', 'onsubmit', window.handleProfileUpdateSubmit);
     safeBind('memberForm', 'onsubmit', window.handleMemberUpdateSubmit);
     safeBind('globalSettingsForm', 'onsubmit', window.handleSettingsSubmit);
     safeBind('quotationForm', 'onsubmit', window.handleQuotationSubmit);
-    
+
     // Initialize specific components
     initQuotationAutocomplete();
-    
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.oninput = (e) => {
-            const activeTab = document.querySelector('.tab-link.active');
-            if (!activeTab) return;
-            const tab = activeTab.dataset.tab;
-            if (tab === 'customers') filterCustomers(e.target.value);
-            else if (tab === 'projects') filterProjects(e.target.value);
-            else filterMembers(e.target.value);
+
+    // --- Global Add Button Logic Removed (Now handled by localized card-add-buttons) ---
+
+    // --- Section-specific Search Logic ---
+    const customerSearch = document.getElementById('customerSearchInput');
+    if (customerSearch) {
+        customerSearch.oninput = (e) => {
+            if (typeof filterCustomers === 'function') filterCustomers(e.target.value);
         };
     }
-    
+
+    const projectSearch = document.getElementById('projectSearchInput');
+    if (projectSearch) {
+        projectSearch.oninput = (e) => {
+            if (typeof filterProjects === 'function') filterProjects(e.target.value);
+        };
+    }
+
     // Profile Modal outside-click
     const pModal = document.getElementById('profileModal');
     if (pModal) {
@@ -67,7 +72,7 @@ function initEventListeners() {
             if (e.target === pModal) closeProfileModal();
         };
     }
-    
+
     safeBind('forgotForm', 'onsubmit', window.handleForgotSubmit);
 
     // Customer Pagination
@@ -132,6 +137,15 @@ function initEventListeners() {
     });
 
     window.addEventListener('keydown', (e) => {
+        // --- Navigation Shortcuts ---
+        if ((e.metaKey || e.ctrlKey) && ['1', '2', '3'].includes(e.key)) {
+            e.preventDefault();
+            if (e.key === '1') switchToTab('customers');
+            if (e.key === '2') switchToTab('projects');
+            if (e.key === '3') switchToTab('tasks');
+            return;
+        }
+
         if (e.key === 'Escape') {
             const activeModals = document.querySelectorAll('.modal-overlay.active');
             if (activeModals.length > 0) {
@@ -167,7 +181,7 @@ function initEventListeners() {
 const iconCache = new Map();
 
 // Custom SVG Loader for Studio Pro Branding Icons
-window.replaceIcons = async function() {
+window.replaceIcons = async function () {
     const icons = document.querySelectorAll('[data-lucide]');
     const nameMapping = {
         'trash-2': 'trash',
@@ -198,7 +212,7 @@ window.replaceIcons = async function() {
         'calendar': 'calendar',
         'clock': 'clock',
         'printer': 'printer',
-        'circle-slash': 'unbound', 
+        'circle-slash': 'unbound',
         'bound': 'bound',
         'unbound': 'unbound'
     };
@@ -209,10 +223,10 @@ window.replaceIcons = async function() {
 
         let name = icon.getAttribute('data-lucide');
         if (!name) continue;
-        
+
         const mappedName = nameMapping[name] || name;
         const iconPath = `assets/icons/${mappedName}.svg`;
-        
+
         try {
             let svgText;
             if (iconCache.has(mappedName)) {
@@ -235,7 +249,7 @@ window.replaceIcons = async function() {
                 icon.style.width = icon.style.width || '18px';
                 icon.style.height = icon.style.height || '18px';
                 icon.setAttribute('data-brand-loaded', 'true');
-                
+
                 const svgEl = icon.querySelector('svg');
                 if (svgEl) {
                     svgEl.style.width = '100%';
@@ -254,21 +268,21 @@ window.replaceIcons = async function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log(">> System Init: v1.9 Release Starting...");
-    try { initEventListeners(); } catch(e) { console.error("Event Init Error:", e); }
-    try { initTabs(); } catch(e) { console.error("Tab Init Error:", e); }
-    
+    try { initEventListeners(); } catch (e) { console.error("Event Init Error:", e); }
+    try { initTabs(); } catch (e) { console.error("Tab Init Error:", e); }
+
     // Initial Icon Replacement
     window.replaceIcons();
 
     const initApp = async () => {
         setSyncStatus(true);
         const hasLiffParams = window.location.search.includes('liffClientId') || window.location.search.includes('code') || window.location.search.includes('liff.state');
-        
+
         if (hasLiffParams) {
             console.log(">> LINE Redirect detected, awaiting processing...");
             await handleLiffRedirect();
         }
-        
+
         if (!window.currentUser && document.querySelectorAll('.auth-stage.active').length === 0) {
             checkAuth();
         }

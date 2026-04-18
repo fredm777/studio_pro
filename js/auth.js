@@ -28,9 +28,9 @@ function enterApp() {
     const customerActions = document.getElementById('customerActions');
 
     if (!window.currentUser) { showAuth(); return; }
-    
+
     if (displayEl) displayEl.innerText = (window.currentUser.nickname || window.currentUser.username || "使用者");
-    
+
     const userLevel = (window.currentUser.level || '').trim();
 
     if (userLevel === '管理者' || userLevel === '管理員') {
@@ -50,7 +50,7 @@ function enterApp() {
         if (customersBtn) { customersBtn.classList.remove('hidden'); customersBtn.click(); }
         if (customerActions) customerActions.style.display = 'none';
     }
-    
+
     if (typeof fetchCustomers === 'function') fetchCustomers();
     if (window.lucide) lucide.createIcons();
 }
@@ -59,7 +59,7 @@ window.switchAuthStage = (stage, clearErrors = true) => {
     document.querySelectorAll('.auth-stage').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
     const target = document.getElementById(`${stage}Stage`);
     if (target) { target.style.display = 'block'; target.classList.add('active'); }
-    
+
     if (clearErrors) {
         document.querySelectorAll('.auth-error-inline, .input-error-msg').forEach(err => {
             err.innerText = '';
@@ -88,7 +88,7 @@ async function handleLogin(e) {
     const btn = e.target ? e.target.querySelector('button[type="submit"]') : null;
     const username = (document.getElementById('loginUser').value || '').trim();
     const password = (document.getElementById('loginPass').value || '').trim();
-    
+
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
     const loginErr = document.getElementById('loginMainError');
@@ -104,7 +104,7 @@ async function handleLogin(e) {
             window.currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
             enterApp();
-            Swal.fire({ icon: 'success', title: '登入成功', text: `歡迎回來, ${window.currentUser.nickname || window.currentUser.username}`, timer: 1500, showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: '登入成功', text: `歡迎回來，${window.currentUser.nickname || window.currentUser.username}`, timer: 1500, showConfirmButton: false });
         } else if (loginErr) {
             loginErr.innerText = json.error || '帳號或密碼錯誤';
             loginErr.classList.add('active');
@@ -117,7 +117,7 @@ async function handleLogin(e) {
     }
 }
 
-window.handleRegister = async function(e) {
+window.handleRegister = async function (e) {
     if (e) e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const username = document.getElementById('regUser').value.trim();
@@ -147,7 +147,7 @@ window.handleRegister = async function(e) {
     finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
 }
 
-window.handleForgotSubmit = async function(e) {
+window.handleForgotSubmit = async function (e) {
     if (e) e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const email = document.getElementById('forgotEmail').value.trim();
@@ -175,7 +175,7 @@ window.handleForgotSubmit = async function(e) {
     finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
 }
 
-window.handleVerify = async function(e) {
+window.handleVerify = async function (e) {
     if (e) e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const code = document.getElementById('vCodeInput').value.trim();
@@ -205,7 +205,7 @@ window.handleVerify = async function(e) {
     finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
 }
 
-window.checkAvailability = async function(type, val) {
+window.checkAvailability = async function (type, val) {
     if (!val) return;
     const errEl = document.getElementById(type === 'username' ? 'regUserError' : 'regEmailError');
     try {
@@ -221,10 +221,10 @@ window.checkAvailability = async function(type, val) {
             errEl.innerText = '';
             errEl.classList.remove('active');
         }
-    } catch (e) {}
+    } catch (e) { }
 }
 
-window.startLiffBinding = async function() {
+window.startLiffBinding = async function () {
     if (!window.currentUser) return;
     setSyncStatus(true);
     try {
@@ -236,7 +236,7 @@ window.startLiffBinding = async function() {
     finally { setSyncStatus(false); }
 }
 
-window.handleLiffRedirect = async function() {
+window.handleLiffRedirect = async function () {
     try {
         await liff.init({ liffId: LIFF_ID });
         if (liff.isLoggedIn()) {
@@ -280,12 +280,12 @@ async function handleLiffBinding() {
     } else Swal.fire('失敗', json.error, 'error');
 }
 
-window.openProfileModal = function() {
+window.openProfileModal = function () {
     window.closeAllModals();
     if (!window.currentUser) return;
     const modal = document.getElementById('profileModal');
     if (modal) modal.classList.add('active');
-    
+
     // Admin Shortcut Logic
     const adminSec = document.getElementById('profAdminSection');
     const userLevel = (window.currentUser.level || '').trim();
@@ -297,15 +297,15 @@ window.openProfileModal = function() {
     let phone = String(window.currentUser.phone || '');
     if (phone.startsWith("'")) phone = phone.slice(1);
     if (document.getElementById('profPhone')) document.getElementById('profPhone').value = phone;
-    
+
     const p1 = document.getElementById('profPass1');
     const p2 = document.getElementById('profPass2');
     if (p1) { p1.value = ''; p1.type = 'password'; }
     if (p2) p2.value = '';
-    
+
     const passErr = document.getElementById('profPassError');
     if (passErr) { passErr.innerText = ''; passErr.classList.remove('active'); }
-    
+
     updateBindingUI('line', window.currentUser.lineId);
     updateBindingUI('google', window.currentUser.googleId);
     if (window.lucide) lucide.createIcons();
@@ -315,7 +315,7 @@ function updateBindingUI(type, id) {
     const bindBtn = document.getElementById(`bind${type.charAt(0).toUpperCase() + type.slice(1)}Btn`);
     const statusText = document.getElementById(`${type}StatusText`);
     if (!statusText || !bindBtn) return;
-    
+
     if (id) {
         statusText.innerHTML = `<i data-lucide="circle-check" style="width:14px; margin-right:4px; color: #6A798F;"></i> 已綁定`;
         bindBtn.innerText = '解除綁定';
@@ -327,12 +327,12 @@ function updateBindingUI(type, id) {
         bindBtn.className = 'bind-btn-blue';
         bindBtn.onclick = () => window.bindSocialAccount(type);
     }
-    
+
     // Refresh icons for new HTML
     if (window.lucide) lucide.createIcons();
 }
 
-window.handleProfileUpdateSubmit = async function(e) {
+window.handleProfileUpdateSubmit = async function (e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const pass1 = document.getElementById('profPass1').value;
@@ -342,9 +342,9 @@ window.handleProfileUpdateSubmit = async function(e) {
         if (passErr) { passErr.innerText = '兩次密碼不一致'; passErr.classList.add('active'); }
         return;
     }
-    const body = { 
-        action: 'update_profile', username: window.currentUser.username, 
-        nickname: document.getElementById('profNick').value, email: document.getElementById('profEmail').value, 
+    const body = {
+        action: 'update_profile', username: window.currentUser.username,
+        nickname: document.getElementById('profNick').value, email: document.getElementById('profEmail').value,
         phone: document.getElementById('profPhone').value.startsWith("'") ? document.getElementById('profPhone').value : "'" + document.getElementById('profPhone').value,
         newPassword: pass1 || null
     };
@@ -353,8 +353,8 @@ window.handleProfileUpdateSubmit = async function(e) {
     try {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
         const json = await res.json();
-        if (json.success) { 
-            window.currentUser = json.user; localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser)); 
+        if (json.success) {
+            window.currentUser = json.user; localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = window.currentUser.nickname || window.currentUser.username;
             Swal.fire({ icon: 'success', title: '資料已更新', timer: 1500, showConfirmButton: false });
@@ -364,9 +364,9 @@ window.handleProfileUpdateSubmit = async function(e) {
     finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
 }
 
-window.logout = function() { 
-    localStorage.removeItem('st_pro_session'); 
-    window.currentUser = null; 
+window.logout = function () {
+    localStorage.removeItem('st_pro_session');
+    window.currentUser = null;
     window.closeAllModals();
     showAuth();
     const d = document.getElementById('displayUser');
@@ -384,13 +384,13 @@ window.togglePassword = (id) => {
     }
 };
 
-window.bindSocialAccount = function(type) {
+window.bindSocialAccount = function (type) {
     window.closeModal('profileModal');
     if (type === 'line') window.startLiffBinding();
     else if (type === 'google') window.bindGoogle();
 };
 
-window.unbindSocialAccount = async function(type) {
+window.unbindSocialAccount = async function (type) {
     const result = await Swal.fire({
         title: '確定解除綁定？',
         text: `解除後將無法使用 ${type.toUpperCase()} 快速登入。`,
@@ -400,7 +400,7 @@ window.unbindSocialAccount = async function(type) {
         cancelButtonText: '取消',
         confirmButtonColor: '#ef4444'
     });
-    
+
     if (result.isConfirmed) {
         setSyncStatus(true);
         try {
@@ -425,10 +425,10 @@ window.unbindSocialAccount = async function(type) {
     }
 };
 
-window.loginViaGoogle = async function() {
+window.loginViaGoogle = async function () {
     Swal.fire({ icon: 'info', title: 'Google 登入開發中', confirmButtonColor: 'var(--primary)' });
 }
 
-window.bindGoogle = async function() {
+window.bindGoogle = async function () {
     Swal.fire({ icon: 'info', title: 'Google 綁定開發中', showCancelButton: true });
 }
