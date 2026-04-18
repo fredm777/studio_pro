@@ -34,6 +34,8 @@ function initEventListeners() {
     }
     
     safeBind('addCustomerBtn', 'onclick', () => showCustomerEditor('新增客戶資料'));
+    safeBind('addProjectBtn', 'onclick', () => showQuotationEditor('新增'));
+    safeBind('addTaskBtn', 'onclick', () => window.showTaskEditorPage());
     const custForm = document.getElementById('customerForm');
     if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
     

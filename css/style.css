@@ -435,6 +435,7 @@ header {
 .user-info {
     display: flex; flex-direction: column; align-items: flex-end;
     cursor: pointer; padding: 4px 12px; border-radius: 10px; transition: 0.2s;
+    position: relative; z-index: 1201; /* Ensure above header and tabs */
 }
 .user-info:hover { background: #f1f5f9; }
 
@@ -625,7 +626,18 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     padding: var(--spacing-modal);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border);
-    max-width: var(--max-width-list);
+    max-width: 800px; /* Reduced to ~50% as requested */
+    margin: 0 auto;
+}
+
+/* Tasks Container (Matches .grid-container precisely in Shadow and Radius) */
+.tasks-container {
+    background: white;
+    border-radius: 16px; /* Matches grid-container */
+    padding: var(--spacing-modal);
+    box-shadow: var(--shadow-sm); /* Matches grid-container */
+    border: 1px solid var(--border);
+    max-width: 800px; 
     margin: 0 auto;
 }
 
@@ -1088,7 +1100,6 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 @media print {
     @page { 
         margin: 0; 
-        size: A4 portrait; 
     }
     
     html, body {
@@ -1107,15 +1118,13 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
     }
 
     #quotePrintArea {
-        display: flex !important;
-        flex-direction: column;
-        justify-content: center; /* Vertical Center */
-        align-items: center;    /* Horizontal Center */
-        min-height: 100vh;
-        width: 100%;
         position: absolute;
         left: 0;
         top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        visibility: visible;
         background: white !important;
     }
     
@@ -1124,17 +1133,40 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
-        width: 85%; /* Adjust width to fit nicely on paper */
+        width: 100% !important;
         max-width: 100% !important;
     }
     
-    /* Reveal textareas fully and allow normal UI borders to print */
+    /* Shrink the overall font sizing cleanly without transform deformation */
+    .quote-sheet-wrapper {
+        font-size: 11px !important; 
+    }
+
+    /* Ensure workflow and totals are visible */
+    .quotation-workflow-grid, .quotation-footer-grid {
+        display: grid !important;
+        visibility: visible !important;
+    }
+
+    /* Hide UI elements */
+    .no-print, #quotePrintArea .btn, button, .pagination-container, .sub-nav-bar {
+        display: none !important;
+    }
+    
     #quotePrintArea input, #quotePrintArea textarea {
         background: transparent !important;
         resize: none !important;
-        box-shadow: none !important;
-        overflow: visible !important;
         border: none !important;
+        color: #000 !important;
+        padding: 0 !important;
+        font-weight: bold;
+    }
+    
+    /* Hide number input spinners in PDF */
+    #quotePrintArea input[type=number]::-webkit-inner-spin-button,
+    #quotePrintArea input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
     
     /* Hide the UI interactive elements within the quote body */
@@ -1411,11 +1443,15 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 }
 
 #profileModal .bind-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 14px 16px;
+    border-radius: 18px;
+    padding: 16px 20px;
     margin-bottom: 0;
     box-shadow: none;
+    background: #fdfdfd;
 }
 
 #profileModal .bind-card-line { border-color: #00C800; }
@@ -1481,8 +1517,13 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 #profileModal .nav-shortcut-card {
     background: #f8fafc;
     border-radius: 16px;
-    padding: 18px 8px;
+    padding: 14px 8px;
     border: 1px solid transparent;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 #profileModal .nav-shortcut-card:hover {
@@ -1493,28 +1534,95 @@ tbody tr:hover { background: #f9fafb; cursor: pointer; }
 }
 
 #profileModal .nav-shortcut-card i {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 4px;
-    color: var(--text-dark);
+    width: 20px;
+    height: 20px;
+    color: #475569;
 }
 
 #profileModal .nav-shortcut-card span {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: #475569;
 }
 
 /* Footer Buttons */
 #profileModal .primary-btn {
-    background: linear-gradient(135deg, #00C800 0%, #00B400 100%) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 20px rgba(0, 200, 0, 0.2) !important;
+    background: #06C755 !important; 
+    border-radius: 12px !important;
+    font-weight: 700;
+    box-shadow: none !important;
+    border: none !important;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
 }
 
 #profileModal .secondary-btn {
     background: #f1f5f9 !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
+    color: #C0C6CF !important;
+    border: none !important;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+#profileForm label {
+    width: 90px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #C0C6CF;
+}
+
+#profileForm input {
+    flex: 1;
+    background: #f8fafc;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    text-align: center;
+    font-weight: 600;
+    color: #6A798F;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+#profileModal .bind-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: none;
+}
+
+#profileModal .bind-btn-blue {
+    background: #0085FF;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+#profileModal .bind-btn-grey {
+    background: #6A798F;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.875rem;
 }
 
 .nav-shortcut-card i {

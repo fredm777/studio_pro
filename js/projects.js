@@ -395,6 +395,15 @@ window.preparePrint = function() {
     const dateVal = document.getElementById('qDate') ? document.getElementById('qDate').value : ''; 
     const custName = document.getElementById('qCustName') ? document.getElementById('qCustName').value : '客戶';
     const projName = document.getElementById('qProjName') ? document.getElementById('qProjName').value : '未命名專案';
+    
+    // Sync Status to Print Area
+    const isCompleted = document.getElementById('projIsCompleted') ? (document.getElementById('projIsCompleted').value === 'true') : false;
+    const statsEl = document.getElementById('qStatusPrint');
+    if (statsEl) {
+        statsEl.innerText = isCompleted ? '已完結' : '未完結';
+        statsEl.style.color = isCompleted ? '#00C800' : '#64748b';
+    }
+
     let yymmdd = '';
     if (dateVal) {
         const parts = dateVal.split('-');

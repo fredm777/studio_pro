@@ -12,14 +12,28 @@ function initTabs() {
                 switchSubView(tabId, 'list');
             }
             
-            // Contextual Button Toggle (Keep search visible)
-            const addBtn = document.getElementById('addCustomerBtn');
+            // Contextual Button Toggle (Align Actions to Sub-Nav)
             const customerActions = document.getElementById('customerActions');
-            if (addBtn) addBtn.style.display = (tabId === 'customers') ? 'block' : 'none';
-            if (customerActions) customerActions.style.display = (tabId === 'customers' || tabId === 'projects') ? 'flex' : 'none';
+            const searchInput = document.getElementById('searchInput');
+            const addCustBtn = document.getElementById('addCustomerBtn');
+            const addProjBtn = document.getElementById('addProjectBtn');
+            const taskFilters = document.getElementById('taskFilters');
+            
+            if (customerActions) {
+                customerActions.style.display = (tabId === 'customers' || tabId === 'projects' || tabId === 'tasks') ? 'flex' : 'none';
+                
+                // Hide search in Tasks as requested
+                if (searchInput) {
+                    searchInput.style.display = (tabId === 'tasks') ? 'none' : 'block';
+                }
+                
+                // Toggle specific buttons
+                if (addCustBtn) addCustBtn.style.display = (tabId === 'customers') ? 'block' : 'none';
+                if (addProjBtn) addProjBtn.classList.toggle('hidden', tabId !== 'projects');
+                if (taskFilters) taskFilters.classList.toggle('hidden', tabId !== 'tasks');
+            }
             
             // Clear search when switching
-            const searchInput = document.getElementById('searchInput');
             if (searchInput) searchInput.value = '';
             
             if (tabId === 'permissions') {
@@ -64,6 +78,40 @@ window.switchToTab = function(tabId, sectionId = null) {
         }
     }
 };
+
+window.routeFromProfile = function(targetTab, targetSubView) {
+    if (typeof closeModal === 'function') closeModal('profileModal');
+    
+    // Switch main tab
+    const btn = document.querySelector(`.tab-link[data-tab="${targetTab}"]`);
+    if (btn) {
+        btn.click();
+    } else {
+        // Fallback for hidden/removed tabs (Settings, Permissions)
+        document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        const section = document.getElementById(targetTab);
+        if (section) section.classList.add('active');
+        
+        const customerActions = document.getElementById('customerActions');
+        if (customerActions) customerActions.style.display = 'none';
+        
+        if (targetTab === 'settings' && typeof fetchSettings === 'function') fetchSettings();
+        if (targetTab === 'permissions' && typeof fetchMembers === 'function') fetchMembers();
+    }
+    
+    setTimeout(() => {
+        if (targetTab === 'settings') {
+            document.querySelectorAll('.admin-sub-tab').forEach(t => t.classList.remove('active'));
+            const targetEl = document.getElementById(targetSubView);
+            if (targetEl) targetEl.classList.add('active');
+        } else if (targetTab === 'permissions') {
+             // permissions defaults to the list view initially, but ensure it's forced if needed
+             if (typeof switchSubView === 'function') switchSubView('permissions', 'list');
+        }
+    }, 150);
+}
 
 function initResizableTable() {
     document.querySelectorAll('th').forEach(th => {

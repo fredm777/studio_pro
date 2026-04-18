@@ -317,19 +317,19 @@ function updateBindingUI(type, id) {
     if (!statusText || !bindBtn) return;
     
     if (id) {
-        statusText.innerHTML = `<i data-lucide="bound" class="status-icon" style="color: #0085FF;"></i> 已綁定`;
+        statusText.innerHTML = `<i data-lucide="circle-check" style="width:14px; margin-right:4px; color: #6A798F;"></i> 已綁定`;
         bindBtn.innerText = '解除綁定';
         bindBtn.className = 'bind-btn-grey';
         bindBtn.onclick = () => window.unbindSocialAccount(type);
     } else {
-        statusText.innerHTML = `<i data-lucide="unbound" class="status-icon" style="color: #94a3b8;"></i> 尚未綁定`;
+        statusText.innerHTML = `<i data-lucide="circle-x" style="width:14px; margin-right:4px; color: #C0C6CF;"></i> 尚未綁定`;
         bindBtn.innerText = '綁定帳號';
         bindBtn.className = 'bind-btn-blue';
         bindBtn.onclick = () => window.bindSocialAccount(type);
     }
     
     // Refresh icons for new HTML
-    if (window.replaceIcons) window.replaceIcons();
+    if (window.lucide) lucide.createIcons();
 }
 
 window.handleProfileUpdateSubmit = async function(e) {
@@ -381,6 +381,46 @@ window.togglePassword = (id) => {
     if (toggle) {
         toggle.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
         if (window.lucide) lucide.createIcons();
+    }
+};
+
+window.bindSocialAccount = function(type) {
+    if (type === 'line') window.startLiffBinding();
+    else if (type === 'google') window.bindGoogle();
+};
+
+window.unbindSocialAccount = async function(type) {
+    const result = await Swal.fire({
+        title: '確定解除綁定？',
+        text: `解除後將無法使用 ${type.toUpperCase()} 快速登入。`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '確定解除',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#ef4444'
+    });
+    
+    if (result.isConfirmed) {
+        setSyncStatus(true);
+        try {
+            const res = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'unbind_social', username: window.currentUser.username, type })
+            });
+            const json = await res.json();
+            if (json.success) {
+                window.currentUser = json.user;
+                localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
+                window.openProfileModal();
+                Swal.fire({ icon: 'success', title: '已解除綁定', timer: 1500, showConfirmButton: false });
+            } else {
+                Swal.fire('失敗', json.error, 'error');
+            }
+        } catch (e) {
+            Swal.fire('錯誤', '連線失敗', 'error');
+        } finally {
+            setSyncStatus(false);
+        }
     }
 };
 
