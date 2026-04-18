@@ -141,7 +141,9 @@ window.showCustomerEditor = (title, data = null) => {
     if (custErr) { custErr.innerText = ''; custErr.classList.remove('active'); }
     
     const rowIdxEl = document.getElementById('rowIndex');
+    const custIdEl = document.getElementById('customerId');
     if (rowIdxEl) rowIdxEl.value = data ? data.rowIndex : '';
+    if (custIdEl) custIdEl.value = data ? data.customerId : '';
     
     if (data) {
         if (document.getElementById('companyName')) document.getElementById('companyName').value = data.companyName || '';
@@ -171,7 +173,8 @@ window.saveCustomer = async function() {
         phone: document.getElementById('phone').value.startsWith("'") ? document.getElementById('phone').value : "'" + document.getElementById('phone').value,
         email: document.getElementById('email').value,
         address: document.getElementById('address').value,
-        invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : ''
+        invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : '',
+        customerId: document.getElementById('customerId').value
     };
 
     const originalData = JSON.parse(JSON.stringify(window.allCustomers));
