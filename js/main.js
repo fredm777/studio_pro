@@ -14,9 +14,9 @@ function initEventListeners() {
     if (regEmailInput) regEmailInput.onblur = () => checkAvailability('email', regEmailInput.value);
 
     safeBind('verifyForm', 'onsubmit', handleVerify);
-    safeBind('logoutBtn', 'onclick', logout);
-    safeBind('bindLineBtn', 'onclick', startLiffBinding);
-    safeBind('lineLoginBtn', 'onclick', loginViaLine);
+    safeBind('logoutBtn', 'onclick', window.logout);
+    safeBind('bindLineBtn', 'onclick', window.startLiffBinding);
+    safeBind('lineLoginBtn', 'onclick', window.loginViaLine);
     safeBind('googleLoginBtn', 'onclick', window.loginViaGoogle);
     safeBind('bindGoogleBtn', 'onclick', window.bindGoogle);
 
@@ -35,8 +35,8 @@ function initEventListeners() {
     const custForm = document.getElementById('customerForm');
     if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); saveCustomer(); };
     
-    safeBind('userInfoTrigger', 'onclick', openProfileModal);
-    safeBind('profileForm', 'onsubmit', handleProfileUpdateSubmit);
+    safeBind('userInfoTrigger', 'onclick', window.openProfileModal);
+    safeBind('profileForm', 'onsubmit', window.handleProfileUpdateSubmit);
     safeBind('memberForm', 'onsubmit', handleMemberUpdateSubmit);
     safeBind('globalSettingsForm', 'onsubmit', handleSettingsSubmit);
     safeBind('quotationForm', 'onsubmit', handleQuotationSubmit);
