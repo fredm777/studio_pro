@@ -668,17 +668,17 @@
                             <!-- Project Status Filter -->
                             <div class="status-filter-group">
                                 <button class="filter-pill" id="projFilterPending" title="待確認專案"
-                                    onclick="setProjectStatusFilter('pending')">
+                                    onclick="setProjectStatusFilter('1')">
                                     <img src="./assets/icons/inprocess.svg" alt="pending"
                                         style="width: 20px; height: 20px;">
                                 </button>
                                 <button class="filter-pill" id="projFilterOngoing" title="進行中專案"
-                                    onclick="setProjectStatusFilter('ongoing')">
+                                    onclick="setProjectStatusFilter('2')">
                                     <img src="./assets/icons/unchecked.svg" alt="ongoing"
                                         style="width: 20px; height: 20px;">
                                 </button>
                                 <button class="filter-pill" id="projFilterCompleted" title="已完成專案"
-                                    onclick="setProjectStatusFilter('completed')">
+                                    onclick="setProjectStatusFilter('3')">
                                     <img src="./assets/icons/checked.svg" alt="completed"
                                         style="width: 20px; height: 20px;">
                                 </button>
@@ -1099,9 +1099,9 @@
                                         style="width: 14px; height: 14px; color: #94a3b8; margin-left: auto;"></i>
                                     <select id="projStatusSelect" onchange="handleStatusChange(this.value)"
                                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                                        <option value="pending">待確認</option>
-                                        <option value="ongoing">進行中</option>
-                                        <option value="completed">已完成</option>
+                                        <option value="1">待確認</option>
+                                        <option value="2">進行中</option>
+                                        <option value="3">已完成</option>
                                     </select>
                                 </div>
                                 <button type="button" class="action-btn btn-outline" onclick="preparePrint()"

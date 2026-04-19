@@ -65,15 +65,67 @@ function initEventListeners() {
         };
     }
 
-    // --- Shortcuts: Cmd+S or Ctrl+S for Save ---
+    // --- Combined Global Keyboard Shortcuts ---
     document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+        const key = e.key;
+
+        // 1. Navigation Shortcuts (Cmd/Ctrl + 1-6)
+        if (isCmdOrCtrl && ['1', '2', '3', '4', '5', '6'].includes(key)) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log(`>> Shortcut Detected: Cmd/Ctrl + ${key}`);
+            if (key === '1') window.switchToTab('customers');
+            if (key === '2') window.switchToTab('projects');
+            if (key === '3') window.switchToTab('tasks');
+            if (key === '4') window.routeFromProfile('settings', 'bankSettingsView');
+            if (key === '5') window.routeFromProfile('settings', 'workflowSettingsView');
+            if (key === '6') window.routeFromProfile('permissions', 'permissionsListView');
+            return;
+        }
+
+        // 2. Save Shortcut (Cmd/Ctrl + S)
+        if (isCmdOrCtrl && key.toLowerCase() === 's') {
             const editView = document.getElementById('projectsEditView');
             if (editView && editView.classList.contains('active')) {
                 e.preventDefault();
-                console.log(">> Shortcut: Trigerring Save...");
+                e.stopPropagation();
+                console.log(">> Shortcut Detected: Cmd/Ctrl + S (Save)");
                 if (typeof window.handleQuotationSubmit === 'function') {
-                    window.handleQuotationSubmit(null, false); // Manual sync
+                    window.handleQuotationSubmit(null, false);
+                }
+            }
+        }
+
+        // 3. Escape Key (Close Modals & Edit Views)
+        if (key === 'Escape') {
+            const activeModals = document.querySelectorAll('.modal-overlay.active');
+            if (activeModals.length > 0) {
+                console.log(">> ESC: Closing active modals");
+                activeModals.forEach(m => m.classList.remove('active'));
+                return;
+            }
+
+            const activeEditViews = document.querySelectorAll('.sub-view-stack.active[id$="EditView"]');
+            if (activeEditViews.length > 0) {
+                activeEditViews.forEach(ev => {
+                    const tabId = ev.id.replace('EditView', '');
+                    console.log(`>> ESC: Returning from EditView for ${tabId}`);
+                    if (typeof window.switchSubView === 'function') {
+                        window.switchSubView(tabId, 'list');
+                    }
+                });
+                return;
+            }
+
+            const activeTab = document.querySelector('.tab-link.active');
+            if (activeTab) {
+                const tabId = activeTab.dataset.tab;
+                const editView = document.getElementById(`${tabId}EditView`);
+                if (editView && editView.classList.contains('active')) {
+                    if (typeof window.switchSubView === 'function') {
+                        window.switchSubView(tabId, 'list');
+                    }
                 }
             }
         }
@@ -152,40 +204,26 @@ function initEventListeners() {
     safeBind('projNextPageBtn', 'onclick', () => window.changePage(1));
 
     window.addEventListener('click', (e) => {
+        // 1. Handle Modal Overlays (like Profile Modal)
         if (e.target.classList.contains('modal-overlay')) {
             e.target.classList.remove('active');
-        }
-    });
-
-    window.addEventListener('keydown', (e) => {
-        // --- Navigation Shortcuts ---
-        if ((e.metaKey || e.ctrlKey) && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
-            e.preventDefault();
-            if (e.key === '1') switchToTab('customers');
-            if (e.key === '2') switchToTab('projects');
-            if (e.key === '3') switchToTab('tasks');
-            if (e.key === '4') routeFromProfile('settings', 'bankSettingsView');
-            if (e.key === '5') routeFromProfile('settings', 'workflowSettingsView');
-            if (e.key === '6') routeFromProfile('permissions', 'permissionsListView');
             return;
         }
 
-        if (e.key === 'Escape') {
-            const activeModals = document.querySelectorAll('.modal-overlay.active');
-            if (activeModals.length > 0) {
-                activeModals.forEach(m => m.classList.remove('active'));
-                return;
-            }
-            const activeTab = document.querySelector('.tab-link.active');
-            if (activeTab) {
-                const tabId = activeTab.dataset.tab;
-                const editView = document.getElementById(`${tabId}EditView`);
-                if (editView && editView.classList.contains('active')) {
-                    switchSubView(tabId, 'list');
+        // 2. Handle Sub-View Stack "Background" clicks (outside the edit card)
+        // If clicking directly on a sub-view-stack that is active, it means we clicked the margin/background
+        if (e.target.classList.contains('sub-view-stack') && e.target.classList.contains('active')) {
+            const tabId = e.target.id.replace('EditView', '').replace('ListView', '');
+            if (e.target.id.includes('EditView')) {
+                console.log(">> Clicked outside edit card, returning to list...");
+                if (typeof window.switchSubView === 'function') {
+                    window.switchSubView(tabId, 'list');
                 }
             }
         }
     });
+
+
 
     // Password Visibility Logic
     document.querySelectorAll('.password-wrapper').forEach(wrapper => {

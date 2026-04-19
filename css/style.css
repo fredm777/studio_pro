@@ -1605,12 +1605,13 @@ tbody tr:hover {
     position: absolute;
     top: 100%;
     left: 0;
-    right: 0;
+    width: 100%;
+    min-width: 250px;
     background: white;
     border: 1.5px solid var(--border);
     border-radius: 10px;
-    box-shadow: var(--shadow-lg);
-    z-index: 1000;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    z-index: 10000;
     max-height: 250px;
     overflow-y: auto;
     display: none;
@@ -1638,6 +1639,11 @@ tbody tr:hover {
 .suggestion-item .s-name {
     font-weight: 600;
     color: var(--text-dark);
+}
+
+.suggestion-item .s-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .suggestion-item .s-tax {

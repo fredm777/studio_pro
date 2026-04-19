@@ -8,9 +8,9 @@ window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items
 // --- Sorting State --- (Deprecated but kept for compat)
 window.projectSortField = 'date';
 window.projectSortOrder = 'desc';
-// Initialize from cache or default to ongoing
+// Initialize from cache or default to All (Pending + Ongoing + Completed)
 const cachedProjFilters = typeof getCache === 'function' ? getCache('projectStatusFilters') : null;
-window.projectStatusFilters = cachedProjFilters || ['pending', 'ongoing', 'completed'];
+window.projectStatusFilters = cachedProjFilters || ['1', '2', '3']; 
 window.projectSearchQuery = '';
 
 /**
@@ -59,12 +59,17 @@ window.setProjectStatusFilter = function(status) {
     if (typeof setCache === 'function') setCache('projectStatusFilters', window.projectStatusFilters);
     
     // Update UI highlights for 3 pills based on inclusion
-    document.getElementById('projFilterPending')?.classList.toggle('active', window.projectStatusFilters.includes('pending'));
-    document.getElementById('projFilterOngoing')?.classList.toggle('active', window.projectStatusFilters.includes('ongoing'));
-    document.getElementById('projFilterCompleted')?.classList.toggle('active', window.projectStatusFilters.includes('completed'));
+    window.updateProjectFilterUI();
     
     window.projectPage = 1;
     window.renderProjects();
+};
+
+window.updateProjectFilterUI = function() {
+    const filters = window.projectStatusFilters || [];
+    document.getElementById('projFilterPending')?.classList.toggle('active', filters.includes('1'));
+    document.getElementById('projFilterOngoing')?.classList.toggle('active', filters.includes('2'));
+    document.getElementById('projFilterCompleted')?.classList.toggle('active', filters.includes('3'));
 };
 
 // Initialize listeners
@@ -78,10 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Set initial active states
     setTimeout(() => {
-        const filters = window.projectStatusFilters || [];
-        document.getElementById('projFilterPending')?.classList.toggle('active', filters.includes('pending'));
-        document.getElementById('projFilterOngoing')?.classList.toggle('active', filters.includes('ongoing'));
-        document.getElementById('projFilterCompleted')?.classList.toggle('active', filters.includes('completed'));
+        window.updateProjectFilterUI();
     }, 500);
 });
 
@@ -126,27 +128,20 @@ window.renderProjects = function() {
     const loading = document.getElementById('projectLoading');
     if (loading) loading.style.display = 'none';
 
-    // Apply Active Filters before rendering
-    const filter = window.projectStatusFilter || 'open';
     const query = (document.getElementById('projectSearchInput')?.value || '').toLowerCase();
     
     window.currentFilteredProjects = (window.allProjects || []).filter(p => {
-        // Handle 3-stage status mapping
-        const raw = p.status || p.isCompleted;
-        let s = 'pending';
-        if (raw === true || String(raw).toLowerCase() === 'true' || raw === 'completed') s = 'completed';
-        else if (raw === 'ongoing' || raw === '進行中') s = 'ongoing';
-        else if (raw === 'pending' || raw === '待確認') s = 'pending';
-        else if (raw === false || String(raw).toLowerCase() === 'false') s = 'ongoing';
+        // Direct numeric comparison (Spreadsheet V column)
+        const s = String(p.status || '');
 
         const filterArr = window.projectStatusFilters || [];
         const matchesStatus = (filterArr.length === 0) || filterArr.includes(s);
         
         // Link with customer data for deeper search
-        const cust = window.allCustomers ? window.allCustomers.find(c => c.customerId === p.customerId) : null;
+        const cust = window.allCustomers ? window.allCustomers.find(c => String(c.customerId) === String(p.customerId)) : null;
         const custName = (cust ? (cust.companyName || cust.nickname || '') : '').toLowerCase();
         const taxId = (cust?.taxId || '').toLowerCase();
-        const contact = (cust?.contactPerson || '').toLowerCase();
+        const contact = (cust?.contact || '').toLowerCase();
         const phone = (cust?.phone || '').toLowerCase();
         const email = (cust?.email || '').toLowerCase();
         
@@ -219,9 +214,11 @@ window.showQuotationEditor = function(title, data = null) {
     if (document.getElementById('quotationTitle')) document.getElementById('quotationTitle').innerText = title;
     if (document.getElementById('quotationItemsBody')) document.getElementById('quotationItemsBody').innerHTML = '';
     
-    // Clear suggests
+    // Clear suggests & dataset
     const suggest = document.getElementById('autocompleteSuggestions');
     if (suggest) suggest.style.display = 'none';
+    const qCustSearch = document.getElementById('qCustSearch');
+    if (qCustSearch) delete qCustSearch.dataset.selectedId;
 
     if (data) {
         // Edit Mode
@@ -238,20 +235,11 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = data.wfDelivery || '';
         if (document.getElementById('qBankData')) document.getElementById('qBankData').value = data.bankData || '';
         
-        const rawStatus = data.status || data.isCompleted;
-        let finalStatus = 'pending'; // Default
-        if (rawStatus === true || String(rawStatus).toLowerCase() === 'true' || rawStatus === 'completed') {
-            finalStatus = 'completed';
-        } else if (rawStatus === 'ongoing' || rawStatus === '進行中') {
-            finalStatus = 'ongoing';
-        } else if (rawStatus === 'pending' || rawStatus === '待確認') {
-            finalStatus = 'pending';
-        }
-
+        const finalStatus = String(data.status || '1');
         if (document.getElementById('projStatus')) document.getElementById('projStatus').value = finalStatus;
         if (typeof updateProjectStatusUI === 'function') updateProjectStatusUI(finalStatus);
         
-        if (typeof selectCustomerById === 'function') selectCustomerById(data.customerId);
+        if (typeof window.selectQuotationCustomer === 'function') window.selectQuotationCustomer(data.customerId);
         
         if (window.currentUser) {
             if (window.currentUser.phone && document.getElementById('qStudioPhone')) document.getElementById('qStudioPhone').innerText = window.currentUser.phone;
@@ -263,8 +251,8 @@ window.showQuotationEditor = function(title, data = null) {
         // New Mode
         if (document.getElementById('projRowIndex')) document.getElementById('projRowIndex').value = '';
         if (document.getElementById('projId')) document.getElementById('projId').value = generateProjectId();
-        if (document.getElementById('projIsCompleted')) document.getElementById('projIsCompleted').value = 'false';
-        if (typeof updateProjectCompletedUI === 'function') updateProjectCompletedUI(false);
+        if (document.getElementById('projStatus')) document.getElementById('projStatus').value = '1';
+        if (typeof updateProjectStatusUI === 'function') updateProjectStatusUI('1');
         const userName = window.currentUser ? (window.currentUser.nickname || window.currentUser.username) : '';
         if (document.getElementById('qPic')) document.getElementById('qPic').value = userName;
         if (document.getElementById('qDate')) document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
@@ -275,9 +263,8 @@ window.showQuotationEditor = function(title, data = null) {
         }
         
         addQuotationRow(); 
-        loadSettingsPreview(); 
-    }
     if (window.lucide) lucide.createIcons();
+    if (typeof initQuotationAutocomplete === 'function') initQuotationAutocomplete();
 }
 
 window.updateProjectStatusUI = function(status) {
@@ -288,19 +275,19 @@ window.updateProjectStatusUI = function(status) {
     
     // Modernized configurations
     const configs = {
-        'pending': { 
+        '1': { 
             text: '待確認', 
             icon: 'assets/icons/unchecked.svg', 
             color: '#64748b',
             decoration: 'none'
         },
-        'ongoing': { 
+        '2': { 
             text: '進行中', 
             icon: 'assets/icons/unchecked.svg', 
             color: '#0085FF', 
             decoration: 'none'
         },
-        'completed': { 
+        '3': { 
             text: '已完成', 
             icon: 'assets/icons/checked.svg', 
             color: '#94a3b8',
@@ -308,13 +295,13 @@ window.updateProjectStatusUI = function(status) {
         }
     };
 
-    const cfg = configs[status] || configs['pending'];
+    const cfg = configs[status] || configs['1'];
     
     if (icon) icon.src = cfg.icon;
     text.innerText = cfg.text;
     text.style.color = cfg.color;
     text.style.textDecoration = cfg.decoration;
-    text.style.fontWeight = (status === 'completed') ? '500' : '600';
+    text.style.fontWeight = (status === '3') ? '500' : '600';
     
     if (select) select.value = status;
 }
@@ -520,7 +507,7 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
         }
     }
 
-    const projStatus = getVal('projStatusSelect') || 'pending';
+    const projStatus = getVal('projStatusSelect') || '1';
 
     // Build Project Object (Strict A-P Mapping)
     const project = {
@@ -540,7 +527,8 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
         bankData: ensureLit(getVal('qBankData')),
         wfDelivery: getVal('qWfDelivery'),
         remark: getVal('qWfRemark'),
-        isCompleted: projStatus === 'completed'
+        status: projStatus,
+        isCompleted: projStatus === '3'
     };
 
     // Build Items Array
@@ -615,13 +603,13 @@ window.preparePrint = function() {
     
     // Sync Status to Print Area
     const statusSelect = document.getElementById('projStatusSelect');
-    const statusVal = statusSelect ? statusSelect.value : 'pending';
+    const statusVal = statusSelect ? statusSelect.value : '1';
     const statsEl = document.getElementById('qStatusPrint');
     if (statsEl) {
         let statusLabel = '待確認';
         let color = '#64748b';
-        if (statusVal === 'ongoing') { statusLabel = '進行中'; color = '#3b82f6'; }
-        else if (statusVal === 'completed') { statusLabel = '已完成'; color = '#00C800'; }
+        if (statusVal === '2') { statusLabel = '進行中'; color = '#3b82f6'; }
+        else if (statusVal === '3') { statusLabel = '已完成'; color = '#00C800'; }
         
         statsEl.innerText = statusLabel;
         statsEl.style.color = color;
@@ -666,24 +654,28 @@ window.initQuotationAutocomplete = function() {
             return;
         }
 
+        console.log(">> Searching for customer:", val, "Available:", (window.allCustomers || []).length);
+
         const matches = (window.allCustomers || []).filter(c => 
             (c.companyName || '').toLowerCase().includes(val) ||
             (c.nickname || '').toLowerCase().includes(val) ||
             (c.contact || '').toLowerCase().includes(val) ||
             (c.taxId || '').toLowerCase().includes(val) ||
             (c.phone || '').toLowerCase().includes(val) ||
-            (c.email || '').toLowerCase().includes(val)
+            (c.email || '').toLowerCase().includes(val) ||
+            (c.address || '').toLowerCase().includes(val)
         ).slice(0, 10);
 
         if (matches.length === 0) {
             suggest.style.display = 'none';
         } else {
             suggest.innerHTML = matches.map(c => `
-                <div class="suggestion-item" onclick="window.selectQuotationCustomer('${c.customerId}')">
-                    <div class="name">${c.companyName || c.nickname}</div>
-                    <div class="meta">
+                <div class="suggestion-item" onmousedown="window.selectQuotationCustomer('${c.customerId}')">
+                    <div class="s-name">${c.companyName || c.nickname}</div>
+                    <div class="s-meta">
                         ${c.taxId ? '統編: ' + c.taxId : ''} 
-                        ${c.contact ? ' | ' + c.contact : ''}
+                        ${c.nickname ? ' | ' + c.nickname : ''}
+                        ${c.phone ? ' | ' + c.phone : ''}
                     </div>
                 </div>
             `).join('');
@@ -694,7 +686,8 @@ window.initQuotationAutocomplete = function() {
         window.isQuotationModified = true;
     });
 
-    document.addEventListener('click', (e) => {
+    // Handle blur and outside clicks
+    document.addEventListener('mousedown', (e) => {
         if (!input.contains(e.target) && !suggest.contains(e.target)) {
             suggest.style.display = 'none';
         }
@@ -709,7 +702,7 @@ window.selectQuotationCustomer = function(id) {
     const suggest = document.getElementById('autocompleteSuggestions');
     
     // Clean leading quotes from Excel/Sheets import
-    const clean = (val) => String(val || '').replace(/^'/, '');
+    const clean = (val) => String(val || '').replace(/^'/, '').trim();
 
     // 1. Fill Header Inputs
     if (input) {
