@@ -3,17 +3,20 @@
 
 window.allTasks = window.allTasks || [];
 window.currentFilteredTasks = window.currentFilteredTasks || [];
-window.taskStatusFilters = { complete: true, incomplete: true };
+const cachedTaskFilters = typeof getCache === 'function' ? getCache('taskStatusFilters') : null;
+window.taskStatusFilters = cachedTaskFilters || ['uncompleted', 'completed']; 
+
+if (!window.saveLocks) window.saveLocks = new Map();
 
 window.fetchTasks = async function () {
-    console.log(">> Fetching Tasks...");
+    const filters = window.taskStatusFilters || [];
+    document.getElementById('uncompletedFilterBtn')?.classList.toggle('active', filters.includes('uncompleted'));
+    document.getElementById('completedFilterBtn')?.classList.toggle('active', filters.includes('completed'));
     
-    // 1. Load from cache first for instant UI
     const cached = getCache('tasks');
     if (cached) {
         window.allTasks = cached.map(t => initializeTaskWeight(t));
-        if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
-        else renderTasksList();
+        window.filterTasksByProject();
     }
 
     setSyncStatus(true);
@@ -23,65 +26,36 @@ window.fetchTasks = async function () {
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ 
-                action: 'get_tasks',
+                action: 'get_all_tasks',
                 username: (window.currentUser ? window.currentUser.username : '')
             })
         });
         
         const json = await res.json();
-        console.log(">> Tasks Fetch Response:", json); 
-        
+        console.log(">> Tasks json response:", json);
         if (json.success) {
-            // Support multiple data keys
-            const taskData = json.tasks || json.data;
-            
-            if (taskData && Array.isArray(taskData)) {
-                window.allTasks = taskData.map(t => initializeTaskWeight(t));
-                setCache('tasks', window.allTasks);
-                console.log(`>> Tasks Loaded: ${window.allTasks.length} items.`);
-            } else {
-                console.warn(">> Tasks Success but data missing/empty:", json);
-            }
+            const raw = json.data || json.tasks || [];
+            window.allTasks = raw.map(t => initializeTaskWeight(t));
+            console.log(">> window.allTasks mapped:", window.allTasks.length);
+            setCache('tasks', window.allTasks);
             
             if (typeof window.updateTaskProjectFilter === 'function') window.updateTaskProjectFilter();
-            if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
-        } else {
-            console.error(">> Tasks Fetch Failed:", json.error);
-            if (json.error) Toast.fire({ icon: 'error', title: '任務讀取失敗', text: json.error });
+            window.filterTasksByProject();
         }
     } catch (e) {
         console.error("Fetch Tasks Error:", e);
-        // Do not alert on every network flick, but log it
     } finally { 
         setSyncStatus(false); 
     }
 }
 
-/**
- * Auto-initialize tasks with weights and IDs
- */
 function initializeTaskWeight(t) {
-    // 1. Normalize ID
-    if (!t.taskId) {
-        t.taskId = t.id || 'T-' + (t.rowIndex || (Date.now() + Math.random().toString(36).substr(2, 5)));
-    }
-    
-    // 2. Normalize Project Association
-    t.projectId = String(t.projectId || t.project_id || t.projectID || "");
-    
-    // 3. Normalize Boolean Completion State (Handle Strings like "TRUE" or 1)
-    const rawCompleted = t.isCompleted || t.completed || t.is_completed;
-    t.isCompleted = (rawCompleted === true || rawCompleted === 'TRUE' || rawCompleted === 'true' || rawCompleted === 1 || rawCompleted === '1');
-    
-    // 4. Normalize Weights and Dates
-    t.orderWeight = parseFloat(t.orderWeight || t.order_weight || 0);
-    if (!t.orderWeight) {
-        const now = new Date();
-        t.orderWeight = now.getTime() + (parseInt(t.rowIndex) || 0) * 1000;
-        if (!t.taskDate) t.taskDate = now.toISOString().split('T')[0];
-        if (!t.taskTime) t.taskTime = "09:00";
-    }
-    
+    if (!t.taskId) t.taskId = t.id || 'T-' + Date.now();
+    const rawComp = t.isCompleted || t.completed;
+    t.isCompleted = (rawComp === true || rawComp === 'TRUE' || rawComp === 'true' || rawComp === 1);
+    t.orderWeight = parseFloat(t.orderWeight || 0);
+    // Normalize date to YYYY-MM-DD only
+    if (t.taskDate) t.taskDate = String(t.taskDate).substring(0, 10);
     return t;
 }
 
@@ -90,26 +64,28 @@ window.updateTaskProjectFilter = function () {
     if (!filterSelect) return;
     const currVal = filterSelect.value;
     
-    let html = '<option value="">所有專案</option>'; // Match phrasing for consistency
+    let html = '<option value="">所有專案</option>';
     const projs = window.allProjects || [];
     const custs = window.allCustomers || [];
 
     projs.forEach(p => {
         const cust = custs.find(c => String(c.customerId) === String(p.customerId));
-        const custName = cust ? (cust.nickname || cust.companyName) : '';
-        const truncName = (p.projectName && p.projectName.length > 8) ? p.projectName.substring(0, 8) + "..." : p.projectName;
-        html += `<option value="${p.projectId}">${truncName} ${custName ? '(' + custName + ')' : ''}</option>`;
+        const nickname = cust ? (cust.nickname || cust.companyName) : '';
+        html += `<option value="${p.projectId}">${p.projectName} (${nickname})</option>`;
     });
 
     filterSelect.innerHTML = html;
     if (currVal) filterSelect.value = currVal;
 }
 
-window.toggleStatusFilter = function (type) {
-    window.taskStatusFilters[type] = !window.taskStatusFilters[type];
-    const btnId = type === 'complete' ? 'filterComplete' : 'filterIncomplete';
-    const btn = document.getElementById(btnId);
-    if (btn) btn.classList.toggle('active', window.taskStatusFilters[type]);
+window.toggleTaskStatusFilter = function (type) {
+    const idx = window.taskStatusFilters.indexOf(type);
+    if (idx > -1) window.taskStatusFilters.splice(idx, 1);
+    else window.taskStatusFilters.push(type);
+    
+    if (typeof setCache === 'function') setCache('taskStatusFilters', window.taskStatusFilters);
+    document.getElementById('uncompletedFilterBtn')?.classList.toggle('active', window.taskStatusFilters.includes('uncompleted'));
+    document.getElementById('completedFilterBtn')?.classList.toggle('active', window.taskStatusFilters.includes('completed'));
     window.filterTasksByProject();
 }
 
@@ -118,282 +94,313 @@ window.filterTasksByProject = function () {
     const pid = filterSelect ? filterSelect.value : '';
     let filtered = window.allTasks || [];
 
-    // If pid is not empty, filter by project ID. 
-    // If pid is empty string (Default/All), bypass project filtering.
     if (pid && String(pid).trim() !== "") {
         filtered = filtered.filter(t => String(t.projectId) === String(pid));
     }
     
     filtered = filtered.filter(t => {
-        if (t.isCompleted && !window.taskStatusFilters.complete) return false;
-        if (!t.isCompleted && !window.taskStatusFilters.incomplete) return false;
-        return true;
+        const s = t.isCompleted ? 'completed' : 'uncompleted';
+        const filterArr = window.taskStatusFilters || [];
+        return (filterArr.length === 0) || filterArr.includes(s);
     });
 
     window.currentFilteredTasks = filtered;
-    renderTasksList(true);
+    window.renderTasks();
 }
 
-function renderTasksList(draggable = true) {
+window.renderTasks = function() {
+    console.log(">> renderTasks called. allTasks size:", (window.allTasks || []).length);
     const list = document.getElementById('taskList');
     if (!list) return;
-
     list.innerHTML = '';
-    const tasks = window.currentFilteredTasks || [];
-    if (tasks.length === 0) {
-        list.innerHTML = `<li style="text-align: center; color: var(--text-muted); padding: 5rem 2rem;">
-            <img src="assets/icons/inbox.svg" style="width: 48px; opacity: 0.2; margin-bottom: 1rem;">
-            <p>尚無符合條件的任務紀錄</p>
-        </li>`;
+
+    const query = (document.getElementById('taskSearchInput')?.value || '').toLowerCase();
+    
+    // Safety check on filtered data
+    let tasksToRender = window.currentFilteredTasks || [];
+    if (query) {
+        tasksToRender = tasksToRender.filter(t => (t.taskName || '').toLowerCase().includes(query));
+    }
+
+    if (tasksToRender.length === 0) {
+        list.innerHTML = `
+            <div style="padding: 100px 0; text-align: center; color: var(--text-muted); opacity: 0.6;">
+                <div style="margin-bottom: 20px;">
+                    <img src="assets/icons/tasks.svg" style="width: 64px; height: 64px; filter: grayscale(1) brightness(1.5); opacity: 0.3;">
+                </div>
+                <p style="font-size: 0.9375rem;">目前沒有符合條件的任務</p>
+            </div>
+        `;
         return;
     }
 
-    tasks.forEach((t, index) => {
-        try {
-            const divider = document.createElement('div');
-            divider.className = 'task-divider';
-            divider.dataset.index = index;
-            list.appendChild(divider);
+    // 1. Mandatory Pre-sort: orderWeight (User custom order) is now HIGHEST priority
+    tasksToRender.sort((a,b) => {
+        const weightA = parseFloat(a.orderWeight || 0);
+        const weightB = parseFloat(b.orderWeight || 0);
+        if (weightA !== weightB) return weightA - weightB;
+        
+        // Secondary sort by date if weights are same
+        const dateA = (a.taskDate || '1970-01-01').substring(0, 10);
+        const dateB = (b.taskDate || '1970-01-01').substring(0, 10);
+        return dateB.localeCompare(dateA); 
+    });
 
-            const li = document.createElement('li');
-            li.className = `task-item ${t.isCompleted ? 'is-completed' : ''}`;
-            li.style.cssText = 'display: flex; align-items: center; padding: 10px 0; gap: 12px;';
-            if (draggable) li.draggable = true;
-            li.dataset.taskId = t.taskId;
-            li.dataset.rowIndex = t.rowIndex;
-            li.dataset.orderWeight = t.orderWeight;
+    tasksToRender.forEach((t, index) => {
+        const item = document.createElement('li'); // Reverted to LI for list structure
+        item.className = `task-item ${t.isCompleted ? 'is-completed' : ''}`;
+        item.style.cssText = 'display: flex; align-items: center; padding: 10px 0; gap: 12px;';
+        item.dataset.id = t.taskId;
+        
+        // Find project name and customer nickname
+        const proj = (window.allProjects || []).find(p => String(p.projectId) === String(t.projectId));
+        const cust = proj ? (window.allCustomers || []).find(c => String(c.customerId) === String(proj.customerId)) : null;
+        
+        let displayValue = "";
+        if (proj && cust) {
+            const custName = cust.nickname || cust.companyName || "未知客戶";
+            displayValue = `${custName}${proj.projectName ? ` - ${proj.projectName}` : ''}`;
+        }
 
-            // Safe ID comparison
-            const project = (window.allProjects || []).find(p => String(p.projectId) === String(t.projectId));
-            const customer = project ? (window.allCustomers || []).find(c => String(c.customerId) === String(project.customerId)) : null;
-            
-            const custDisplay = customer ? (customer.nickname || customer.companyName) : '客戶簡稱...';
-            
-            // Safe Time Slicing
-            let timeStr = String(t.taskTime || "");
-            if (timeStr.includes(":") && timeStr.length > 5) timeStr = timeStr.slice(0, 5);
-            
-            const dtValue = (t.taskDate && t.taskTime) ? `${t.taskDate}T${timeStr}` : '';
-            
-            const iconColor = "#D5D9DF";
-            const checkIcon = t.isCompleted ? 
-                `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>` : 
-                `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`;
+        const iconStyle = 'width: 20px; height: 20px; vertical-align: middle; filter: brightness(0) saturate(100%) invert(48%) sepia(23%) saturate(382%) hue-rotate(177deg) brightness(93%) contrast(85%);';
+        const checkIcon = t.isCompleted ? 'assets/icons/checked.svg' : 'assets/icons/unchecked.svg';
 
-            const dateContent = dtValue ? 
-                `<input type="datetime-local" class="task-inline-input" value="${dtValue}" onchange="updateTaskFromInline(this, 'datetime', '${t.taskId}')">` :
-                `<div class="date-placeholder-row" onclick="this.innerHTML='<input type=\\'datetime-local\\' class=\\'task-inline-input\\' onblur=\\'updateTaskFromInline(this, \\'datetime\\', \\'${t.taskId}\\')\\' autofocus>'; this.querySelector('input').focus();">
-                    <img src="assets/icons/search.svg" style="width: 18px; opacity: 0.35;">
-                 </div>`;
-
-        li.innerHTML = `
-            <div class="drag-handle" style="width: 24px; display: flex; justify-content: center; opacity: 0.12; cursor: grab;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5E6D82" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+        item.innerHTML = `
+            <div class="task-drag-handle" style="width: 24px; display: flex; justify-content: center; cursor: grab;">
+                <img src="assets/icons/drag.svg" style="width: 16px; height: 16px; ${iconStyle}">
             </div>
-            <div style="width: 140px; position: relative;" class="autocomplete-container">
-                <input class="task-inline-input customer-search" value="${custDisplay}" 
-                       onfocus="showTaskCustomerSearch(this, '${t.taskId}')" 
+            <div style="width: 150px; position: relative;" class="autocomplete-container">
+                <input class="task-inline-input customer-search" value="${displayValue}" 
+                       onfocus="this.select(); showTaskCustomerSearch(this, '${t.taskId}')" 
                        oninput="filterTaskCustomerSearch(this)"
-                       placeholder="客戶簡稱...">
+                       placeholder="專案/客戶...">
             </div>
-            <div style="width: 180px;">
-                ${dateContent}
+            <div style="width: 80px; position: relative;">
+                <div class="task-date-display" style="
+                    font-size: 0.8125rem; 
+                    color: var(--text-main); 
+                    pointer-events: none; 
+                    text-align: center;
+                    background: #f1f5f9;
+                    padding: 8px 0;
+                    border-radius: 8px;
+                    border: 1px solid transparent;
+                ">
+                    ${t.taskDate ? t.taskDate.substring(5).replace('-', '/') : '00/00'}
+                </div>
+                <input type="date" class="task-inline-input" 
+                       style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0; cursor: pointer; z-index: 10;" 
+                       value="${t.taskDate || ''}" 
+                       onclick="if(this.showPicker) this.showPicker()"
+                       onchange="window.updateTaskField('${t.taskId}', 'taskDate', this.value)">
             </div>
             <div style="flex: 1;">
                 <input class="task-inline-input" value="${t.taskName || ''}" 
-                       onblur="updateTaskFromInline(this, 'name', '${t.taskId}')" 
+                       onblur="window.updateTaskField('${t.taskId}', 'taskName', this.value)" 
                        placeholder="任務內容...">
             </div>
-            <div style="display: flex; gap: 6px; align-items: center; padding-right: 8px;">
-                <button class="action-btn-icon" onclick="toggleTaskCompletion('${t.taskId}')" title="完成/取消">
-                    ${checkIcon}
+            <div class="task-actions" style="display: flex; gap: 8px; align-items: center; padding-right: 8px;">
+                <button class="action-btn-icon" onclick="window.toggleTaskStatus('${t.taskId}')" title="完成/取消">
+                    <img src="${checkIcon}" style="${iconStyle}">
                 </button>
-                <button class="action-btn-icon" onclick="duplicateTask('${t.taskId}')" title="複製項目">
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <button class="action-btn-icon" onclick="window.duplicateTask('${t.taskId}')" title="複製項目">
+                    <img src="assets/icons/duplicate.svg" style="${iconStyle}">
                 </button>
-                <button class="action-btn-icon" onclick="deleteTask('${t.taskId}')" title="刪除任務">
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                <button class="action-btn-icon" onclick="window.deleteTask('${t.taskId}')" title="刪除任務">
+                    <img src="assets/icons/trash.svg" style="${iconStyle}">
                 </button>
             </div>
         `;
-            list.appendChild(li);
-        } catch (err) {
-            console.error(">> Error rendering individual task:", err, t);
-        }
+        list.appendChild(item);
     });
 
-    const endDiv = document.createElement('div');
-    endDiv.className = 'task-divider';
-    list.appendChild(endDiv);
-
-    if (draggable) initDragAndDrop(list);
-}
-
-// --- Drag and Drop Logic ---
-function initDragAndDrop(listElement) {
-    let draggedItem = null;
-    const items = listElement.querySelectorAll('.task-item');
-
-    items.forEach(item => {
-        item.addEventListener('dragstart', function() {
-            draggedItem = this;
-            setTimeout(() => this.style.opacity = '0.4', 0);
-        });
-        item.addEventListener('dragend', function() {
-            this.style.opacity = '1';
-            draggedItem = null;
-            document.querySelectorAll('.task-divider').forEach(d => d.classList.remove('drag-over'));
-        });
-        item.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            const rect = this.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            document.querySelectorAll('.task-divider').forEach(d => d.classList.remove('drag-over'));
-            
-            if (e.clientY < midpoint) {
-                const prevDiv = this.previousElementSibling;
-                if (prevDiv && prevDiv.classList.contains('task-divider')) prevDiv.classList.add('drag-over');
-            } else {
-                const nextDiv = this.nextElementSibling;
-                if (nextDiv && nextDiv.classList.contains('task-divider')) nextDiv.classList.add('drag-over');
+    if (window.Sortable) {
+        if (window.taskSortable) window.taskSortable.destroy();
+        window.taskSortable = new Sortable(list, {
+            handle: '.task-drag-handle',
+            animation: 150,
+            onEnd: () => {
+                const items = Array.from(list.querySelectorAll('.task-item'));
+                const orderedIds = items.map(el => el.dataset.id);
+                window.saveTaskOrder(orderedIds);
             }
         });
-        item.addEventListener('drop', function(e) {
-            if (!draggedItem || this === draggedItem) return;
-            const rect = this.getBoundingClientRect();
-            const midpoint = rect.top + (rect.height / 2);
-            if (e.clientY < midpoint) {
-                listElement.insertBefore(draggedItem.previousElementSibling, this);
-                listElement.insertBefore(draggedItem, this);
-            } else {
-                listElement.insertBefore(draggedItem, this.nextElementSibling.nextElementSibling);
-                listElement.insertBefore(draggedItem.previousElementSibling, draggedItem);
-            }
-            calculateNewWeight(draggedItem);
-        });
-    });
-}
-
-async function calculateNewWeight(item) {
-    const prev = item.previousElementSibling;
-    const next = item.nextElementSibling;
-    let newWeight;
-    const OFFSET = 30 * 60 * 1000;
-
-    if (!prev && !next) newWeight = Date.now();
-    else if (!prev) newWeight = parseFloat(next.dataset.orderWeight) - OFFSET;
-    else if (!next) newWeight = parseFloat(prev.dataset.orderWeight) + OFFSET;
-    else newWeight = (parseFloat(prev.dataset.orderWeight) + parseFloat(next.dataset.orderWeight)) / 2;
-
-    item.dataset.orderWeight = newWeight;
-    const task = window.allTasks.find(t => t.taskId == item.dataset.taskId);
-    if (task) {
-        task.orderWeight = newWeight;
-        window.allTasks.sort((a, b) => a.orderWeight - b.orderWeight);
-        window.filterTasksByProject();
-        setSyncStatus(true);
-        try {
-            await fetch(GAS_WEB_APP_URL, {
-                method: 'POST', mode: 'cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'save_task', task })
-            });
-            setCache('tasks', window.allTasks);
-        } catch (e) { console.error(e); } finally { setSyncStatus(false); }
     }
 }
 
-// --- Inline Workflow ---
+window.saveTaskOrder = async function(orderedIds) {
+    // 1. Update orderWeight in memory based on new sequence
+    orderedIds.forEach((id, index) => {
+        const task = window.allTasks.find(t => String(t.taskId) === String(id));
+        if (task) task.orderWeight = (index + 1) * 10;
+    });
 
-window.addNewTaskInline = function() {
-    console.log(">> Adding Task Inline...");
-    const now = new Date();
-    const ts = Date.now();
-    const uniqueId = `T-${ts}-${Math.floor(Math.random() * 1000)}`;
+    // 2. Sync to Backend
+    const updates = window.allTasks.filter(t => t.rowIndex).map(t => ({
+        rowIndex: t.rowIndex,
+        orderWeight: t.orderWeight
+    }));
+
+    if (updates.length === 0) return;
+
+    setSyncStatus(true);
+    try {
+        await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'update_tasks_order', updates })
+        });
+        setCache('tasks', window.allTasks);
+        console.log(">> Task order synced. Refreshing Row Indices...");
+        window.fetchTasks(); // Ensure fresh indices
+    } catch (e) {
+        console.error("Order Sync Error:", e);
+    } finally {
+        setSyncStatus(false);
+    }
+}
+
+window.updateTaskField = async function(taskId, field, value) {
+    const task = window.allTasks.find(t => String(t.taskId) === String(taskId));
+    if (!task || task[field] === value) return;
+
+    if (window.saveLocks.get(taskId)) {
+        setTimeout(() => window.updateTaskField(taskId, field, value), 500);
+        return;
+    }
+
+    window.saveLocks.set(taskId, true);
+    task[field] = value;
+    
+    // Always re-render on any field update to ensure UI is in sync
+    window.filterTasksByProject();
+
+    setSyncStatus(true);
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'save_task', task })
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+            task.rowIndex = json.data.rowIndex;
+            setCache('tasks', window.allTasks);
+        }
+    } catch (e) { console.error(e); } finally {
+        window.saveLocks.delete(taskId);
+        setSyncStatus(false);
+    }
+}
+
+window.toggleTaskStatus = function(taskId) {
+    const task = window.allTasks.find(t => String(t.taskId) === String(taskId));
+    if (!task) return;
+    
+    // Calculate new state but DO NOT update memory yet
+    const newState = !task.isCompleted;
+    
+    // Let the central field updater handle memory and saving
+    window.updateTaskField(taskId, 'isCompleted', newState);
+}
+
+window.deleteTask = function(taskId) {
+    const task = window.allTasks.find(t => String(t.taskId) === String(taskId));
+    if (!task) return;
+    Swal.fire({
+        title: '確定要刪除？',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '刪除',
+        cancelButtonText: '取消'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            window.allTasks = window.allTasks.filter(t => String(t.taskId) !== String(taskId));
+            window.filterTasksByProject(); // Instant UI removal
+
+            if (task.rowIndex) {
+                setSyncStatus(true);
+                try {
+                    await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST', mode: 'cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'delete_task', rowIndex: task.rowIndex })
+                    });
+                    // Crucial: Refresh from backend to sync RowIndices for remaining tasks
+                    window.fetchTasks();
+                } catch(e) { console.error(e); } finally {
+                    setSyncStatus(false);
+                }
+            }
+            setCache('tasks', window.allTasks);
+        }
+    });
+}
+
+window.duplicateTask = async function(taskId) {
+    const src = window.allTasks.find(t => String(t.taskId) === String(taskId));
+    if (!src) return;
+
+    // Create a new copy with unique ID and no rowIndex yet
+    const newTask = { 
+        ...src, 
+        taskId: 'T-' + Date.now(), 
+        rowIndex: null, 
+        orderWeight: Date.now(), // Put at top by giving it high weight or unshifting
+        isCompleted: false 
+    };
+
+    setSyncStatus(true);
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'save_task', task: newTask })
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+            newTask.rowIndex = json.data.rowIndex;
+            window.allTasks.unshift(newTask);
+            setCache('tasks', window.allTasks);
+            window.filterTasksByProject();
+            // Removed notification for smoother UX
+        }
+    } catch (e) {
+        console.error("Duplicate Error:", e);
+    } finally {
+        setSyncStatus(false);
+    }
+}
+
+window.addTaskInline = function() {
     const newTask = {
-        taskId: uniqueId,
-        projectId: '', 
+        taskId: 'T-' + Date.now(),
+        projectId: '',
         taskName: '',
-        isCompleted: 'FALSE',
-        orderWeight: ts, 
-        taskDate: now.toISOString().split('T')[0],
-        taskTime: now.toTimeString().split(' ')[0].substring(0, 5),
+        taskDate: new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
+        taskTime: '09:00',
+        isCompleted: false,
+        orderWeight: Date.now(),
         rowIndex: null
     };
+    
     window.allTasks.unshift(newTask);
-    window.currentFilteredTasks = [...window.allTasks];
-    renderTasksList(true);
+    window.filterTasksByProject(); // Refresh UI and filters
+
     setTimeout(() => {
-        const first = document.querySelector('#taskList .task-item');
-        if (first) {
-            const inp = first.querySelector('.customer-search');
-            if (inp) inp.focus();
-        }
+        const first = document.querySelector('#taskList .customer-search');
+        if (first) first.focus();
     }, 150);
 }
 
-if (!window.saveLocks) window.saveLocks = new Map();
-
-window.updateTaskFromInline = async function (input, type, taskId) {
-    const task = window.allTasks.find(t => String(t.taskId) === String(taskId));
-    if (!task) return;
-
-    // Strict Lock: If this task is already being saved (especially for creation), wait.
-    if (window.saveLocks.get(taskId)) {
-        console.log(`>> Save in progress for ${taskId}, retrying in 500ms...`);
-        setTimeout(() => window.updateTaskFromInline(input, type, taskId), 500);
-        return;
-    }
-    
-    let changed = false;
-    const val = input.value.trim();
-
-    if (type === 'name') {
-        if (task.taskName !== val) { task.taskName = val; changed = true; }
-    } else if (type === 'datetime') {
-        if (!val) {
-             // If date is cleared, refresh to show placeholder
-             renderTasksList(true);
-             return;
-        }
-        const [d, t] = val.split('T');
-        if (task.taskDate !== d || task.taskTime !== t) { task.taskDate = d; task.taskTime = t; changed = true; }
-    }
-
-    if (changed) {
-        window.saveLocks.set(taskId, true); // Lock via global Map
-        setSyncStatus(true);
-        try {
-            const res = await fetch(GAS_WEB_APP_URL, {
-                method: 'POST', mode: 'cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'save_task', task })
-            });
-            const json = await res.json();
-            if (json.success && json.data) {
-                task.rowIndex = json.data.rowIndex; // Essential to prevent duplicates
-                setCache('tasks', window.allTasks);
-                console.log(`>> Task ${taskId} saved to row ${task.rowIndex}`);
-            }
-        } catch (e) {
-            console.error("Save Task Error:", e);
-        } finally { 
-            window.saveLocks.delete(taskId); // Unlock
-            setSyncStatus(false); 
-            renderTasksList(true); 
-        }
-    } else { 
-        renderTasksList(true); 
-    }
-}
-
+// --- Autocomplete Logic ---
 window.showTaskCustomerSearch = function(input, taskId) {
     document.querySelectorAll('.task-autocomplete-dropdown').forEach(d => d.remove());
     const container = input.closest('.autocomplete-container');
     const dropdown = document.createElement('div');
     dropdown.className = 'task-autocomplete-dropdown';
     container.appendChild(dropdown);
-    filterTaskCustomerSearch(input);
+    window.filterTaskCustomerSearch(input);
 
     const closeListener = (e) => {
         if (!container.contains(e.target)) {
@@ -412,7 +419,7 @@ window.filterTaskCustomerSearch = function(input) {
     const custs = window.allCustomers || [];
 
     const data = projs.map(p => {
-        const c = custs.find(curr => curr.customerId === p.customerId);
+        const c = custs.find(curr => String(curr.customerId) === String(p.customerId));
         return {
             projectId: p.projectId,
             projectName: p.projectName,
@@ -425,25 +432,27 @@ window.filterTaskCustomerSearch = function(input) {
         data.filter(i => i.fullSearch.includes(query)).slice(0, 10) : data.slice(0, 8);
 
     dropdown.innerHTML = filtered.map(item => `
-        <div class="task-autocomplete-item" onclick="selectTaskProjectForInline('${input.closest('.task-item').dataset.taskId}', '${item.projectId}', '${item.customerName}')">
+        <div class="task-autocomplete-item" onmousedown="window.selectTaskProjectForInline('${input.closest('.task-item').dataset.id}', '${item.projectId}')">
             <div style="font-weight: 600;">${item.customerName}</div>
             <div style="font-size: 0.75rem; color: var(--text-muted);">${item.projectName}</div>
         </div>
     `).join('') || '<div class="task-autocomplete-item" style="color: var(--text-muted); cursor: default;">查無項目</div>';
 }
 
-window.selectTaskProjectForInline = async function(taskId, projectId, customerName) {
+window.selectTaskProjectForInline = async function(taskId, projectId) {
     const task = window.allTasks.find(t => String(t.taskId) === String(taskId));
     if (!task) return;
-
-    if (window.saveLocks.get(taskId)) {
-        console.log(`>> Project Selection: Save in progress, waiting...`);
-        setTimeout(() => window.selectTaskProjectForInline(taskId, projectId, customerName), 500);
-        return;
-    }
     
+    // Explicitly update ID
     task.projectId = projectId;
-    window.saveLocks.set(taskId, true); // Lock
+    
+    // Close dropdown instantly
+    document.querySelectorAll('.task-autocomplete-dropdown').forEach(d => d.remove());
+
+    // Mandatory Instant Refresh
+    window.filterTasksByProject();
+
+    // FORCE SAVE TO BACKEND IMMEDIATELY
     setSyncStatus(true);
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -456,92 +465,9 @@ window.selectTaskProjectForInline = async function(taskId, projectId, customerNa
             task.rowIndex = json.data.rowIndex;
             setCache('tasks', window.allTasks);
         }
-    } catch (e) { 
-        console.error("Select Project Error:", e); 
-    } finally { 
-        window.saveLocks.delete(taskId); // Unlock
-        setSyncStatus(false); 
-        renderTasksList(true);
+    } catch (e) {
+        console.error("Save Error after Selection:", e);
+    } finally {
+        setSyncStatus(false);
     }
-}
-
-window.toggleTaskCompletion = async function (taskId) {
-    const t = window.allTasks.find(x => x.taskId == taskId);
-    if (!t) return;
-    t.isCompleted = !t.isCompleted;
-    renderTasksList(true);
-    setSyncStatus(true);
-    try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST', mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task: t })
-        });
-        const json = await res.json();
-        if (json.success && json.data) {
-            t.rowIndex = json.data.rowIndex;
-            setCache('tasks', window.allTasks);
-        }
-    } catch (e) { console.error(e); } finally { setSyncStatus(false); }
-}
-
-window.deleteTask = function (taskId) {
-    const task = window.allTasks.find(x => x.taskId == taskId);
-    if (!task) return;
-    Swal.fire({
-        title: '確定要刪除這筆任務？',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        confirmButtonText: '確定刪除',
-        cancelButtonText: '取消'
-    }).then(async (result) => {
-        if (result.isConfirmed) {
-            setSyncStatus(true);
-            try {
-                if (task.rowIndex === null) {
-                    window.allTasks = window.allTasks.filter(x => x.taskId != taskId);
-                    renderTasksList(true);
-                    return;
-                }
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST', mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'delete_task', rowIndex: parseInt(task.rowIndex) })
-                });
-                const json = await res.json();
-                if (json.success) {
-                    window.allTasks = window.allTasks.filter(x => x.taskId != taskId);
-                    renderTasksList(true);
-                    setCache('tasks', window.allTasks);
-                }
-            } catch (e) { console.error(e); } finally { setSyncStatus(false); }
-        }
-    });
-}
-
-window.duplicateTask = async function(taskId) {
-    const source = window.allTasks.find(t => t.taskId == taskId);
-    if (!source) return;
-    const newTask = JSON.parse(JSON.stringify(source));
-    newTask.taskId = 'T-' + Date.now();
-    newTask.rowIndex = null;
-    newTask.orderWeight = source.orderWeight + 1000;
-    window.allTasks.push(newTask);
-    window.allTasks.sort((a, b) => a.orderWeight - b.orderWeight);
-    renderTasksList(true);
-    setSyncStatus(true);
-    try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST', mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task: newTask })
-        });
-        const json = await res.json();
-        if (json.success && json.data) {
-            newTask.rowIndex = json.data.rowIndex;
-            setCache('tasks', window.allTasks);
-        }
-        renderTasksList(true);
-    } catch (e) { console.error(e); } finally { setSyncStatus(false); }
 }

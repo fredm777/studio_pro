@@ -2,6 +2,7 @@
     --primary: #00C800;
     /* New Brand Green */
     --primary-glow: rgba(0, 200, 0, 0.2);
+    --primary-30: rgba(0, 200, 0, 0.3);
     --secondary: #22c55e;
     --accent: #10b981;
     --bg-main: #f8fafc;
@@ -10,6 +11,7 @@
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(255, 255, 255, 0.3);
     --text-dark: #0f172a;
+    --color-hover-blue: #0085FF;
     --text-main: #334155;
     --text-muted: #64748b;
     --border: #e2e8f0;
@@ -28,7 +30,7 @@
 
     /* Interaction States */
     --color-active-bg: #D5D9DF;
-    --color-hover-blue: #0085FF;
+    --color-hover-blue: #00C800;
     --max-width-list: 1100px;
 }
 
@@ -395,7 +397,7 @@ textarea {
     width: 100%;
     padding: 0.75rem 1rem;
     background: #f1f5f9;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border); /* Standardized to 1.5px */
     border-radius: 10px;
     font-size: 0.9375rem;
     color: var(--text-dark);
@@ -414,7 +416,7 @@ select:focus,
 textarea:focus {
     background: #fff;
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px var(--primary-glow);
+    box-shadow: 0 0 0 5px var(--primary-30); /* Standardized to 5px ring */
     outline: none;
 }
 
@@ -571,7 +573,8 @@ header {
     padding: 6px;
     border-radius: 12px;
     gap: 4px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    /* Flat border instead of shadow */
     position: relative;
     align-items: center;
 }
@@ -643,15 +646,17 @@ header {
 
 .sub-nav-bar {
     position: sticky;
-    top: 55px;
+    top: 0;
+    /* Updated for clean stickiness */
     background: transparent;
-    /* 移除底色 */
     border-bottom: none;
-    /* 移除邊框 */
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 70px;
+    height: 54px;
+    /* Sufficient height for contents */
+    margin-bottom: 12px;
+    /* Precise 12px gap to search bar */
     z-index: 1100;
 }
 
@@ -660,8 +665,10 @@ header {
     max-width: 1400px;
     padding: 0 1.5rem;
     display: flex;
-    align-items: center;
-    justify-content: center; /* Center tabs */
+    justify-content: center;
+    /* Center everything together */
+    gap: 12px;
+    /* 12px gap between Tabs and User Actions */
     height: 100%;
     position: relative;
 }
@@ -672,8 +679,10 @@ header {
     padding: 6px;
     border-radius: 12px;
     gap: 4px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    margin: 0 auto;
+    border: 1px solid #f1f5f9;
+    /* Flat border instead of shadow */
+    margin: 0;
+    /* Let parent handle centering */
     align-items: center;
     position: relative;
 }
@@ -683,41 +692,53 @@ header {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
+    gap: 12px;
     width: 100%;
-    height: 48px; /* Standardize height */
+    height: 48px;
+    /* Standardize height */
+    margin-bottom: 12px;
+    /* Precise 12px gap to table area */
     z-index: 100;
 }
 
 .card-add-btn {
-    flex-shrink: 0;
     width: 48px;
     height: 48px;
     background: #BBF7D0;
-    border: none;
-    border-radius: 12px;
-    color: #166534;
+    color: var(--primary);
+    border: 1px solid #f1f5f9;
+    border-radius: 10px !important;
+    display: flex;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 10px !important;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(187, 247, 208, 0.4);
+    box-shadow: none !important;
 }
 
 .card-add-btn:hover {
-    background: #86EFAC;
-    transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(6, 199, 85, 0.2);
+    background: #BBF7D0 !important;
+    border: 1.5px solid var(--color-hover-blue) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .card-add-btn svg {
     width: 22px;
     height: 22px;
-    stroke: #166534;
+    stroke: #6A798F !important; /* Unified Gray-Blue Icon */
     stroke-width: 3px;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+.card-search-wrapper {
+    position: relative;
+    width: 350px;
+    /* Fixed stable width */
 }
 
 .nav-search-wrapper {
@@ -731,16 +752,22 @@ header {
 .nav-search-input {
     width: 100%;
     background: white;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 40px;
     padding: 10px 16px 10px 40px;
     font-size: 0.9375rem;
     transition: all 0.2s;
 }
 
+.nav-search-input:hover {
+    border-color: #0085FF;
+}
+
 .nav-search-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.1);
+    box-shadow: 0 0 0 5px var(--primary-30);
+    outline: none;
+    border-width: 1.5px;
 }
 
 .nav-search-icon {
@@ -755,28 +782,33 @@ header {
 }
 
 .card-add-btn {
-    width: 44px;
-    height: 44px;
-    background: #bbf7d0; /* Light green square as requested */
+    width: 48px;
+    height: 48px;
+    background: #BBF7D0;
     color: var(--primary);
-    border: none;
-    border-radius: 12px;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 10px !important;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.2);
+    box-shadow: none !important;
+    margin: 0 !important;
 }
 
 .card-add-btn:hover {
-    transform: scale(1.05);
-    background: #86efac;
+    background: #BBF7D0 !important;
+    border: 1.5px solid var(--color-hover-blue) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-.card-add-btn i, .card-add-btn svg {
+.card-add-btn i,
+.card-add-btn svg {
     width: 20px;
     height: 20px;
+    stroke: #6A798F !important; /* Unified Gray-Blue Icon */
     stroke-width: 3;
 }
 
@@ -851,13 +883,45 @@ header {
 
 .card-wrapper {
     position: relative;
-    padding-top: 0; 
+    padding-top: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    margin-top: 0; 
-    gap: 12px; /* Fixed gap between Actions and Table */
+    margin-top: 0;
+    gap: 12px;
+
+    /* Fixed gap between Actions and Table */
+    /* ==========================================
+   GLOBAL INPUT & FOCUS DECORATION
+   ========================================== */
+    input:focus,
+    textarea:focus,
+    select:focus,
+    .task-inline-input:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.12) !important;
+        outline: none !important;
+    }
+
+    /* Ensure consistent component radius everywhere */
+    .modal-card,
+    .edit-card,
+    .card,
+    button,
+    input,
+    select,
+    textarea,
+    .social-login-btn,
+    .profile-input-group input,
+    .pagination-btn,
+    .filter-pill,
+    .card-add-btn,
+    .nav-search-input,
+    .card-search-input {
+        border-radius: 10px !important;
+    }
+
     z-index: 10;
 }
 
@@ -865,30 +929,36 @@ header {
     position: relative;
     display: flex;
     align-items: center;
-    width: 360px; /* Increased to accommodate task filters/search info */
+    width: 360px;
+    /* Increased to accommodate task filters/search info */
     justify-content: flex-end;
 }
 
 .card-search-input {
-    width: 360px; /* Matches wrapper */
+    width: 360px;
+    /* Matches wrapper */
     min-width: 360px;
     height: 48px;
     background: white;
     border: 1.5px solid #ade4b8;
-    border-radius: 40px;
+    border-radius: 10px;
     padding: 0 42px 0 18px;
     font-size: 0.9375rem;
     font-weight: 500;
     color: var(--text-dark);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.card-search-input:hover {
+    border-color: #0085FF;
 }
 
 .card-search-input:focus {
-    width: 320px;
+    background: white;
     border-color: var(--primary);
+    box-shadow: 0 0 0 5px var(--primary-30);
     outline: none;
-    box-shadow: 0 8px 20px rgba(6, 199, 85, 0.12);
 }
 
 .card-search-icon {
@@ -909,7 +979,8 @@ header {
 }
 
 main {
-    padding: 0 1.5rem 2.5rem 1.5rem; /* Standardized main padding, zero on top */
+    padding: 0 1.5rem 2.5rem 1.5rem;
+    /* Standardized main padding, zero on top */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -925,7 +996,8 @@ main {
 .tab-content.active {
     display: block;
     animation: fadeIn 0.3s;
-    margin-top: 12px; /* 12px gap from sub-nav */
+    margin-top: 12px;
+    /* 12px gap from sub-nav */
 }
 
 .placeholder-container {
@@ -965,13 +1037,15 @@ main {
 
 .grid-container {
     background: white;
-    border-radius: 16px;
-    border: 1px solid var(--border);
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
     overflow: auto;
     box-shadow: var(--shadow-sm);
     width: fit-content;
-    min-width: 420px; /* Minimum width to support the centered action bar */
-    max-width: 1400px; /* Allow more space but prevent excessive stretching */
+    min-width: 420px;
+    /* Minimum width to support the centered action bar */
+    max-width: 1400px;
+    /* Allow more space but prevent excessive stretching */
     margin: 0 auto !important;
 }
 
@@ -1003,7 +1077,7 @@ td {
 .table-container {
     background: white;
     border-radius: var(--radius-xl);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     overflow-x: auto;
     /* Premium horizontal scroll */
     margin-bottom: 2rem;
@@ -1058,12 +1132,12 @@ tbody tr:hover {
 
 .modal-card {
     background: white;
-    border-radius: var(--radius-lg);
+    border-radius: 10px !important;
     box-shadow: var(--card-shadow);
     padding: 2.5rem;
     width: 100%;
     max-width: 440px;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
 }
 
 .badge {
@@ -1122,7 +1196,7 @@ tbody tr:hover {
     border-radius: var(--radius-xl);
     padding: var(--spacing-modal);
     box-shadow: var(--shadow-md);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     max-width: 800px;
     /* Reduced to ~50% as requested */
     margin: 0 auto;
@@ -1131,14 +1205,15 @@ tbody tr:hover {
 /* Tasks Container (Matches .grid-container precisely in Shadow and Radius) */
 .tasks-container {
     background: white;
-    border-radius: 16px;
+    border-radius: 10px;
     padding: var(--spacing-modal);
     box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     width: fit-content;
     min-width: 420px;
     max-width: 1400px;
-    margin: 0 auto !important; /* Standardize with grid-container */
+    margin: 0 auto !important;
+    /* Standardize with grid-container */
 }
 
 /* Specific List Container Alignment */
@@ -1155,9 +1230,9 @@ tbody tr:hover {
     left: 0;
     width: 280px;
     background: white;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     z-index: 2000;
     max-height: 250px;
     overflow-y: auto;
@@ -1228,7 +1303,7 @@ tbody tr:hover {
     background: white;
     border-radius: 10px;
     /* 這裡改為 10px */
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     padding: 2.8rem;
     max-width: 800px;
     margin: 0 auto;
@@ -1247,19 +1322,23 @@ tbody tr:hover {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 0 1.5rem;
+    padding: 0 1.25rem;
+    min-width: 140px;
     border-radius: 12px;
     font-size: 0.9375rem;
     font-weight: 700;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+    margin: 0 !important;
+    /* Precise gap control */
     border: 1.5px solid transparent;
 }
 
 .save-btn {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
-    border: none;
+    border: 1.5px solid transparent;
     cursor: pointer;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -1276,7 +1355,7 @@ tbody tr:hover {
 
 .btn-outline {
     background: white;
-    border-color: var(--border);
+    border: 1.5px solid var(--border);
     color: var(--text-main);
 }
 
@@ -1296,7 +1375,7 @@ tbody tr:hover {
     background: rgba(6, 199, 85, 0.1);
     color: var(--primary);
     border-radius: 10px;
-    border: 1px solid rgba(6, 199, 85, 0.2);
+    border: 1.5px solid rgba(6, 199, 85, 0.2);
 }
 
 .invoice-badge i {
@@ -1496,7 +1575,7 @@ tbody tr:hover {
     border-radius: 10px;
     padding: var(--spacing-modal);
     box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     max-width: var(--max-width-list);
     margin: 0 auto;
 }
@@ -1528,7 +1607,7 @@ tbody tr:hover {
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 10px;
     box-shadow: var(--shadow-lg);
     z-index: 1000;
@@ -1568,7 +1647,7 @@ tbody tr:hover {
 
 /* Quotation Items Table */
 .items-table-wrapper {
-    border: 2px solid #000;
+    border: 1px solid var(--text-dark);
     margin-bottom: 2rem;
 }
 
@@ -1579,15 +1658,15 @@ tbody tr:hover {
 
 .items-table th {
     background: #f8fafc;
-    color: #000;
-    border: 1px solid #000;
+    color: var(--text-dark);
+    border: 1px solid var(--text-dark);
     padding: 10px;
     font-size: 0.8rem;
     text-transform: none;
 }
 
 .items-table td {
-    border: 1px solid #000;
+    border: 1px solid var(--text-dark);
     padding: 8px;
     vertical-align: top;
 }
@@ -1681,7 +1760,7 @@ tbody tr:hover {
 
 /* Quotation Footer */
 .process-box {
-    border: 2px solid #000;
+    border: 1px solid var(--text-dark);
     padding: 1.5rem;
 }
 
@@ -1690,7 +1769,7 @@ tbody tr:hover {
     padding: 4px 12px;
     font-weight: 700;
     font-size: 0.9rem;
-    border-bottom: 2px solid #000;
+    border-bottom: 1px solid var(--text-dark);
     margin: -1.5rem -1.5rem 1rem -1.5rem;
     text-align: center;
 }
@@ -1698,14 +1777,14 @@ tbody tr:hover {
 .summary-box {
     display: flex;
     flex-direction: column;
-    border: 2px solid #000;
+    border: 1px solid var(--text-dark);
 }
 
 .summary-row {
     display: flex;
     justify-content: space-between;
     padding: 12px 1rem;
-    border-bottom: 1px solid #000;
+    border-bottom: 1px solid var(--text-dark);
     font-weight: 600;
 }
 
@@ -1867,6 +1946,8 @@ tbody tr:hover {
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        max-width: none !important; /* Break the 800px limit */
+        width: 100% !important;
     }
 
     /* Form specifics */
@@ -1878,25 +1959,32 @@ tbody tr:hover {
     }
 
     @page {
-        margin: 0 !important;
+        size: auto; /* Allow browser to show orientation/size selects */
+        margin: 0.5cm !important;
     }
 
-    /* Absolute Centering for Print */
+    html,
+    body {
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Standard Print Body: Vertical & Horizontal Centering */
     body.printing {
         margin: 0 !important;
         padding: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 100vw !important;
-        height: 100vh !important;
         background: white !important;
+        width: 100% !important;
+        min-height: 100vh !important; /* Fill full page height */
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 
     #quotePrintArea {
-        /* Standard A4 (210mm) - 2cm (1cm each side) = 190mm */
-        width: 190mm !important;
-        max-width: 190mm !important;
+        width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
         background: white !important;
@@ -1909,11 +1997,30 @@ tbody tr:hover {
     }
 
     .quote-sheet-wrapper {
-        font-size: 10px !important;
+        font-size: 10pt !important;
+        line-height: 1.5;
         margin: 0 !important;
         width: 100% !important;
         box-shadow: none !important;
         border: none !important;
+    }
+
+    .quote-header-info, 
+    .quote-body-table, 
+    .quote-footer-grid {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important; /* Force grid rigidity */
+    }
+
+    .info-box, .remark-box, .price-box {
+        min-height: 45mm !important; /* Rigid height */
+        border: 1px solid var(--text-dark) !important;
+        padding: 3mm !important;
+    }
+
+    .quote-body-table {
+        min-height: 120mm !important; /* Locked main area */
     }
 
     /* Input/Textarea cleanup for print */
@@ -1922,7 +2029,7 @@ tbody tr:hover {
         background: transparent !important;
         resize: none !important;
         border: none !important;
-        color: #000 !important;
+        color: var(--text-dark) !important;
         padding: 0 !important;
         font-weight: bold;
     }
@@ -1999,36 +2106,63 @@ tbody tr:hover {
 }
 
 .filter-pill {
-    padding: 0.5rem 1.25rem;
-    border-radius: 10px;
+    padding: 0;
+    width: 44px;
+    /* Fixed square */
+    height: 48px;
+    /* Match bar height */
+    border-radius: 10px !important;
+    /* Unified 10px radius */
     background: transparent;
-    color: var(--text-muted);
+    color: var(--text-dark);
     font-size: 0.8125rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid transparent;
-    display: inline-flex;
+    border: 1.5px solid transparent;
+    display: flex !important;
     align-items: center;
-    gap: 0;
-    white-space: nowrap;
-}
-
-.filter-pill.active {
-    background: #bbf7d0; /* Same green as plus button but for active state */
-    color: #166534; /* Darker green text for contrast */
-    border-color: #86efac;
-    box-shadow: 0 4px 10px rgba(6, 199, 85, 0.1);
+    justify-content: center;
+    margin: 0 !important;
+    box-sizing: border-box;
 }
 
 .filter-pill:hover:not(.active) {
-    background: #e2e8f0;
+    border: 1.5px solid var(--color-hover-blue) !important;
+    background: transparent !important;
+    color: var(--color-hover-blue) !important;
+}
+
+.filter-pill.active {
+    background: #BBF7D0 !important;
+    border: 1.5px solid transparent !important;
+    color: var(--text-dark);
+}
+
+.filter-pill.active:hover {
+    background: #BBF7D0 !important;
+    border: 1.5px solid #0085FF !important;
     color: var(--text-dark);
 }
 
 .filter-pill:active {
-    background: var(--color-active-bg);
-    transform: scale(0.98);
+    background: #BBF7D0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Force shoulder-to-shoulder layout for task filters */
+.row-flex {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+background: var(--color-active-bg);
+transform: scale(0.98);
 }
 
 /* Action Icon Hover State */
@@ -2101,8 +2235,9 @@ tbody tr:hover {
 }
 
 .task-divider.drag-over {
-    background: var(--primary-30);
-    /* 綠色 30% 透明度 */
+    height: 3px;
+    background: rgba(0, 200, 0, 0.3);
+    margin: 4px 0;
 }
 
 /* Task Item Cell Styling */
@@ -2332,22 +2467,31 @@ tbody tr:hover {
 .wf-label-input {
     flex: 0 0 25%;
     background: transparent !important;
-    border: none !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px;
     font-size: 0.8125rem !important;
     color: var(--text-muted) !important;
     font-weight: 500 !important;
     text-align: left !important;
     cursor: text;
-    padding: 0 !important;
+    padding: 2px 4px !important;
+    transition: all 0.2s;
+}
+
+.wf-label-input:hover {
+    border-color: #00C800 !important;
 }
 
 .wf-label-input:focus {
     color: var(--primary);
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 5px var(--primary-30) !important;
 }
 
 .task-inline-input {
     width: 100%;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
+    /* Balanced padding */
     background: #eef2f6;
     border: 1.5px solid transparent;
     border-radius: 12px;
@@ -2355,12 +2499,28 @@ tbody tr:hover {
     color: #5e6d82;
     font-weight: 600;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    /* Ensure same font for dates */
+    -webkit-appearance: none;
+    /* Strip mobile system styles */
+    appearance: none;
+}
+
+.task-inline-input:hover {
+    border-color: #0085FF;
+}
+
+/* Specifically for dates to look identical to text pointers */
+input[type="date"].task-inline-input {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
 }
 
 .task-inline-input:focus {
     background: white;
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 5px var(--primary-30);
     outline: none;
     color: var(--text-dark);
 }
@@ -2423,12 +2583,13 @@ tbody tr:hover {
 .compact-form-row textarea {
     padding: 10px 16px;
     background: #f8fafc;
-    border: 1px solid transparent;
+    border: 1.5px solid #f8fafc; /* Match background for stability */
     border-radius: 10px;
     font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-dark);
     font-family: inherit;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .compact-form-row input {
@@ -2436,17 +2597,25 @@ tbody tr:hover {
     text-align: center;
 }
 
-.compact-form-row input:focus {
+.compact-form-row input:hover,
+.compact-form-row textarea:hover {
+    border-color: #0085FF !important;
+}
+
+.compact-form-row input:focus,
+.compact-form-row textarea:focus {
     background: white;
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(0, 200, 0, 0.08);
+    box-shadow: 0 0 0 5px var(--primary-30);
+    outline: none;
 }
 
 /* Premium Profile Modal Styles */
 #profileModal .modal-card {
     max-width: 440px;
     padding: 32px 24px;
-    border-radius: 28px;
+    border-radius: 10px;
+    /* Standardized to 10px */
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
@@ -2479,7 +2648,8 @@ tbody tr:hover {
 #profileModal .bind-card .icon-box {
     width: 40px;
     height: 40px;
-    border-radius: 12px;
+    border-radius: 10px;
+    /* Standardized to 10px */
 }
 
 #profileModal .bind-card .info {
@@ -2487,10 +2657,10 @@ tbody tr:hover {
 }
 
 #profileModal .bind-btn-blue {
-    background: #0085FF !important;
-    box-shadow: 0 4px 12px rgba(0, 133, 255, 0.25) !important;
+    background: var(--primary) !important;
+    box-shadow: 0 4px 12px rgba(0, 200, 0, 0.25) !important;
     padding: 8px 20px !important;
-    border-radius: 100px !important;
+    border-radius: 10px !important;
 }
 
 /* Rounded Inputs with light grey background */
@@ -2511,9 +2681,9 @@ tbody tr:hover {
 #profileForm input {
     flex: 1;
     background: #f4f7f9;
-    /* Light grey pill */
+    /* Light grey rounded rectangle */
     border: 2px solid transparent;
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 10px 16px;
     text-align: center;
     font-weight: 700;
@@ -2522,10 +2692,20 @@ tbody tr:hover {
     transition: all 0.2s;
 }
 
-#profileForm input:focus {
-    background: white;
-    border-color: #00C800;
-    box-shadow: 0 4px 10px rgba(0, 200, 0, 0.05);
+#profileModal input:hover,
+#profileModal textarea:hover,
+.compact-form-row input:hover,
+.compact-form-row textarea:hover {
+    border-color: #0085FF !important;
+    border-width: 1.5px !important;
+    border-style: solid !important;
+}
+
+#profileForm input:focus,
+.compact-form-row input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 5px var(--primary-30) !important;
+    background: white !important;
 }
 
 /* Navigation Grid Refining */
@@ -2538,21 +2718,23 @@ tbody tr:hover {
 
 #profileModal .nav-shortcut-card {
     background: #f8fafc;
-    border-radius: 16px;
-    padding: 14px 8px;
-    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 12px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid transparent; /* Match input standard */
 }
 
 #profileModal .nav-shortcut-card:hover {
     background: white;
-    border-color: #f1f5f9;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    border-color: var(--color-hover-blue);
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 #profileModal .nav-shortcut-card i {
@@ -2570,7 +2752,7 @@ tbody tr:hover {
 /* Footer Buttons */
 #profileModal .primary-btn {
     background: #06C755 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     font-weight: 700;
     box-shadow: none !important;
     border: none !important;
@@ -2583,7 +2765,7 @@ tbody tr:hover {
 
 #profileModal .secondary-btn {
     background: #f1f5f9 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     color: #C0C6CF !important;
     border: none !important;
     height: 44px;
@@ -2626,7 +2808,7 @@ tbody tr:hover {
 }
 
 #profileModal .bind-btn-blue {
-    background: #0085FF;
+    background: #00C800;
     color: white;
     border: none;
     padding: 8px 20px;
@@ -2667,4 +2849,30 @@ tbody tr:hover {
     letter-spacing: 0.05rem;
     opacity: 0.4;
     font-weight: 500;
+}
+
+/* Hide native date picker icon when requested */
+.no-native-icon::-webkit-calendar-picker-indicator {
+    display: none !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    -webkit-appearance: none;
+}
+/* --- Task List Refinements --- */
+.task-date-separator {
+    margin: 12px 0 12px;
+    padding: 0;
+    border-bottom: 2px solid #e2e8f0; /* Default 2px gray */
+    list-style: none;
+    transition: all 0.2s ease;
+    height: 1px; /* Minimal height since no text */
+}
+
+/* Logic for active/drag state feedback */
+.task-date-separator.drag-over {
+    border-bottom-color: rgba(34, 197, 94, 0.3); /* 30% Green */
+    border-bottom-width: 3px;
 }

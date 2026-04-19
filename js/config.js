@@ -12,6 +12,10 @@ window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) ||
 window.projectPage = 1;
 window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 7;
 
+// --- Performance Optimization: Task Order Debounce ---
+let taskOrderSyncTimer = null;
+const TASK_ORDER_SYNC_DELAY = 1500; // 1.5 seconds buffer
+
 window.allMembers = [];
 window.allProjects = []; // Added here as a base
 window.currentUser = null;

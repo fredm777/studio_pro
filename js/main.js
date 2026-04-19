@@ -35,7 +35,7 @@ function initEventListeners() {
 
     safeBind('addCustomerBtn', 'onclick', () => showCustomerEditor('新增客戶資料'));
     safeBind('addProjectBtn', 'onclick', () => showQuotationEditor('建立新報價單'));
-    safeBind('addTaskBtn', 'onclick', () => window.addNewTaskInline());
+    safeBind('addTaskBtn', 'onclick', () => window.addTaskInline());
     const custForm = document.getElementById('customerForm');
     if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); window.saveCustomer(); };
 
@@ -50,7 +50,7 @@ function initEventListeners() {
 
     // --- Global Add Button Logic Removed (Now handled by localized card-add-buttons) ---
 
-    // --- Section-specific Search Logic ---
+    // Section-specific Search Logic
     const customerSearch = document.getElementById('customerSearchInput');
     if (customerSearch) {
         customerSearch.oninput = (e) => {
@@ -64,6 +64,27 @@ function initEventListeners() {
             if (typeof filterProjects === 'function') filterProjects(e.target.value);
         };
     }
+
+    // --- Shortcuts: Cmd+S or Ctrl+S for Save ---
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            const editView = document.getElementById('projectsEditView');
+            if (editView && editView.classList.contains('active')) {
+                e.preventDefault();
+                console.log(">> Shortcut: Trigerring Save...");
+                if (typeof window.handleQuotationSubmit === 'function') {
+                    window.handleQuotationSubmit(null, false); // Manual sync
+                }
+            }
+        }
+    });
+
+    // --- Browser Navigation Guard ---
+    window.onbeforeunload = function() {
+        if (window.isQuotationModified) {
+            return "報價單內容已修改，確定要離開嗎？";
+        }
+    };
 
     // Profile Modal outside-click
     const pModal = document.getElementById('profileModal');
@@ -80,7 +101,7 @@ function initEventListeners() {
     if (itemsInput) {
         itemsInput.value = window.itemsPerPage;
         itemsInput.oninput = (e) => {
-            const val = parseInt(e.target.value) || 20;
+            const val = parseInt(e.target.value) || 7;
             window.itemsPerPage = val;
             localStorage.setItem('st_pro_items_per_page', window.itemsPerPage);
             window.currentPage = 1;
@@ -88,7 +109,7 @@ function initEventListeners() {
         };
         itemsInput.onwheel = (e) => {
             e.preventDefault();
-            let val = parseInt(itemsInput.value) || 20;
+            let val = parseInt(itemsInput.value) || 7;
             if (e.deltaY < 0) val += 5; else val -= 5;
             if (val < 1) val = 1;
             if (val > 200) val = 200;
@@ -105,7 +126,7 @@ function initEventListeners() {
     if (projItemsInput) {
         projItemsInput.value = window.projectItemsPerPage;
         projItemsInput.oninput = (e) => {
-            const val = parseInt(e.target.value) || 20;
+            const val = parseInt(e.target.value) || 7;
             window.projectItemsPerPage = val;
             localStorage.setItem('st_pro_project_items_per_page', window.projectItemsPerPage);
             window.projectPage = 1;
@@ -113,7 +134,7 @@ function initEventListeners() {
         };
         projItemsInput.onwheel = (e) => {
             e.preventDefault();
-            let val = parseInt(projItemsInput.value) || 20;
+            let val = parseInt(projItemsInput.value) || 7;
             if (e.deltaY < 0) val += 5; else val -= 5;
             if (val < 1) val = 1;
             if (val > 200) val = 200;
@@ -138,11 +159,14 @@ function initEventListeners() {
 
     window.addEventListener('keydown', (e) => {
         // --- Navigation Shortcuts ---
-        if ((e.metaKey || e.ctrlKey) && ['1', '2', '3'].includes(e.key)) {
+        if ((e.metaKey || e.ctrlKey) && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
             e.preventDefault();
             if (e.key === '1') switchToTab('customers');
             if (e.key === '2') switchToTab('projects');
             if (e.key === '3') switchToTab('tasks');
+            if (e.key === '4') routeFromProfile('settings', 'bankSettingsView');
+            if (e.key === '5') routeFromProfile('settings', 'workflowSettingsView');
+            if (e.key === '6') routeFromProfile('permissions', 'permissionsListView');
             return;
         }
 

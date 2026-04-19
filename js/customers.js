@@ -86,7 +86,16 @@ window.renderCustomers = function() {
     const paginatedData = window.currentFilteredCustomers.slice(startIndex, startIndex + window.itemsPerPage);
     
     if (paginatedData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem;">沒有符合的資料</td></tr>`;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center; padding: 60px 0; color: var(--text-muted); opacity: 0.6;">
+                    <div style="margin-bottom: 20px;">
+                        <img src="assets/icons/users.svg" style="width: 64px; height: 64px; filter: grayscale(1) brightness(1.5); opacity: 0.3;">
+                    </div>
+                    <p style="font-size: 0.9375rem;">目前沒有符合條件的客戶資料</p>
+                </td>
+            </tr>
+        `;
         return;
     }
 
@@ -103,10 +112,25 @@ window.renderCustomers = function() {
     if (window.lucide) lucide.createIcons();
 }
 
-window.switchSubView = function(tabId, viewType) {
+window.switchSubView = async function(tabId, viewType) {
+    // Safety check for unsaved quotation changes
+    if (window.isQuotationModified && viewType === 'list' && tabId === 'projects') {
+        const result = await Swal.fire({
+            title: '尚未儲存',
+            text: '報價單內容已修改，確定要離開嗎？（未儲存的變更將遺失）',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '確定離開',
+            cancelButtonText: '留下來儲存',
+            confirmButtonColor: '#ef4444'
+        });
+        if (!result.isConfirmed) return;
+        window.isQuotationModified = false; // Reset if they force leave
+    }
+
     const section = document.getElementById(tabId);
     if (!section) return;
-
+    
     const listView = section.querySelector('.sub-view-stack[id$="ListView"]');
     const editView = section.querySelector('.sub-view-stack[id$="EditView"]');
 
