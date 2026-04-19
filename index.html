@@ -696,11 +696,13 @@
                             <table>
                                 <thead>
                                     <tr class="sortable-row">
-                                        <th>客戶名稱</th>
-                                        <th>日期</th>
-                                        <th>專案名稱</th>
-                                        <th>承辦人員</th>
-                                        <th>總計 (含稅)</th>
+                                        <th onclick="toggleProjectSort('customer')" class="sortable-header" id="th-customer">客戶名稱 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleProjectSort('date')" class="sortable-header" id="th-date">日期 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleProjectSort('projectName')" class="sortable-header" id="th-projectName">專案名稱 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleProjectSort('pic')" class="sortable-header" id="th-pic">承辦人員 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleProjectSort('depositPaid')" class="sortable-header" id="th-depositPaid" style="min-width: 100px;">已收款項 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleProjectSort('balanceDue')" class="sortable-header" id="th-balanceDue" style="min-width: 100px;">應收尾款 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleProjectSort('total')" class="sortable-header" id="th-total">總計 (含稅) <span class="sort-icon"></span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="projectTableBody"></tbody>
@@ -1076,7 +1078,7 @@
                                                 <td class="text-right fw-bold" style="font-size: 1.1em;"><span id="qTotal">0</span></td>
                                             </tr>
                                             <tr>
-                                                <td class="bg-light text-center fw-bold">已收訂金</td>
+                                                <td class="bg-light text-center fw-bold">已收款項</td>
                                                 <td class="text-right">
                                                     <input type="number" id="qDepositPaid" class="text-right" value="0" 
                                                            style="font-weight:bold; color:var(--primary); width:100%;"

@@ -5,7 +5,7 @@ window.currentFilteredProjects = [];
 window.projectPage = 1;
 window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items_per_page')) || 7;
 
-// --- Sorting State --- (Deprecated but kept for compat)
+// --- Sorting State ---
 window.projectSortField = 'date';
 window.projectSortOrder = 'desc';
 // Initialize from cache or default to All (Pending + Ongoing + Completed)
@@ -63,6 +63,56 @@ window.setProjectStatusFilter = function(status) {
     
     window.projectPage = 1;
     window.renderProjects();
+};
+
+/**
+ * Toggle Project Sorting
+ */
+window.toggleProjectSort = function(field) {
+    if (window.projectSortField === field) {
+        // Toggle order
+        window.projectSortOrder = (window.projectSortOrder === 'asc') ? 'desc' : 'asc';
+    } else {
+        // New field
+        window.projectSortField = field;
+        // Default: dates and amounts descending (newest/most first), names ascending
+        if (['date', 'total', 'depositPaid', 'balanceDue'].includes(field)) {
+            window.projectSortOrder = 'desc';
+        } else {
+            window.projectSortOrder = 'asc';
+        }
+    }
+    
+    window.projectPage = 1;
+    window.renderProjects();
+};
+
+/**
+ * Update Header Icons UI
+ */
+window.updateProjectSortHeaderUI = function() {
+    // Clear all
+    document.querySelectorAll('.sortable-header').forEach(th => {
+        th.classList.remove('active', 'asc', 'desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.innerHTML = '';
+    });
+    
+    const activeTh = document.getElementById(`th-${window.projectSortField}`);
+    if (activeTh) {
+        activeTh.classList.add('active', window.projectSortOrder);
+        const icon = activeTh.querySelector('.sort-icon');
+        if (icon) {
+            // Use Lucide if available, else simple arrows
+            if (window.lucide) {
+                const iconName = window.projectSortOrder === 'asc' ? 'arrow-up-narrow' : 'arrow-down-wide';
+                icon.innerHTML = `<i data-lucide="${iconName}" style="width:14px; height:14px;"></i>`;
+                lucide.createIcons();
+            } else {
+                icon.innerText = window.projectSortOrder === 'asc' ? ' ↑' : ' ↓';
+            }
+        }
+    }
 };
 
 window.updateProjectFilterUI = function() {
@@ -157,6 +207,44 @@ window.renderProjects = function() {
         return matchesStatus && matchesQuery;
     });
 
+    // --- SORTING STEP ---
+    const field = window.projectSortField || 'date';
+    const order = window.projectSortOrder || 'desc';
+    const multi = (order === 'desc') ? -1 : 1;
+
+    window.currentFilteredProjects.sort((a, b) => {
+        let valA, valB;
+
+        switch (field) {
+            case 'customer':
+                const cA = window.allCustomers ? window.allCustomers.find(c => String(c.customerId) === String(a.customerId)) : null;
+                const cB = window.allCustomers ? window.allCustomers.find(c => String(c.customerId) === String(b.customerId)) : null;
+                valA = (cA ? (cA.companyName || cA.nickname || '') : '').toLowerCase();
+                valB = (cB ? (cB.companyName || cB.nickname || '') : '').toLowerCase();
+                break;
+            case 'date':
+                valA = a.date || '0000-00-00';
+                valB = b.date || '0000-00-00';
+                break;
+            case 'total':
+            case 'depositPaid':
+            case 'balanceDue':
+                valA = parseFloat(a[field]) || 0;
+                valB = parseFloat(b[field]) || 0;
+                break;
+            default:
+                valA = (a[field] || '').toLowerCase();
+                valB = (b[field] || '').toLowerCase();
+        }
+
+        if (valA < valB) return -1 * multi;
+        if (valA > valB) return 1 * multi;
+        return 0;
+    });
+
+    // Update Header UI
+    window.updateProjectSortHeaderUI();
+
     tbody.innerHTML = '';
     if (window.currentFilteredProjects.length === 0) {
         tbody.innerHTML = `
@@ -191,6 +279,9 @@ window.renderProjects = function() {
         const custDisp = cust ? (cust.companyName || cust.nickname) : proj.customerId;
         const dateStr = proj.date || '';
         const totalDisp = proj.total ? Number(proj.total).toLocaleString() : '0';
+        const depositDisp = proj.depositPaid ? Number(proj.depositPaid).toLocaleString() : '0';
+        const balanceDisp = proj.balanceDue ? Number(proj.balanceDue).toLocaleString() : '0';
+        const balanceStyle = (parseFloat(proj.balanceDue) > 0) ? 'color: #ef4444; font-weight: 500;' : 'color: #94a3b8;';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -198,6 +289,8 @@ window.renderProjects = function() {
             <td>${dateStr}</td>
             <td>${proj.projectName || ''}</td>
             <td>${proj.pic || ''}</td>
+            <td style="color:var(--text-muted);">$${depositDisp}</td>
+            <td style="${balanceStyle}">$${balanceDisp}</td>
             <td style="font-weight:700; color:var(--primary);">$${totalDisp}</td>
         `;
         tr.style.cursor = 'pointer';
@@ -468,14 +561,13 @@ function addQuotationRow(data = null) {
     const rowIdx = tbody.children.length + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td class="text-center" style="cursor: pointer;" title="連點兩下刪除此列" ondblclick="if(confirm('確定要刪除此列項目？')) { this.closest('tr').remove(); calcQuotation(); triggerQuotationAutoSave(); }">${rowIdx}</td>
+        <td class="text-center" style="cursor: pointer; color: var(--primary); font-weight: 700;" title="連點兩下刪除此列" ondblclick="if(confirm('確定要刪除此列項目？')) { this.closest('tr').remove(); calcQuotation(); triggerQuotationAutoSave(); }">${rowIdx}</td>
         <td><input class="i-name" placeholder="項目名稱" value="${data ? data.name : ''}" oninput="triggerQuotationAutoSave()"></td>
         <td><textarea class="i-content" placeholder="細項詳述..." rows="1" style="resize:vertical;" oninput="triggerQuotationAutoSave()">${data ? data.content : ''}</textarea></td>
         <td><input type="number" class="i-price text-right" value="${data ? data.price : ''}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
         <td><input type="number" class="i-qty text-center" value="${data ? data.qty : 1}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
-        <td style="position:relative;">
+        <td>
             <input type="number" class="i-total text-right fw-bold" readonly tabindex="-1" value="${data ? data.subtotal : 0}">
-            <div class="remove-btn-dense" onclick="this.closest('tr').remove(); calcQuotation(); triggerQuotationAutoSave();" style="position:absolute; right:-25px; top:50%; transform:translateY(-50%); font-size:18px;" title="移除此列">&times;</div>
         </td>
     `;
     tbody.appendChild(tr);
