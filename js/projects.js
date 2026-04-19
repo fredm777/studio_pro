@@ -616,11 +616,19 @@ window.triggerQuotationAutoSave = function() {
 }
 
 let isSavingQuotation = false;
+let nextSavePending = false; // Queue for rapid edits
 window.isQuotationModified = false; // Flag for unsaved changes
 
 window.handleQuotationSubmit = async function (e, isBackground = false) {
     if (e) e.preventDefault();
-    if (isSavingQuotation) return;
+    
+    if (isSavingQuotation) {
+        if (isBackground) {
+            console.log(">> Save in progress, queueing next background save...");
+            nextSavePending = true;
+        }
+        return;
+    }
 
     if (!isBackground) setSyncStatus(true);
     isSavingQuotation = true;
@@ -712,6 +720,13 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
     } finally {
         isSavingQuotation = false;
         if (!isBackground) setSyncStatus(false);
+        
+        // Handle Queued Save
+        if (nextSavePending) {
+            console.log(">> Triggering queued save...");
+            nextSavePending = false;
+            window.handleQuotationSubmit(null, true);
+        }
     }
 };
 
