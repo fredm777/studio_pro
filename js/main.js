@@ -85,23 +85,21 @@ function initEventListeners() {
             return;
         }
 
-        const activeStack = e.target.closest('.sub-view-stack.active');
+        // --- ENHANCED: Precise Background Closing ---
+        // Restricted per user request: Quotation/Project editor should NOT close on outside click.
+        // Only other views (like Customers) will maintain this behavior for now.
+        const activeStack = document.querySelector('.sub-view-stack.active');
         if (activeStack && activeStack.id.includes('EditView')) {
-            // Whitelist: common editor components
-            const isInteractive = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'LABEL'].includes(e.target.tagName);
-            const isPaperArea = e.target.closest('.edit-card') || 
-                               e.target.closest('.quote-sheet-wrapper') || 
-                               e.target.closest('.form-actions');
-            
-            // Only close if it's a strict background element OR not in a paper area/interactive element
-            const isBackground = e.target.classList.contains('sub-view-stack') || 
-                                e.target.classList.contains('card-wrapper');
-            
-            const isOutside = isBackground || (!isInteractive && !isPaperArea);
-            
-            if (isOutside) {
+            // CRITICAL: Skip if it's the projects/quotation editor
+            if (activeStack.id === 'projectsEditView') return;
+
+            const isRootBackground = (e.target === activeStack) || 
+                                     (e.target.classList.contains('card-wrapper')) ||
+                                     (e.target.classList.contains('sub-view-stack'));
+
+            if (isRootBackground) {
                 const tabId = activeStack.id.replace('EditView', '').replace('ListView', '');
-                console.log(">> Clicked outside card, returning to list for tab:", tabId);
+                console.log(">> Clicked Background: returning to list for tab:", tabId);
                 if (typeof window.switchSubView === 'function') {
                     window.switchSubView(tabId, 'list');
                 }
@@ -150,7 +148,8 @@ function initEventListeners() {
 
     // Component-specific inits wrapped in safety checks
     if (typeof window.initQuotationAutocomplete === 'function') {
-        initQuotationAutocomplete();
+        console.log(">> [INIT] Binding Quotation Autocomplete...");
+        window.initQuotationAutocomplete();
     } else {
         console.warn(">> [INIT WARNING] initQuotationAutocomplete not found in projects.js");
     }
@@ -362,6 +361,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(">> LINE Redirect detected, awaiting processing...");
             await handleLiffRedirect();
         }
+        
+        // Pre-fetch system settings for automation
+        if (typeof fetchSettings === 'function') fetchSettings();
 
         if (!window.currentUser && document.querySelectorAll('.auth-stage.active').length === 0) {
             checkAuth();

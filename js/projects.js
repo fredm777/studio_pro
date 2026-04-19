@@ -266,8 +266,40 @@ window.showQuotationEditor = function(title, data = null) {
             if (window.currentUser.phone && document.getElementById('qStudioPhone')) document.getElementById('qStudioPhone').innerText = window.currentUser.phone;
             if (window.currentUser.email && document.getElementById('qStudioEmail')) document.getElementById('qStudioEmail').innerText = window.currentUser.email;
         }
+
+        // --- NEW: Auto-import System Settings (Values only for NEW) ---
+        if (window.sysSettingsCache) {
+            const s = window.sysSettingsCache;
+            // 1. Bank/Remittance formatting
+            const bankStr = [
+                s.bank_name ? `銀行：${s.bank_name}${s.bank_code ? ' (' + s.bank_code + ')' : ''}` : '',
+                s.bank_branch ? `分行：${s.bank_branch}${s.branch_code ? ' (' + s.branch_code + ')' : ''}` : '',
+                s.account_name ? `戶名：${s.account_name}` : '',
+                s.account_num ? `帳號：${s.account_num.replace(/^'/, '')}` : ''
+            ].filter(x => x).join('\n');
+            if (document.getElementById('qBankData')) document.getElementById('qBankData').value = bankStr;
+
+            // 2. Workflow Contents
+            if (document.getElementById('qWfOrder')) document.getElementById('qWfOrder').value = s.wf_order || '';
+            if (document.getElementById('qWfDeposit')) document.getElementById('qWfDeposit').value = s.wf_deposit || '';
+            if (document.getElementById('qWfDraft')) document.getElementById('qWfDraft').value = s.wf_draft || '';
+            if (document.getElementById('qWfEdit')) document.getElementById('qWfEdit').value = s.wf_edit || '';
+            if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = s.wf_delivery || '';
+            if (document.getElementById('qWfRemark')) document.getElementById('qWfRemark').value = s.wf_remark || '';
+        }
         
         addQuotationRow(); 
+    }
+
+    // --- GLOBAL: Sync Labels from System Settings (ALWAYS RUN) ---
+    if (window.sysSettingsCache) {
+        const s = window.sysSettingsCache;
+        if (document.getElementById('qWfOrderLbl')) document.getElementById('qWfOrderLbl').innerText = s.wf_order_lbl || '訂購單';
+        if (document.getElementById('qWfDepositLbl')) document.getElementById('qWfDepositLbl').innerText = s.wf_deposit_lbl || '訂金';
+        if (document.getElementById('qWfDraftLbl')) document.getElementById('qWfDraftLbl').innerText = s.wf_draft_lbl || '初稿';
+        if (document.getElementById('qWfEditLbl')) document.getElementById('qWfEditLbl').innerText = s.wf_edit_lbl || '修改次數';
+        if (document.getElementById('qWfDeliveryLbl')) document.getElementById('qWfDeliveryLbl').innerText = s.wf_delivery_lbl || '交付內容';
+        if (document.getElementById('qWfRemarkLbl')) document.getElementById('qWfRemarkLbl').innerText = s.wf_remark_lbl || '其他';
     }
     
     if (window.lucide) lucide.createIcons();
@@ -650,9 +682,21 @@ window.preparePrint = function() {
 }
 
 window.initQuotationAutocomplete = function() {
+    console.log(">> Initializing Quotation Autocomplete (Downloads-logic-optimized)");
     const input = document.getElementById('qCustSearch');
     const suggest = document.getElementById('autocompleteSuggestions');
     if (!input || !suggest) return;
+
+    // Load data if missing
+    if (!window.allCustomers || window.allCustomers.length === 0) {
+        if (typeof fetchCustomers === 'function') {
+            console.log(">> Customer data missing for autocomplete, triggering fetch...");
+            fetchCustomers();
+        }
+    }
+
+    if (input.dataset.autocompleteBound) return;
+    input.dataset.autocompleteBound = 'true';
 
     input.addEventListener('input', (e) => {
         const val = e.target.value.trim().toLowerCase();
@@ -661,39 +705,77 @@ window.initQuotationAutocomplete = function() {
             return;
         }
 
-        console.log(">> Searching for customer:", val, "Available:", (window.allCustomers || []).length);
+        // Safety Pre-fetch Check
+        if (!window.allCustomers || window.allCustomers.length === 0) {
+            console.log(">> Emergency pre-fetch triggered by input event...");
+            if (typeof fetchCustomers === 'function') fetchCustomers();
+        }
 
-        const matches = (window.allCustomers || []).filter(c => 
-            (c.companyName || '').toLowerCase().includes(val) ||
-            (c.nickname || '').toLowerCase().includes(val) ||
-            (c.contact || '').toLowerCase().includes(val) ||
-            (c.taxId || '').toLowerCase().includes(val) ||
-            (c.phone || '').toLowerCase().includes(val) ||
-            (c.email || '').toLowerCase().includes(val) ||
-            (c.address || '').toLowerCase().includes(val)
-        ).slice(0, 10);
+        // Reset linked ID if user types manually
+        if (input.dataset.selectedId) {
+            delete input.dataset.selectedId;
+            const qCustName = document.getElementById('qCustName');
+            if (qCustName) qCustName.value = '';
+        }
+
+        // --- Downloads-Logic: Explicit field matching for accuracy ---
+        const matches = (window.allCustomers || []).filter(c => {
+            const cn = (c.companyName || '').toLowerCase();
+            const nk = (c.nickname || '').toLowerCase();
+            const ct = (c.contact || '').toLowerCase();
+            const tx = (c.taxId || '').toLowerCase();
+            const ph = (c.phone || '').toLowerCase();
+            const em = (c.email || '').toLowerCase();
+            
+            return cn.includes(val) || nk.includes(val) || ct.includes(val) || 
+                   tx.includes(val) || ph.includes(val) || em.includes(val);
+        }).slice(0, 10);
 
         if (matches.length === 0) {
-            suggest.style.display = 'none';
-        } else {
-            suggest.innerHTML = matches.map(c => `
-                <div class="suggestion-item" onmousedown="window.selectQuotationCustomer('${c.customerId}')">
-                    <div class="s-name">${c.companyName || c.nickname}</div>
-                    <div class="s-meta">
-                        ${c.taxId ? '統編: ' + c.taxId : ''} 
-                        ${c.nickname ? ' | ' + c.nickname : ''}
-                        ${c.phone ? ' | ' + c.phone : ''}
-                    </div>
+            suggest.innerHTML = `
+                <div class="suggestion-item no-results" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
+                    <i data-lucide="search" style="width: 20px; height: 20px; margin-bottom: 8px; opacity: 0.5;"></i>
+                    <div>查無相符客戶資料</div>
                 </div>
-            `).join('');
+            `;
+            suggest.style.display = 'block';
+            if (window.lucide) lucide.createIcons();
+        } else {
+            console.log(`>> Autocomplete: matches confirmed [${matches.length}] for "${val}"`);
+            const cleanData = (v) => String(v || '').replace(/^'/, '').trim();
+
+            suggest.innerHTML = matches.map(c => {
+                const taxDisp = cleanData(c.taxId);
+                const phoneDisp = cleanData(c.phone);
+                const nameDisp = c.companyName || c.nickname || '未命名';
+                const nickDisp = (c.nickname && c.companyName) ? `(${c.nickname})` : '';
+                
+                return `
+                    <div class="suggestion-item" onmousedown="window.selectQuotationCustomer('${c.customerId}')" style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+                        <div class="s-name" style="font-weight: 700; color: #1e293b; margin-bottom: 3px; font-size: 0.9375rem; text-align: left;">
+                            ${nameDisp} <span style="font-weight: 400; font-size: 0.8em; opacity: 0.7; margin-left: 4px; color: #64748b;">${nickDisp}</span>
+                        </div>
+                        <div class="s-meta" style="font-size: 0.75rem; color: #64748b; display: flex; gap: 8px; flex-wrap: wrap; text-align: left;">
+                            ${taxDisp ? `<span>統編: ${taxDisp}</span>` : ''}
+                            ${c.contact ? `<span> | 窗口: ${c.contact}</span>` : ''}
+                            ${phoneDisp ? `<span> | 電話: ${phoneDisp}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
             suggest.style.display = 'block';
         }
-        
-        // Mark as modified on typing
         window.isQuotationModified = true;
     });
 
-    // Handle blur and outside clicks
+    // Handle focus to show results if already typed
+    input.addEventListener('focus', () => {
+        if (input.value.trim()) {
+            input.dispatchEvent(new Event('input'));
+        }
+    });
+
+    // Handle outside clicks
     document.addEventListener('mousedown', (e) => {
         if (!input.contains(e.target) && !suggest.contains(e.target)) {
             suggest.style.display = 'none';
@@ -702,44 +784,44 @@ window.initQuotationAutocomplete = function() {
 };
 
 window.selectQuotationCustomer = function(id) {
-    const cust = (window.allCustomers || []).find(c => String(c.customerId) === String(id));
+    if (!window.allCustomers) return;
+    const cust = window.allCustomers.find(c => String(c.customerId) === String(id));
     if (!cust) return;
 
     const input = document.getElementById('qCustSearch');
+    const hiddenName = document.getElementById('qCustName');
     const suggest = document.getElementById('autocompleteSuggestions');
     
     // Clean leading quotes from Excel/Sheets import
     const clean = (val) => String(val || '').replace(/^'/, '').trim();
 
-    // 1. Fill Header Inputs
+    // 1. Fill Identity Fields
+    const displayName = cust.companyName || cust.nickname || '';
     if (input) {
-        input.value = cust.companyName || cust.nickname || '';
+        input.value = displayName;
         input.dataset.selectedId = cust.customerId;
     }
+    if (hiddenName) hiddenName.value = displayName;
     
-    const fields = {
-        'qTaxId': clean(cust.taxId),
-        'qContact': cust.contact || '',
-        'qPhone': clean(cust.phone),
-        'qEmail': cust.email || '',
-        'qAddress': cust.address || ''
-    };
+    // 2. Exact Field Filling (Restored from stable version)
+    const qTaxId = document.getElementById('qTaxId');
+    const qContact = document.getElementById('qContact');
+    const qPhone = document.getElementById('qPhone');
+    const qEmail = document.getElementById('qEmail');
 
-    Object.entries(fields).forEach(([elId, val]) => {
-        const el = document.getElementById(elId);
-        if (el) el.value = val;
-    });
+    if (qTaxId) qTaxId.value = clean(cust.taxId);
+    if (qContact) qContact.value = cust.contact || '';
+    if (qPhone) qPhone.value = clean(cust.phone);
+    if (qEmail) qEmail.value = cust.email || '';
 
-    // 2. Hide suggestions
+    // 3. Hide suggestions
     if (suggest) suggest.style.display = 'none';
     
-    // 3. Mark as modified
+    // 4. State Updates
     window.isQuotationModified = true;
-    
-    // 4. Trigger AutoSave for status sync
     if (typeof window.triggerQuotationAutoSave === 'function') {
         window.triggerQuotationAutoSave();
     }
     
-    console.log(">> Imported Customer Info:", name);
+    console.log(">> [SUCCESS] Imported Customer Info for:", displayName);
 };

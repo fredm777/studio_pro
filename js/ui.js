@@ -23,7 +23,8 @@ function initTabs() {
                     if (typeof fetchProjects === 'function') fetchProjects();
                 }
             } else if (tabId === 'projects') {
-                fetchProjects();
+                if (typeof fetchProjects === 'function') fetchProjects();
+                if (typeof fetchCustomers === 'function') fetchCustomers();
             } else {
                 renderCustomers();
             }

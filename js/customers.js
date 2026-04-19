@@ -1,9 +1,13 @@
 // Customer Management - Logic & CRUD
 // ==========================================
 
-// --- Sorting State --- (Deprecated but kept global vars for compatibility)
+// --- State ---
 window.customerSortField = 'companyName';
 window.customerSortOrder = 'asc';
+window.allCustomers = typeof getCache === 'function' ? getCache('customers') || [] : [];
+window.currentFilteredCustomers = [...window.allCustomers];
+window.currentPage = 1;
+window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 7;
 
 window.fetchCustomers = async function() {
     setSyncStatus(true);

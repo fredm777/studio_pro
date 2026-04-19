@@ -1602,20 +1602,20 @@ tbody tr:hover {
 
 /* Autocomplete Suggestions */
 .suggestions-list {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    min-width: 250px;
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    z-index: 10000;
-    max-height: 250px;
-    overflow-y: auto;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    width: 100% !important;
+    min-width: 350px !important; /* Wider for clear reading */
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+    z-index: 2147483647 !important; /* Max possible integer for z-index */
+    max-height: 300px !important;
+    overflow-y: auto !important;
     display: none;
-    margin-top: 4px;
+    margin-top: 8px !important;
 }
 
 .suggestion-item {
@@ -1637,13 +1637,15 @@ tbody tr:hover {
 }
 
 .suggestion-item .s-name {
-    font-weight: 600;
-    color: var(--text-dark);
+    font-weight: 700;
+    color: #1e293b; /* Darker Slate for better contrast */
+    text-align: left;
 }
 
 .suggestion-item .s-meta {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: #64748b;
+    text-align: left;
 }
 
 .suggestion-item .s-tax {
@@ -1675,6 +1677,13 @@ tbody tr:hover {
     border: 1px solid var(--text-dark);
     padding: 8px;
     vertical-align: top;
+    overflow: visible !important; /* CRITICAL: Ensure dropdowns aren't clipped */
+}
+
+/* Specific fix for the customer search cell */
+.quote-sheet-table td {
+    overflow: visible !important;
+    position: relative; /* Base for suggestions-list */
 }
 
 .items-table input,

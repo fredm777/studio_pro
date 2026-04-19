@@ -875,6 +875,15 @@
                                     .filter-pill.active img {
                                         filter: brightness(0.4) contrast(1.2) !important; /* Darken icon to match plus sign */
                                     }
+
+                                    /* Native Date Picker Refinements */
+                                    input[type="date"] {
+                                        border: 1px solid var(--text-dark); /* Keep it crisp but thin */
+                                    }
+                                    input[type="date"]:focus {
+                                        box-shadow: none !important; /* Remove the heavy green shadow */
+                                        border-color: var(--primary) !important;
+                                    }
                                 </style>
 
                             <div class="quote-sheet-wrapper" id="quotePrintArea">
@@ -890,7 +899,7 @@
                                         <tr>
                                             <td class="bg-light text-center">客戶名稱</td>
                                             <td style="position:relative;">
-                                                <input id="qCustSearch" placeholder="選擇或輸入客戶..." autocomplete="off">
+                                                <input id="qCustSearch" placeholder="選擇或輸入客戶..." autocomplete="off" onclick="event.stopPropagation()">
                                                 <div id="autocompleteSuggestions" class="suggestions-list"></div>
                                                 <input type="hidden" id="qCustName">
                                             </td>
@@ -921,10 +930,7 @@
                                             <td class="bg-light text-center">電子信箱</td>
                                             <td id="qStudioEmail" class="text-center">jjukvs@gmail.com</td>
                                         </tr>
-                                        <tr>
-                                            <td class="bg-light text-center">通訊地址</td>
-                                            <td colspan="3"><input id="qAddress" style="width:100%;" placeholder="主要通訊地址"></td>
-                                        </tr>
+
                                         <tr>
                                             <td class="bg-light text-center">專案名稱</td>
                                             <td><input id="qProjName" required placeholder="專案名稱" style="font-weight:bold;"></td>

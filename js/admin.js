@@ -29,6 +29,7 @@ async function fetchSettings() {
         });
         const json = await res.json();
         if (json.success && json.settings) {
+            window.sysSettingsCache = json.settings;
             const s = json.settings;
             if (document.getElementById('setBankName')) document.getElementById('setBankName').value = s.bank_name || '';
             if (document.getElementById('setBankCode')) document.getElementById('setBankCode').value = s.bank_code || '';
