@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Studio Pro Member System</title>
+    <title>Studio Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -491,27 +491,28 @@
                                     <input type="time" id="taskTime">
                                 </div>
 
-                        <div id="taskError" class="auth-error-inline"></div>
+                                <div id="taskError" class="auth-error-inline"></div>
 
-                        <div class="task-status-container">
-                            <div id="statusIncomplete" class="status-item active" onclick="setTaskEditorStatus(false)">
-                                <i data-lucide="square"></i>
-                                <span>未完成</span>
-                            </div>
-                            <div id="statusComplete" class="status-item" onclick="setTaskEditorStatus(true)">
-                                <i data-lucide="square-check"></i>
-                                <span>已完成</span>
-                            </div>
-                        </div>
+                                <div class="task-status-container">
+                                    <div id="statusIncomplete" class="status-item active"
+                                        onclick="setTaskEditorStatus(false)">
+                                        <i data-lucide="square"></i>
+                                        <span>未完成</span>
+                                    </div>
+                                    <div id="statusComplete" class="status-item" onclick="setTaskEditorStatus(true)">
+                                        <i data-lucide="square-check"></i>
+                                        <span>已完成</span>
+                                    </div>
+                                </div>
 
-                        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                            <button type="submit" class="save-btn" style="flex: 2;">儲存任務</button>
-                            <button type="button" class="back-btn" onclick="switchSubView('tasks', 'list')"
-                                style="flex: 1; justify-content: center;">取消</button>
-                        </div>
-                        </form>
-                    </div> <!-- end edit-card -->
-                </div> <!-- end tasksEditView -->
+                                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                    <button type="submit" class="save-btn" style="flex: 2;">儲存任務</button>
+                                    <button type="button" class="back-btn" onclick="switchSubView('tasks', 'list')"
+                                        style="flex: 1; justify-content: center;">取消</button>
+                                </div>
+                            </form>
+                        </div> <!-- end edit-card -->
+                    </div> <!-- end tasksEditView -->
             </section> <!-- end tasks section -->
 
             <section id="permissions" class="tab-content sub-view-container">
@@ -815,6 +816,11 @@
                                     text-align: center;
                                 }
 
+                                .quote-sheet-table .i-content {
+                                    text-align: left !important;
+                                    padding: 8px 10px !important;
+                                }
+
                                 .quote-sheet-table input:focus,
                                 .quote-sheet-table textarea:focus {
                                     background-color: #eef2ff;
@@ -863,28 +869,35 @@
                                     z-index: 10;
                                     transition: background 0.2s;
                                 }
-                                    .resizer:hover,
-                                    .resizing .resizer {
-                                        background-color: transparent;
-                                    }
-                                    /* Align All Filter Pills with Action Buttons */
-                                    .filter-pill.active {
-                                        background-color: var(--primary-light) !important;
-                                        border-color: var(--primary) !important;
-                                    }
-                                    .filter-pill.active img {
-                                        filter: brightness(0.4) contrast(1.2) !important; /* Darken icon to match plus sign */
-                                    }
 
-                                    /* Native Date Picker Refinements */
-                                    input[type="date"] {
-                                        border: 1px solid var(--text-dark); /* Keep it crisp but thin */
-                                    }
-                                    input[type="date"]:focus {
-                                        box-shadow: none !important; /* Remove the heavy green shadow */
-                                        border-color: var(--primary) !important;
-                                    }
-                                </style>
+                                .resizer:hover,
+                                .resizing .resizer {
+                                    background-color: transparent;
+                                }
+
+                                /* Align All Filter Pills with Action Buttons */
+                                .filter-pill.active {
+                                    background-color: var(--primary-light) !important;
+                                    border-color: var(--primary) !important;
+                                }
+
+                                .filter-pill.active img {
+                                    filter: brightness(0.4) contrast(1.2) !important;
+                                    /* Darken icon to match plus sign */
+                                }
+
+                                /* Native Date Picker Refinements */
+                                input[type="date"] {
+                                    border: 1px solid var(--text-dark);
+                                    /* Keep it crisp but thin */
+                                }
+
+                                input[type="date"]:focus {
+                                    box-shadow: none !important;
+                                    /* Remove the heavy green shadow */
+                                    border-color: var(--primary) !important;
+                                }
+                            </style>
 
                             <div class="quote-sheet-wrapper" id="quotePrintArea">
                                 <!-- Top Header Grid -->
@@ -899,7 +912,8 @@
                                         <tr>
                                             <td class="bg-light text-center">客戶名稱</td>
                                             <td style="position:relative;">
-                                                <input id="qCustSearch" placeholder="選擇或輸入客戶..." autocomplete="off" onclick="event.stopPropagation()">
+                                                <input id="qCustSearch" placeholder="選擇或輸入客戶..." autocomplete="off"
+                                                    onclick="event.stopPropagation()">
                                                 <div id="autocompleteSuggestions" class="suggestions-list"></div>
                                                 <input type="hidden" id="qCustName">
                                             </td>
@@ -933,7 +947,8 @@
 
                                         <tr>
                                             <td class="bg-light text-center">專案名稱</td>
-                                            <td><input id="qProjName" required placeholder="專案名稱" style="font-weight:bold;"></td>
+                                            <td><input id="qProjName" required placeholder="專案名稱"
+                                                    style="font-weight:bold;"></td>
                                             <td class="bg-light text-center">報價日期</td>
                                             <td><input id="qDate" type="date" class="text-center fw-bold"></td>
                                         </tr>
@@ -991,13 +1006,15 @@
                                                 <td id="qWfOrderLbl" class="bg-light text-center">訂購單</td>
                                                 <td style="padding: 0;"><textarea id="qWfOrder"
                                                         style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;"
-                                                        rows="2" placeholder="報價單承蒙認可簽署後..." oninput="triggerQuotationAutoSave()"></textarea></td>
+                                                        rows="2" placeholder="報價單承蒙認可簽署後..."
+                                                        oninput="triggerQuotationAutoSave()"></textarea></td>
                                             </tr>
                                             <tr>
                                                 <td id="qWfDepositLbl" class="bg-light text-center">訂金</td>
                                                 <td style="padding: 0;"><textarea id="qWfDeposit"
                                                         style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;"
-                                                        rows="1" placeholder="總額50%..." oninput="triggerQuotationAutoSave()"></textarea></td>
+                                                        rows="1" placeholder="總額50%..."
+                                                        oninput="triggerQuotationAutoSave()"></textarea></td>
                                             </tr>
                                             <tr>
                                                 <td class="bg-light text-center" style="vertical-align: middle;">匯款帳號
@@ -1005,32 +1022,37 @@
                                                 <td style="padding: 0;">
                                                     <textarea id="qBankData" rows="4"
                                                         style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;"
-                                                        placeholder="銀行：...\n戶名：...\n帳號：..." oninput="triggerQuotationAutoSave()"></textarea>
+                                                        placeholder="銀行：...\n戶名：...\n帳號：..."
+                                                        oninput="triggerQuotationAutoSave()"></textarea>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td id="qWfDraftLbl" class="bg-light text-center">初稿</td>
                                                 <td style="padding: 0;"><input id="qWfDraft"
                                                         style="border:none; background:transparent; outline:none; width:100%; padding:8px 12px; font-family:inherit; font-size:inherit;"
-                                                        placeholder="3 至 5 個工作天..." oninput="triggerQuotationAutoSave()"></td>
+                                                        placeholder="3 至 5 個工作天..."
+                                                        oninput="triggerQuotationAutoSave()"></td>
                                             </tr>
                                             <tr>
                                                 <td id="qWfEditLbl" class="bg-light text-center">修改次數</td>
                                                 <td style="padding: 0;"><textarea id="qWfEdit"
                                                         style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;"
-                                                        rows="2" placeholder="2次免費整體調整..." oninput="triggerQuotationAutoSave()"></textarea></td>
+                                                        rows="2" placeholder="2次免費整體調整..."
+                                                        oninput="triggerQuotationAutoSave()"></textarea></td>
                                             </tr>
                                             <tr>
                                                 <td id="qWfDeliveryLbl" class="bg-light text-center">交付內容</td>
                                                 <td style="padding: 0;"><textarea id="qWfDelivery"
                                                         style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;"
-                                                        rows="2" placeholder="定稿後，支付尾款..." oninput="triggerQuotationAutoSave()"></textarea></td>
+                                                        rows="2" placeholder="定稿後，支付尾款..."
+                                                        oninput="triggerQuotationAutoSave()"></textarea></td>
                                             </tr>
                                             <tr>
                                                 <td id="qWfRemarkLbl" class="bg-light text-center">其他</td>
                                                 <td style="padding: 0;"><textarea id="qWfRemark"
                                                         style="border:none; background:transparent; outline:none; width:100%; resize:vertical; padding:8px 12px; font-family:inherit; font-size:inherit; height:100%;"
-                                                        rows="2" placeholder="其他補充說明..." oninput="triggerQuotationAutoSave()"></textarea></td>
+                                                        rows="2" placeholder="其他補充說明..."
+                                                        oninput="triggerQuotationAutoSave()"></textarea></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -1042,19 +1064,28 @@
                                         </colgroup>
                                         <tbody>
                                             <tr>
-                                                <td class="bg-light text-center fw-bold" style="height: 33.33%;">稅前合計
-                                                </td>
+                                                <td class="bg-light text-center fw-bold">稅前合計</td>
                                                 <td class="text-right"><span id="qSubtotal">0</span></td>
                                             </tr>
                                             <tr>
-                                                <td class="bg-light text-center fw-bold" style="height: 33.33%;">5%營業稅
-                                                </td>
+                                                <td class="bg-light text-center fw-bold">5%營業稅</td>
                                                 <td class="text-right"><span id="qTax">0</span></td>
                                             </tr>
                                             <tr>
-                                                <td class="bg-light text-center fw-bold" style="height: 33.33%;">總額</td>
-                                                <td class="text-right fw-bold" style="font-size: 1.1em;"><span
-                                                        id="qTotal">0</span></td>
+                                                <td class="bg-light text-center fw-bold">總額</td>
+                                                <td class="text-right fw-bold" style="font-size: 1.1em;"><span id="qTotal">0</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center fw-bold">已收訂金</td>
+                                                <td class="text-right">
+                                                    <input type="number" id="qDepositPaid" class="text-right" value="0" 
+                                                           style="font-weight:bold; color:var(--primary); width:100%;"
+                                                           oninput="calcQuotation(); triggerQuotationAutoSave();">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="bg-light text-center fw-bold">尾款</td>
+                                                <td class="text-right fw-bold" style="color: #ef4444;"><span id="qBalanceDue">0</span></td>
                                             </tr>
                                         </tbody>
                                     </table>

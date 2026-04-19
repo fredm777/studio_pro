@@ -239,6 +239,7 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('qWfDeposit')) document.getElementById('qWfDeposit').value = data.wfDeposit || '';
         if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = data.wfDelivery || '';
         if (document.getElementById('qBankData')) document.getElementById('qBankData').value = data.bankData || '';
+        if (document.getElementById('qDepositPaid')) document.getElementById('qDepositPaid').value = data.depositPaid || 0;
         
         const finalStatus = String(data.status || '1');
         if (document.getElementById('projStatus')) document.getElementById('projStatus').value = finalStatus;
@@ -497,9 +498,13 @@ function calcQuotation() {
     });
     const tax = Math.round(subtotal * 0.05);
     const total = subtotal + tax;
+    const deposit = parseFloat(document.getElementById('qDepositPaid')?.value) || 0;
+    const balance = total - deposit;
+
     if (document.getElementById('qSubtotal')) document.getElementById('qSubtotal').innerText = subtotal.toLocaleString();
     if (document.getElementById('qTax')) document.getElementById('qTax').innerText = tax.toLocaleString();
     if (document.getElementById('qTotal')) document.getElementById('qTotal').innerText = total.toLocaleString();
+    if (document.getElementById('qBalanceDue')) document.getElementById('qBalanceDue').innerText = balance.toLocaleString();
 }
 
 let quotationAutoSaveTimer = null;
@@ -566,6 +571,8 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
         bankData: ensureLit(getVal('qBankData')),
         wfDelivery: getVal('qWfDelivery'),
         remark: getVal('qWfRemark'),
+        depositPaid: parseFloat(getVal('qDepositPaid')) || 0,
+        balanceDue: parseFloat(getText('qBalanceDue')) || 0,
         status: projStatus,
         isCompleted: projStatus === '3'
     };
