@@ -13,12 +13,6 @@ window.fetchTasks = async function () {
     document.getElementById('uncompletedFilterBtn')?.classList.toggle('active', filters.includes('uncompleted'));
     document.getElementById('completedFilterBtn')?.classList.toggle('active', filters.includes('completed'));
     
-    const cached = getCache('tasks');
-    if (cached) {
-        window.allTasks = cached.map(t => initializeTaskWeight(t));
-        window.filterTasksByProject();
-    }
-
     setSyncStatus(true);
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
@@ -37,7 +31,6 @@ window.fetchTasks = async function () {
             const raw = json.data || json.tasks || [];
             window.allTasks = raw.map(t => initializeTaskWeight(t));
             console.log(">> window.allTasks mapped:", window.allTasks.length);
-            setCache('tasks', window.allTasks);
             
             if (typeof window.updateTaskProjectFilter === 'function') window.updateTaskProjectFilter();
             window.filterTasksByProject();
@@ -250,7 +243,6 @@ window.saveTaskOrder = async function(orderedIds) {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'update_tasks_order', updates })
         });
-        setCache('tasks', window.allTasks);
         console.log(">> Task order synced. Refreshing Row Indices...");
         window.fetchTasks(); // Ensure fresh indices
     } catch (e) {
@@ -285,7 +277,7 @@ window.updateTaskField = async function(taskId, field, value) {
         const json = await res.json();
         if (json.success && json.data) {
             task.rowIndex = json.data.rowIndex;
-            setCache('tasks', window.allTasks);
+            // setCache('tasks', window.allTasks); // Removed persistence
         }
     } catch (e) { console.error(e); } finally {
         window.saveLocks.delete(taskId);
@@ -332,7 +324,7 @@ window.deleteTask = function(taskId) {
                     setSyncStatus(false);
                 }
             }
-            setCache('tasks', window.allTasks);
+            // setCache('tasks', window.allTasks); // Removed persistence
         }
     });
 }
@@ -361,7 +353,6 @@ window.duplicateTask = async function(taskId) {
         if (json.success && json.data) {
             newTask.rowIndex = json.data.rowIndex;
             window.allTasks.unshift(newTask);
-            setCache('tasks', window.allTasks);
             window.filterTasksByProject();
             // Removed notification for smoother UX
         }
@@ -463,7 +454,7 @@ window.selectTaskProjectForInline = async function(taskId, projectId) {
         const json = await res.json();
         if (json.success && json.data) {
             task.rowIndex = json.data.rowIndex;
-            setCache('tasks', window.allTasks);
+            // setCache('tasks', window.allTasks); // Removed persistence
         }
     } catch (e) {
         console.error("Save Error after Selection:", e);

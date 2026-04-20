@@ -138,13 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.fetchProjects = async function() {
-    // 1. Load from cache first for instant UI
-    const cached = getCache('projects');
-    if (cached) {
-        window.allProjects = cached;
-        window.currentFilteredProjects = [...window.allProjects];
-    }
-    
     setSyncStatus(true);
     const loading = document.getElementById('projectLoading');
     if (loading) loading.style.display = 'block';
@@ -159,7 +152,6 @@ window.fetchProjects = async function() {
         const json = await res.json();
         if (json.success) {
             window.allProjects = json.projects || [];
-            setCache('projects', window.allProjects);
             window.currentFilteredProjects = [...window.allProjects];
             window.renderProjects();
             if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
@@ -196,10 +188,7 @@ window.syncSingleProject = async function(projectId) {
                 window.allProjects.unshift(newProj);
             }
             
-            // 2. Update Cache
-            setCache('projects', window.allProjects);
-            
-            // 3. Trigger UI Render (List View)
+            // 2. Trigger UI Render (List View)
             window.renderProjects();
             
             console.log(`>> [SUCCESS] Single project sync completed: ${projectId}`);
@@ -301,7 +290,7 @@ window.renderProjects = function() {
     if (window.currentFilteredProjects.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align:center; padding: 60px 0; color: var(--text-muted); opacity: 0.6;">
+                <td colspan="7" style="text-align:center; padding: 60px 0; color: var(--text-muted); opacity: 0.6;">
                     <div style="margin-bottom: 20px;">
                         <img src="assets/icons/projects.svg" style="width: 64px; height: 64px; filter: grayscale(1) brightness(1.5); opacity: 0.3;">
                     </div>
@@ -736,9 +725,16 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
     // Build Items Array
     const items = Array.from(document.querySelectorAll('#quotationItemsBody tr')).map(row => {
         const getRowVal = (cls) => row.querySelector(cls)?.value || '';
+        const iName = getRowVal('.i-name');
+        
+        // --- DEBUG: Name Collision Check ---
+        if (iName && iName === project.projectName) {
+            console.warn(">> DEBUG WARNING: Item name is identical to project name! Possible auto-fill/leak detected.", { iName, projectName: project.projectName });
+        }
+        
         return {
             index: row.cells[0].innerText,
-            name: getRowVal('.i-name'),
+            name: iName,
             content: getRowVal('.i-content'),
             price: parseFloat(getRowVal('.i-price')) || 0,
             qty: parseFloat(getRowVal('.i-qty')) || 0,
@@ -746,10 +742,18 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
         };
     });
 
+    // --- DEBUG: Log full payload before sending ---
+    console.log(">> handleQuotationSubmit: Sending Payload", { 
+        project: project.projectName, 
+        pId: project.projectId, 
+        itemsCount: items.length, 
+        firstItem: items[0] 
+    });
+
     try {
         const response = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
-            mode: 'cors',
+            mode: 'cors', 
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'save_project', project, items })
         });

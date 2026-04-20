@@ -115,10 +115,14 @@ function setSyncStatus(active) {
 }
 
 // --- Hybrid Caching Helpers ---
+const DATA_CACHE_WHITELIST = ['projectStatusFilters', 'taskStatusFilters'];
+
 function getCache(key) {
+    if (!DATA_CACHE_WHITELIST.includes(key)) return null;
     const cached = localStorage.getItem(`st_pro_cache_${key}`);
     return cached ? JSON.parse(cached) : null;
 }
 function setCache(key, data) {
+    if (!DATA_CACHE_WHITELIST.includes(key)) return;
     localStorage.setItem(`st_pro_cache_${key}`, JSON.stringify(data));
 }

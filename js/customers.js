@@ -4,8 +4,8 @@
 // --- State ---
 window.customerSortField = 'companyName';
 window.customerSortOrder = 'asc';
-window.allCustomers = typeof getCache === 'function' ? getCache('customers') || [] : [];
-window.currentFilteredCustomers = [...window.allCustomers];
+window.allCustomers = [];
+window.currentFilteredCustomers = [];
 window.currentPage = 1;
 window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 7;
 
@@ -20,14 +20,9 @@ window.fetchCustomers = async function() {
         });
         const json = await res.json();
         if (json.success) { 
-            const hasChanged = JSON.stringify(window.allCustomers) !== JSON.stringify(json.data);
-            if (hasChanged) {
-                window.allCustomers = json.data || []; 
-                setCache('customers', window.allCustomers);
-                window.currentFilteredCustomers = [...window.allCustomers];
-                // applyCurrentSort(); // Disabled sorting
-                window.renderCustomers(); 
-            }
+            window.allCustomers = json.data || []; 
+            window.currentFilteredCustomers = [...window.allCustomers];
+            window.renderCustomers(); 
         }
     } catch (err) { 
         console.error("Fetch Error:", err);
