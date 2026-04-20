@@ -338,7 +338,7 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('projStatus')) document.getElementById('projStatus').value = finalStatus;
         if (typeof updateProjectStatusUI === 'function') updateProjectStatusUI(finalStatus);
         
-        if (typeof window.selectQuotationCustomer === 'function') window.selectQuotationCustomer(data.customerId);
+        if (typeof window.selectQuotationCustomer === 'function') window.selectQuotationCustomer(data.customerId, true);
         
         if (window.currentUser) {
             if (window.currentUser.phone && document.getElementById('qStudioPhone')) document.getElementById('qStudioPhone').innerText = window.currentUser.phone;
@@ -398,6 +398,10 @@ window.showQuotationEditor = function(title, data = null) {
     
     if (window.lucide) lucide.createIcons();
     if (typeof initQuotationAutocomplete === 'function') initQuotationAutocomplete();
+    
+    // Safety: Reset modification state after initialization to prevent ghost auto-saves
+    if (quotationAutoSaveTimer) clearTimeout(quotationAutoSaveTimer);
+    window.isQuotationModified = false;
 }
 
 window.updateProjectStatusUI = function(status) {
@@ -710,6 +714,8 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
                 switchSubView('projects', 'list');
             } else {
                 console.log(">> Async Sync success. Row:", result.rowIndex);
+                // Background success should also refresh projects to keep localStorage cache valid
+                if (typeof fetchProjects === 'function') fetchProjects();
             }
         } else {
             throw new Error(result.error || '儲存失敗');
@@ -897,7 +903,7 @@ window.initQuotationAutocomplete = function() {
     });
 };
 
-window.selectQuotationCustomer = function(id) {
+window.selectQuotationCustomer = function(id, isInit = false) {
     if (!window.allCustomers) return;
     const cust = window.allCustomers.find(c => String(c.customerId) === String(id));
     if (!cust) return;
@@ -932,9 +938,11 @@ window.selectQuotationCustomer = function(id) {
     if (suggest) suggest.style.display = 'none';
     
     // 4. State Updates
-    window.isQuotationModified = true;
-    if (typeof window.triggerQuotationAutoSave === 'function') {
-        window.triggerQuotationAutoSave();
+    if (!isInit) {
+        window.isQuotationModified = true;
+        if (typeof window.triggerQuotationAutoSave === 'function') {
+            window.triggerQuotationAutoSave();
+        }
     }
     
     console.log(">> [SUCCESS] Imported Customer Info for:", displayName);
