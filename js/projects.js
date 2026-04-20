@@ -444,11 +444,11 @@ window.showQuotationEditor = function(title, data = null) {
     if (quotationAutoSaveTimer) clearTimeout(quotationAutoSaveTimer);
     window.isQuotationModified = false;
 
-    // Toggle delete button visibility based on existing record
+    // Toggle delete and duplicate buttons visibility based on existing record
     const deleteBtn = document.getElementById('deleteProjectBtn');
-    if (deleteBtn) {
-        deleteBtn.style.display = data ? 'flex' : 'none';
-    }
+    const duplicateBtn = document.getElementById('duplicateProjectBtn');
+    if (deleteBtn) deleteBtn.style.display = data ? 'flex' : 'none';
+    if (duplicateBtn) duplicateBtn.style.display = data ? 'flex' : 'none';
 
     // --- NEW: Force Auto-expand for all textareas after load ---
     setTimeout(() => {
@@ -507,6 +507,27 @@ window.deleteProject = async function() {
         setSyncStatus(false);
     }
 }
+
+window.duplicateProject = function() {
+    // 1. Clear ID and Row Index to treat this as a NEW record
+    if (document.getElementById('projRowIndex')) document.getElementById('projRowIndex').value = '';
+    const newId = generateProjectId();
+    if (document.getElementById('projId')) document.getElementById('projId').value = newId;
+
+    // 2. Update Title
+    if (document.getElementById('quotationTitle')) document.getElementById('quotationTitle').innerText = '複製報價單';
+
+    // 3. Mark as modified
+    window.isQuotationModified = true;
+
+    // 4. Hide delete and duplicate buttons (since it's now a NEW unsaved project)
+    const delBtn = document.getElementById('deleteProjectBtn');
+    if (delBtn) delBtn.style.display = 'none';
+    const dupBtn = document.getElementById('duplicateProjectBtn');
+    if (dupBtn) dupBtn.style.display = 'none';
+
+    Toast.fire({ icon: 'success', title: '專案資料已複製至新表單，請點擊「儲存專案」以完成' });
+};
 
 window.updateProjectStatusUI = function(status) {
     const icon = document.getElementById('quoteStatusIcon');
