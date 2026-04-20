@@ -171,6 +171,58 @@ window.fetchProjects = async function() {
     }
 }
 
+window.syncSingleProject = async function(projectId) {
+    if (!projectId) return;
+    console.log(`>> Syncing single project: ${projectId}`);
+    
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'get_project', projectId })
+        });
+        const json = await res.json();
+        
+        if (json.success && json.project) {
+            const newProj = json.project;
+            
+            // 1. Update in-memory array
+            if (!window.allProjects) window.allProjects = [];
+            const idx = window.allProjects.findIndex(p => p.projectId === projectId);
+            if (idx > -1) {
+                window.allProjects[idx] = newProj;
+            } else {
+                window.allProjects.unshift(newProj);
+            }
+            
+            // 2. Update Cache
+            setCache('projects', window.allProjects);
+            
+            // 3. Trigger UI Render (List View)
+            window.renderProjects();
+            
+            console.log(`>> [SUCCESS] Single project sync completed: ${projectId}`);
+            
+            // 4. If current editor is open for this project, consider refreshing it 
+            // (Only if it's not currently being edited/dirty, though usually this runs after a save)
+            const currentEditorId = document.getElementById('projId')?.value;
+            if (currentEditorId === projectId && !window.isQuotationModified) {
+                console.log(">> Editor matches synced project, potentially refreshing view...");
+                // Note: We don't necessarily want to force showQuotationEditor again 
+                // because it resets the form, but we might update the rowIndex.
+                if (document.getElementById('projRowIndex')) {
+                    document.getElementById('projRowIndex').value = newProj.rowIndex || '';
+                }
+            }
+            
+            return newProj;
+        }
+    } catch (err) {
+        console.error("Single Project Sync Error:", err);
+    }
+}
+
 window.renderProjects = function() {
     const tbody = document.getElementById('projectTableBody');
     if (!tbody) return;
@@ -710,12 +762,12 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
 
             if (!isBackground) {
                 Toast.fire({ icon: 'success', title: '專案已儲存' });
-                if (typeof fetchProjects === 'function') fetchProjects();
+                if (typeof syncSingleProject === 'function') syncSingleProject(projectId);
                 switchSubView('projects', 'list');
             } else {
                 console.log(">> Async Sync success. Row:", result.rowIndex);
-                // Background success should also refresh projects to keep localStorage cache valid
-                if (typeof fetchProjects === 'function') fetchProjects();
+                // Precision sync for background saves
+                if (typeof syncSingleProject === 'function') syncSingleProject(projectId);
             }
         } else {
             throw new Error(result.error || '儲存失敗');
