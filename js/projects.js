@@ -8,9 +8,9 @@ window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items
 // --- Sorting State ---
 window.projectSortField = 'date';
 window.projectSortOrder = 'desc';
-// Initialize from cache or default to Active only (Pending + Ongoing)
+// Initialize from cache or default to All (Pending + Ongoing + Completed)
 const cachedProjFilters = typeof getCache === 'function' ? getCache('projectStatusFilters') : null;
-window.projectStatusFilters = cachedProjFilters || ['1', '2']; 
+window.projectStatusFilters = cachedProjFilters || ['1', '2', '3']; 
 window.projectSearchQuery = '';
 
 /**
