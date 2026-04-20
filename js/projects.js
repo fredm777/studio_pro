@@ -8,9 +8,9 @@ window.projectItemsPerPage = parseInt(localStorage.getItem('st_pro_project_items
 // --- Sorting State ---
 window.projectSortField = 'date';
 window.projectSortOrder = 'desc';
-// Initialize from cache or default to All (Pending + Ongoing + Completed)
+// Initialize from cache or default to Active only (Pending + Ongoing)
 const cachedProjFilters = typeof getCache === 'function' ? getCache('projectStatusFilters') : null;
-window.projectStatusFilters = cachedProjFilters || ['1', '2', '3']; 
+window.projectStatusFilters = cachedProjFilters || ['1', '2']; 
 window.projectSearchQuery = '';
 
 /**
@@ -225,7 +225,7 @@ window.renderProjects = function() {
         // Direct numeric comparison (Spreadsheet V column)
         const s = String(p.status || '');
 
-        const filterArr = window.projectStatusFilters || [];
+        const filterArr = window.projectStatusFilters || ['1', '2'];
         const matchesStatus = (filterArr.length === 0) || filterArr.includes(s);
         
         // Link with customer data for deeper search
@@ -443,6 +443,69 @@ window.showQuotationEditor = function(title, data = null) {
     // Safety: Reset modification state after initialization to prevent ghost auto-saves
     if (quotationAutoSaveTimer) clearTimeout(quotationAutoSaveTimer);
     window.isQuotationModified = false;
+
+    // Toggle delete button visibility based on existing record
+    const deleteBtn = document.getElementById('deleteProjectBtn');
+    if (deleteBtn) {
+        deleteBtn.style.display = data ? 'flex' : 'none';
+    }
+
+    // --- NEW: Force Auto-expand for all textareas after load ---
+    setTimeout(() => {
+        const allTextareas = form.querySelectorAll('textarea');
+        allTextareas.forEach(ta => {
+            if (typeof window.autoExpandTextarea === 'function') {
+                window.autoExpandTextarea(ta);
+            }
+        });
+    }, 150);
+}
+
+window.deleteProject = async function() {
+    const projectId = document.getElementById('projId').value;
+    const projName = document.getElementById('qProjName').value || '未命名專案';
+    
+    if (!projectId) return;
+
+    const result = await Swal.fire({
+        title: '確定要刪除？',
+        text: `我們即將刪除專案「${projName}」，所有相關細項與報價內容將一併移除，且無法復原。`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '確定刪除',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#ef4444'
+    });
+
+    if (!result.isConfirmed) return;
+
+    setSyncStatus(true);
+    try {
+        const body = {
+            action: 'delete_project',
+            projectId: projectId
+        };
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        if (json.success) {
+            Toast.fire({ icon: 'success', title: '專案報價單已刪除' });
+            window.isQuotationModified = false;
+            window.switchSubView('projects', 'list');
+            if (typeof window.fetchProjects === 'function') window.fetchCustomers(); // Also refresh customers as they may be linked
+            if (typeof window.fetchProjects === 'function') window.fetchProjects();
+        } else {
+            throw new Error(json.error);
+        }
+    } catch (e) {
+        Swal.fire('刪除失敗', e.message || '請重新嘗試', 'error');
+    } finally {
+        setSyncStatus(false);
+    }
 }
 
 window.updateProjectStatusUI = function(status) {
@@ -530,6 +593,14 @@ async function fetchProjectItems(projId) {
         proj.items.forEach(item => {
             addQuotationRow(item);
         });
+    } else if (projId) {
+        console.log(">> Items missing in cache, triggering precision sync...");
+        const refreshedProj = await syncSingleProject(projId);
+        if (refreshedProj && refreshedProj.items && refreshedProj.items.length > 0) {
+            refreshedProj.items.forEach(item => addQuotationRow(item));
+        } else {
+            addQuotationRow();
+        }
     } else {
         addQuotationRow(); 
     }
@@ -594,11 +665,29 @@ async function loadSettingsPreview() {
             if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = clean(s.wf_delivery);
             if (document.getElementById('qWfDeliveryLbl')) document.getElementById('qWfDeliveryLbl').innerText = clean(s.wf_delivery_lbl) || '交付內容說明';
             
-            if (document.getElementById('qWfRemark')) document.getElementById('qWfRemark').value = clean(s.wf_remark);
+            if (document.getElementById('qWfRemark')) {
+                document.getElementById('qWfRemark').value = clean(s.wf_remark);
+                autoExpandTextarea(document.getElementById('qWfRemark'));
+            }
             if (document.getElementById('qWfRemarkLbl')) document.getElementById('qWfRemarkLbl').innerText = clean(s.wf_remark_lbl) || '其他說明';
+            
+            // Add listeners to workflow textareas
+            ['qBankData', 'qWfOrder', 'qWfDeposit', 'qWfDraft', 'qWfEdit', 'qWfDelivery', 'qWfRemark'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => autoExpandTextarea(el));
+                    autoExpandTextarea(el);
+                }
+            });
         }
     } catch(e) {}
 }
+
+window.autoExpandTextarea = function(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight) + 'px';
+};
 
 function addQuotationRow(data = null) {
     const tbody = document.getElementById('quotationItemsBody');
@@ -608,7 +697,7 @@ function addQuotationRow(data = null) {
     tr.innerHTML = `
         <td class="text-center" style="cursor: pointer; color: var(--primary); font-weight: 700;" title="連點兩下刪除此列" ondblclick="if(confirm('確定要刪除此列項目？')) { this.closest('tr').remove(); calcQuotation(); triggerQuotationAutoSave(); }">${rowIdx}</td>
         <td><input class="i-name" placeholder="項目名稱" value="${data ? data.name : ''}" oninput="triggerQuotationAutoSave()"></td>
-        <td><textarea class="i-content" placeholder="細項詳述..." rows="1" style="resize:vertical;" oninput="triggerQuotationAutoSave()">${data ? data.content : ''}</textarea></td>
+        <td><textarea class="i-content" placeholder="細項詳述..." rows="1" style="resize:vertical;" oninput="autoExpandTextarea(this); triggerQuotationAutoSave()">${data ? data.content : ''}</textarea></td>
         <td><input type="number" class="i-price text-right" value="${data ? data.price : ''}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
         <td><input type="number" class="i-qty text-center" value="${data ? data.qty : 1}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
         <td>
@@ -616,6 +705,13 @@ function addQuotationRow(data = null) {
         </td>
     `;
     tbody.appendChild(tr);
+
+    // Initial expansion for loaded data
+    const ta = tr.querySelector('textarea');
+    if (ta && data && data.content) {
+        setTimeout(() => autoExpandTextarea(ta), 0);
+    }
+
     calcQuotation();
 }
 
@@ -675,7 +771,7 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
         return;
     }
 
-    if (!isBackground) setSyncStatus(true);
+    if (typeof window.setSyncStatus === 'function') window.setSyncStatus(true);
     isSavingQuotation = true;
 
     // Helper to extract values
@@ -764,13 +860,25 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
             if (result.rowIndex && rowIdxInput) rowIdxInput.value = result.rowIndex;
             window.isQuotationModified = false;
 
+            // --- INSTANT CACHE UPDATE: Update local memory before background sync finishes ---
+            if (window.allProjects) {
+                const idx = window.allProjects.findIndex(p => p.projectId === projectId);
+                const updatedProj = { ...project, items, rowIndex: result.rowIndex || project.rowIndex };
+                if (idx > -1) {
+                    window.allProjects[idx] = updatedProj;
+                } else {
+                    window.allProjects.unshift(updatedProj);
+                }
+                window.renderProjects(); // Refresh list immediately
+            }
+
             if (!isBackground) {
-                Toast.fire({ icon: 'success', title: '專案已儲存' });
-                if (typeof syncSingleProject === 'function') syncSingleProject(projectId);
+                // For manual saves, we AWAIT the precision sync to ensure consistency
+                if (typeof syncSingleProject === 'function') await syncSingleProject(projectId);
                 switchSubView('projects', 'list');
             } else {
                 console.log(">> Async Sync success. Row:", result.rowIndex);
-                // Precision sync for background saves
+                // Precision sync for background saves (fire and forget)
                 if (typeof syncSingleProject === 'function') syncSingleProject(projectId);
             }
         } else {
@@ -781,7 +889,7 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
         if (!isBackground) Swal.fire('儲存失敗', err.message, 'error');
     } finally {
         isSavingQuotation = false;
-        if (!isBackground) setSyncStatus(false);
+        if (typeof window.setSyncStatus === 'function') window.setSyncStatus(false);
         
         // Handle Queued Save
         if (nextSavePending) {
@@ -793,19 +901,34 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
 };
 
 window.filterProjects = function(val) {
-    const query = String(val).toLowerCase();
-    window.currentFilteredProjects = (window.allProjects || []).filter(p => {
-        const cust = window.allCustomers ? window.allCustomers.find(c => c.customerId === p.customerId) : null;
-        const custName = cust ? (cust.nickname || cust.companyName) : (p.customerId || '');
-        return (p.projectName || '').toLowerCase().includes(query) ||
-               custName.toLowerCase().includes(query) ||
-               (p.pic || '').toLowerCase().includes(query) ||
-               (p.projectId || '').toLowerCase().includes(query) ||
-               (cust ? (cust.companyName || '').toLowerCase().includes(query) : false) ||
-               (cust ? (cust.phone || '').toLowerCase().includes(query) : false) ||
-               (cust ? (cust.taxId || '').toLowerCase().includes(query) : false) ||
-               (cust ? (cust.address || '').toLowerCase().includes(query) : false);
-    });
+    const query = String(val).toLowerCase().trim();
+    if (!query) {
+        window.currentFilteredProjects = [...(window.allProjects || [])];
+    } else {
+        window.currentFilteredProjects = (window.allProjects || []).filter(p => {
+            const pCustId = String(p.customerId || '').trim();
+            const cust = (window.allCustomers || []).find(c => String(c.customerId || '').trim() === pCustId);
+            
+            if (val && val.length > 1 && !cust && query !== '') {
+                // Optional: log if we can't find a customer for a project during an active search
+                // console.warn(`>> Search: Project ${p.projectId} has no linked customer [${pCustId}]`);
+            }
+
+            // 1. Basic Fields (Project Name, PIC)
+            const matchBasic = (p.projectName || '').toLowerCase().includes(query) ||
+                               (p.pic || '').toLowerCase().includes(query);
+            
+            // 2. Customer Related Fields (Company Name, Nickname, Address, Tax ID)
+            const matchCustomer = cust ? (
+                (cust.companyName || '').toLowerCase().includes(query) ||
+                (cust.nickname || '').toLowerCase().includes(query) ||
+                (cust.address || '').toLowerCase().includes(query) ||
+                (cust.taxId || '').toLowerCase().includes(query)
+            ) : false;
+
+            return matchBasic || matchCustomer;
+        });
+    }
     window.projectPage = 1;
     window.renderProjects();
 };
@@ -941,7 +1064,9 @@ window.initQuotationAutocomplete = function() {
             }).join('');
             suggest.style.display = 'block';
         }
-        window.isQuotationModified = true;
+        if (e.isTrusted) {
+            window.isQuotationModified = true;
+        }
     });
 
     // Handle focus to show results if already typed

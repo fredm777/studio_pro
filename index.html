@@ -420,6 +420,7 @@
                             <div id="customerError" class="auth-error-inline" style="margin-bottom: 1.5rem;"></div>
                             <div style="display: flex; gap: 12px; margin-top: 1.5rem;">
                                 <button type="submit" class="action-btn save-btn" style="flex: 1;">儲存變更</button>
+                                <button type="button" id="deleteCustomerBtn" class="action-btn delete-btn" onclick="deleteCustomer()" style="flex: 1; display: none;">刪除客戶</button>
                                 <button type="button" class="action-btn btn-outline"
                                     onclick="switchSubView('customers', 'list')" style="flex: 1;">取消</button>
                             </div>
@@ -1134,7 +1135,7 @@
                             <div class="form-actions flex-row mt-2"
                                 style="max-width: 1000px; margin: 2rem auto 0; gap: 12px;">
                                 <div class="action-btn btn-outline"
-                                    style="flex: 1.5; display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 140px; position: relative; cursor: pointer;">
+                                    style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; cursor: pointer;">
                                     <img id="quoteStatusIcon" src="./assets/icons/inprocess.svg" alt="status"
                                         style="width: 20px; height: 20px;">
                                     <span id="quoteStatusText" style="font-size: 0.875rem;">待確認</span>
@@ -1150,6 +1151,11 @@
                                 <button type="button" class="action-btn btn-outline" onclick="preparePrint()"
                                     style="flex: 1;" title="列印或轉存 PDF">
                                     <i data-lucide="printer" style="width: 18px; height: 18px;"></i>
+                                </button>
+                                <button type="button" id="deleteProjectBtn" class="action-btn delete-btn" onclick="deleteProject()"
+                                    style="flex: 1; display: none; align-items: center; justify-content: center; gap: 8px;">
+                                    <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                                    刪除專案
                                 </button>
                                 <button type="button" class="action-btn save-btn" onclick="handleQuotationSubmit(event)"
                                     style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">

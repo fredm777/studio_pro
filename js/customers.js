@@ -8,6 +8,7 @@ window.allCustomers = [];
 window.currentFilteredCustomers = [];
 window.currentPage = 1;
 window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) || 7;
+window.isCustomerModified = false;
 
 window.fetchCustomers = async function() {
     setSyncStatus(true);
@@ -113,18 +114,32 @@ window.renderCustomers = function() {
 
 window.switchSubView = async function(tabId, viewType) {
     // Safety check for unsaved quotation changes
-    if (window.isQuotationModified && viewType === 'list' && tabId === 'projects') {
-        const result = await Swal.fire({
-            title: '尚未儲存',
-            text: '報價單內容已修改，確定要離開嗎？（未儲存的變更將遺失）',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: '確定離開',
-            cancelButtonText: '留下來儲存',
-            confirmButtonColor: '#ef4444'
-        });
-        if (!result.isConfirmed) return;
-        window.isQuotationModified = false; // Reset if they force leave
+    if (viewType === 'list') {
+        if (tabId === 'projects' && window.isQuotationModified) {
+            const result = await Swal.fire({
+                title: '尚未儲存',
+                text: '報價單內容已修改，確定要離開嗎？（未儲存的變更將遺失）',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定離開',
+                cancelButtonText: '留下來儲存',
+                confirmButtonColor: '#ef4444'
+            });
+            if (!result.isConfirmed) return;
+            window.isQuotationModified = false;
+        } else if (tabId === 'customers' && window.isCustomerModified) {
+            const result = await Swal.fire({
+                title: '尚未儲存',
+                text: '客戶資料已修改，確定要離開嗎？（未儲存的變更將遺失）',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定離開',
+                cancelButtonText: '留下來儲存',
+                confirmButtonColor: '#ef4444'
+            });
+            if (!result.isConfirmed) return;
+            window.isCustomerModified = false;
+        }
     }
 
     const section = document.getElementById(tabId);
@@ -189,6 +204,58 @@ window.showCustomerEditor = (title, data = null) => {
     }
     
     if (window.lucide) lucide.createIcons();
+    window.isCustomerModified = false;
+
+    // Toggle delete button visibility based on existing record
+    const deleteBtn = document.getElementById('deleteCustomerBtn');
+    if (deleteBtn) {
+        deleteBtn.style.display = data ? 'block' : 'none';
+    }
+}
+
+window.deleteCustomer = async function() {
+    const rIndex = document.getElementById('rowIndex').value;
+    const companyName = document.getElementById('companyName').value;
+    
+    if (!rIndex) return;
+
+    const result = await Swal.fire({
+        title: '確定要刪除？',
+        text: `我們即將刪除客戶「${companyName}」，此動作無法復原。`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '確定刪除',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#ef4444'
+    });
+
+    if (!result.isConfirmed) return;
+
+    setSyncStatus(true);
+    try {
+        const body = {
+            action: 'delete_customer',
+            rowIndex: parseInt(rIndex)
+        };
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        if (json.success) {
+            Toast.fire({ icon: 'success', title: '客戶資料已刪除' });
+            window.switchSubView('customers', 'list');
+            if (typeof window.fetchCustomers === 'function') window.fetchCustomers();
+        } else {
+            throw new Error(json.error);
+        }
+    } catch (e) {
+        Swal.fire('刪除失敗', e.message || '請重新嘗試', 'error');
+    } finally {
+        setSyncStatus(false);
+    }
 }
 
 window.saveCustomer = async function() {
@@ -239,6 +306,7 @@ window.saveCustomer = async function() {
         const json = await res.json();
         if (json.success) { 
             Toast.fire({ icon: 'success', title: '客戶已儲存' });
+            window.isCustomerModified = false;
             window.switchSubView('customers', 'list');
             if (typeof window.fetchCustomers === 'function') window.fetchCustomers(); 
         } else {

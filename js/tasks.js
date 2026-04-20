@@ -62,6 +62,7 @@ window.updateTaskProjectFilter = function () {
     const custs = window.allCustomers || [];
 
     projs.forEach(p => {
+        if (p.status === '3') return; // Skip completed projects
         const cust = custs.find(c => String(c.customerId) === String(p.customerId));
         const nickname = cust ? (cust.nickname || cust.companyName) : '';
         html += `<option value="${p.projectId}">${p.projectName} (${nickname})</option>`;
@@ -153,6 +154,9 @@ window.renderTasks = function() {
         if (proj && cust) {
             const custName = cust.nickname || cust.companyName || "未知客戶";
             displayValue = `${custName}${proj.projectName ? ` - ${proj.projectName}` : ''}`;
+        } else {
+            // Fallback: This allows "Plain Text" to be stored in the projectId field
+            displayValue = t.projectId || "";
         }
 
         const iconStyle = 'width: 20px; height: 20px; vertical-align: middle; filter: brightness(0) saturate(100%) invert(48%) sepia(23%) saturate(382%) hue-rotate(177deg) brightness(93%) contrast(85%);';
@@ -166,7 +170,8 @@ window.renderTasks = function() {
                 <input class="task-inline-input customer-search" value="${displayValue}" 
                        onfocus="this.select(); showTaskCustomerSearch(this, '${t.taskId}')" 
                        oninput="filterTaskCustomerSearch(this)"
-                       placeholder="專案/客戶...">
+                       onblur="window.saveTaskCustomTarget('${t.taskId}', this.value)"
+                       placeholder="請輸入對象">
             </div>
             <div style="width: 80px; position: relative;">
                 <div class="task-date-display" style="
@@ -406,7 +411,7 @@ window.filterTaskCustomerSearch = function(input) {
     const dropdown = input.nextElementSibling;
     if (!dropdown || !dropdown.classList.contains('task-autocomplete-dropdown')) return;
     const query = input.value.toLowerCase().trim();
-    const projs = window.allProjects || [];
+    const projs = (window.allProjects || []).filter(p => p.status === '1' || p.status === '2');
     const custs = window.allCustomers || [];
 
     const data = projs.map(p => {
@@ -460,5 +465,31 @@ window.selectTaskProjectForInline = async function(taskId, projectId) {
         console.error("Save Error after Selection:", e);
     } finally {
         setSyncStatus(false);
+    }
+}
+
+// Helper to save custom text if no project was selected from the dropdown
+window.saveTaskCustomTarget = function(taskId, value) {
+    const task = window.allTasks.find(t => String(t.taskId) === String(taskId));
+    if (!task) return;
+
+    // Normalizing empty
+    const normalizedValue = (value || "").trim();
+    
+    // Determine the "expected" display string for the current linked project
+    let currentDisplay = "";
+    const proj = (window.allProjects || []).find(p => String(p.projectId) === String(task.projectId));
+    if (proj) {
+        const cust = (window.allCustomers || []).find(c => String(c.customerId) === String(proj.customerId));
+        const custName = cust ? (cust.nickname || cust.companyName) : "未知客戶";
+        currentDisplay = `${custName}${proj.projectName ? ` - ${proj.projectName}` : ''}`;
+    } else {
+        currentDisplay = task.projectId || "";
+    }
+
+    // Only update if the user's input is different from what we'd expect for the current state
+    if (normalizedValue !== currentDisplay) {
+        console.log(">> Task Target Blur: Saving custom text:", normalizedValue);
+        window.updateTaskField(taskId, 'projectId', normalizedValue);
     }
 }

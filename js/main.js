@@ -37,8 +37,21 @@ function initEventListeners() {
             }
         }
 
-        // C. Escape Key (Close Modals & Edit Views)
+        // C. Escape Key (Clear Search or Close Modals/Views)
         if (key === 'Escape') {
+            // 1. Priority: Clear active search input
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.classList.contains('card-search-input')) {
+                console.log(">> ESC: Clearing search input");
+                activeEl.value = '';
+                const tabId = activeEl.id.replace('SearchInput', '');
+                // Trigger relevant filter
+                if (tabId === 'customer' && typeof window.filterCustomers === 'function') window.filterCustomers('');
+                if (tabId === 'project' && typeof window.filterProjects === 'function') window.filterProjects('');
+                activeEl.blur();
+                return;
+            }
+
             if (document.querySelector('.swal2-container')) {
                 console.log(">> ESC: Swal detected, letting library handle it.");
                 return; 
@@ -75,6 +88,21 @@ function initEventListeners() {
                 }
             }
         }
+
+        // D. Pagination Navigation (ArrowLeft / ArrowRight)
+        if (key === 'ArrowLeft' || key === 'ArrowRight') {
+            const activeSubView = document.querySelector('.sub-view-stack.active');
+            if (!activeSubView || !activeSubView.id.endsWith('ListView')) return;
+
+            // Ignore if typing in an input, textarea or select
+            const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+            if (isTyping) return;
+
+            e.preventDefault();
+            const dir = (key === 'ArrowRight') ? 1 : -1;
+            console.log(`>> Pagination Shortcut: ${key} (${dir})`);
+            if (typeof window.changePage === 'function') window.changePage(dir);
+        }
     }, true);
 
     // --- 2. PRIORITY: Global Click-Outside Listener ---
@@ -90,8 +118,8 @@ function initEventListeners() {
         // Only other views (like Customers) will maintain this behavior for now.
         const activeStack = document.querySelector('.sub-view-stack.active');
         if (activeStack && activeStack.id.includes('EditView')) {
-            // CRITICAL: Skip if it's the projects/quotation editor
-            if (activeStack.id === 'projectsEditView') return;
+            // CRITICAL: Skip if it's the projects or customers editor
+            if (activeStack.id === 'projectsEditView' || activeStack.id === 'customersEditView') return;
 
             const isRootBackground = (e.target === activeStack) || 
                                      (e.target.classList.contains('card-wrapper')) ||
@@ -138,7 +166,13 @@ function initEventListeners() {
     safeBind('addProjectBtn', 'onclick', () => showQuotationEditor('建立新報價單'));
     safeBind('addTaskBtn', 'onclick', () => window.addTaskInline());
     const custForm = document.getElementById('customerForm');
-    if (custForm) custForm.onsubmit = (e) => { e.preventDefault(); window.saveCustomer(); };
+    if (custForm) {
+        custForm.onsubmit = (e) => { e.preventDefault(); window.saveCustomer(); };
+        // Track changes
+        custForm.addEventListener('input', () => {
+            window.isCustomerModified = true;
+        });
+    }
 
     safeBind('userInfoTrigger', 'onclick', window.openProfileModal);
     safeBind('profileForm', 'onsubmit', window.handleProfileUpdateSubmit);
@@ -157,21 +191,35 @@ function initEventListeners() {
     const customerSearch = document.getElementById('customerSearchInput');
     if (customerSearch) {
         customerSearch.oninput = (e) => {
-            if (typeof filterCustomers === 'function') filterCustomers(e.target.value);
+            if (typeof window.filterCustomers === 'function') window.filterCustomers(e.target.value);
+        };
+        customerSearch.onkeydown = (e) => {
+            if (e.key === 'Escape') {
+                customerSearch.value = '';
+                if (typeof window.filterCustomers === 'function') window.filterCustomers('');
+                customerSearch.blur();
+            }
         };
     }
 
     const projectSearch = document.getElementById('projectSearchInput');
     if (projectSearch) {
         projectSearch.oninput = (e) => {
-            if (typeof filterProjects === 'function') filterProjects(e.target.value);
+            if (typeof window.filterProjects === 'function') window.filterProjects(e.target.value);
+        };
+        projectSearch.onkeydown = (e) => {
+            if (e.key === 'Escape') {
+                projectSearch.value = '';
+                if (typeof window.filterProjects === 'function') window.filterProjects('');
+                projectSearch.blur();
+            }
         };
     }
 
     // --- Browser Navigation Guard ---
     window.onbeforeunload = function() {
-        if (window.isQuotationModified) {
-            return "報價單內容已修改，確定要離開嗎？";
+        if (window.isQuotationModified || window.isCustomerModified) {
+            return "內容已修改，確定要離開嗎？";
         }
     };
 

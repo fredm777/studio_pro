@@ -526,6 +526,25 @@ textarea:focus {
     box-shadow: 0 10px 15px -3px var(--primary-glow);
 }
 
+.delete-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+}
+
 .auth-footer {
     margin-top: 2rem;
     text-align: center;
