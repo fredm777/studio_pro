@@ -113,32 +113,53 @@ window.renderCustomers = function() {
 }
 
 window.switchSubView = async function(tabId, viewType) {
-    // Safety check for unsaved quotation changes
-    if (viewType === 'list') {
-        if (tabId === 'projects' && window.isQuotationModified) {
+    // 1. Guard check for unsaved changes
+    if (viewType === 'list' || (document.querySelector('.tab-link.active')?.dataset.tab !== tabId)) {
+        let isDirty = false;
+        let dirtyType = ''; // 'projects' or 'customers'
+        
+        // Detect which form is currently active and dirty
+        if (document.getElementById('projectsEditView')?.classList.contains('active') && window.isQuotationModified) {
+            isDirty = true;
+            dirtyType = 'projects';
+        } else if (document.getElementById('customersEditView')?.classList.contains('active') && window.isCustomerModified) {
+            isDirty = true;
+            dirtyType = 'customers';
+        }
+
+        if (isDirty) {
             const result = await Swal.fire({
                 title: '尚未儲存',
-                text: '報價單內容已修改，確定要離開嗎？（未儲存的變更將遺失）',
+                text: '內容已變更，是否要儲存？',
                 icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '確定離開',
-                cancelButtonText: '留下來儲存',
-                confirmButtonColor: '#ef4444'
+                showDenyButton: true,
+                showCancelButton: false, // Ensure no 3rd gray button appears
+                confirmButtonText: '儲存變更',
+                denyButtonText: '直接離開',
+                confirmButtonColor: '#10b981', // Green
+                denyButtonColor: '#ef4444',    // Red
+                allowOutsideClick: false       // Block until decision is made
             });
-            if (!result.isConfirmed) return;
-            window.isQuotationModified = false;
-        } else if (tabId === 'customers' && window.isCustomerModified) {
-            const result = await Swal.fire({
-                title: '尚未儲存',
-                text: '客戶資料已修改，確定要離開嗎？（未儲存的變更將遺失）',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '確定離開',
-                cancelButtonText: '留下來儲存',
-                confirmButtonColor: '#ef4444'
-            });
-            if (!result.isConfirmed) return;
-            window.isCustomerModified = false;
+
+            if (result.isConfirmed) {
+                // Option: Save Change
+                console.log(">> Navigation Guard: User chose to SAVE before leaving.");
+                if (dirtyType === 'projects') {
+                    await window.handleQuotationSubmit(null, false);
+                } else if (dirtyType === 'customers') {
+                    await window.saveCustomer();
+                }
+                // Flag is reset inside save functions upon success
+            } else if (result.isDenied) {
+                // Option: Leave Directly
+                console.log(">> Navigation Guard: User chose to LEAVE without saving.");
+                if (dirtyType === 'projects') window.isQuotationModified = false;
+                if (dirtyType === 'customers') window.isCustomerModified = false;
+            } else {
+                // Option: Dismissed (ESC or Outside click) -> STAY
+                console.log(">> Navigation Guard: User chose to STAY.");
+                return false; // Block navigation
+            }
         }
     }
 
@@ -161,6 +182,7 @@ window.switchSubView = async function(tabId, viewType) {
     }
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    return true;
 }
 
 window.showCustomerEditor = (title, data = null) => {
@@ -223,10 +245,12 @@ window.deleteCustomer = async function() {
         title: '確定要刪除？',
         text: `我們即將刪除客戶「${companyName}」，此動作無法復原。`,
         icon: 'warning',
-        showCancelButton: true,
+        showDenyButton: true,
+        showCancelButton: false,
         confirmButtonText: '確定刪除',
-        cancelButtonText: '取消',
-        confirmButtonColor: '#ef4444'
+        denyButtonText: '取消',
+        confirmButtonColor: '#ef4444',
+        denyButtonColor: '#667A8E'
     });
 
     if (!result.isConfirmed) return;

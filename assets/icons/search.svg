@@ -3,12 +3,12 @@
 <svg version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 24 24" style="enable-background:new 0 0 24 24;" xml:space="preserve">
 <style type="text/css">
-	.st0{fill:none;stroke:#D3D8DF;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st0{fill:none;stroke:#667A8E;stroke-width:1.9874;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
 </style>
 <g>
 	<g>
-		<circle class="st0" cx="10.3" cy="10.3" r="6"/>
-		<line class="st0" x1="14.5" y1="14.5" x2="19.7" y2="19.7"/>
+		<circle class="st0" cx="10.4" cy="10.4" r="5.7"/>
+		<line class="st0" x1="19.2" y1="19.2" x2="14.4" y2="14.4"/>
 	</g>
 </g>
 </svg>

@@ -3,14 +3,14 @@
 <svg version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 24 24" style="enable-background:new 0 0 24 24;" xml:space="preserve">
 <style type="text/css">
-	.st0{fill:#D4D8DE;}
+	.st0{fill:#667A8E;}
 </style>
 <g>
-	<circle class="st0" cx="14" cy="7.3" r="1"/>
-	<circle class="st0" cx="10" cy="7.3" r="1"/>
-	<circle class="st0" cx="14" cy="12" r="1"/>
-	<circle class="st0" cx="10" cy="12" r="1"/>
-	<circle class="st0" cx="14" cy="16.7" r="1"/>
-	<circle class="st0" cx="10" cy="16.7" r="1"/>
+	<circle class="st0" cx="14.9" cy="5.2" r="1.4"/>
+	<circle class="st0" cx="9.1" cy="5.2" r="1.4"/>
+	<circle class="st0" cx="14.9" cy="12" r="1.4"/>
+	<circle class="st0" cx="9.1" cy="12" r="1.4"/>
+	<circle class="st0" cx="14.9" cy="18.8" r="1.4"/>
+	<circle class="st0" cx="9.1" cy="18.8" r="1.4"/>
 </g>
 </svg>

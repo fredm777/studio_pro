@@ -5,9 +5,7 @@
 <style type="text/css">
 	.st0{fill:none;stroke:#667A90;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
 </style>
-<g>
-	<circle class="st0" cx="12" cy="10.2" r="2.9"/>
-	<path class="st0" d="M7.1,19.4v-1.6c0-2.7,2.1-4.8,4.8-4.8H12h0.2c2.7,0,4.8,2.2,4.8,4.8v1.6"/>
-	<circle class="st0" cx="12" cy="12" r="8.9"/>
-</g>
+<circle class="st0" cx="12" cy="10.5" r="2.4"/>
+<path class="st0" d="M8,18v-1.2c0-2.2,1.7-3.9,3.9-3.9H12h0.2c2.2,0,3.9,1.8,3.9,3.9V18"/>
+<circle class="st0" cx="12" cy="12" r="7.2"/>
 </svg>

@@ -471,10 +471,12 @@ window.deleteProject = async function() {
         title: '確定要刪除？',
         text: `我們即將刪除專案「${projName}」，所有相關細項與報價內容將一併移除，且無法復原。`,
         icon: 'warning',
-        showCancelButton: true,
+        showDenyButton: true,
+        showCancelButton: false,
         confirmButtonText: '確定刪除',
-        cancelButtonText: '取消',
-        confirmButtonColor: '#ef4444'
+        denyButtonText: '取消',
+        confirmButtonColor: '#ef4444',
+        denyButtonColor: '#667A8E'
     });
 
     if (!result.isConfirmed) return;
@@ -539,14 +541,14 @@ window.updateProjectStatusUI = function(status) {
     const configs = {
         '1': { 
             text: '待確認', 
-            icon: 'assets/icons/unchecked.svg', 
+            icon: 'assets/icons/TBD.svg', 
             color: '#64748b',
             decoration: 'none'
         },
         '2': { 
             text: '進行中', 
             icon: 'assets/icons/unchecked.svg', 
-            color: '#0085FF', 
+            color: '#00C800',
             decoration: 'none'
         },
         '3': { 

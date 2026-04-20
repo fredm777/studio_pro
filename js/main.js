@@ -178,7 +178,13 @@ function initEventListeners() {
     safeBind('profileForm', 'onsubmit', window.handleProfileUpdateSubmit);
     safeBind('memberForm', 'onsubmit', window.handleMemberUpdateSubmit);
     safeBind('globalSettingsForm', 'onsubmit', window.handleSettingsSubmit);
-    safeBind('quotationForm', 'onsubmit', window.handleQuotationSubmit);
+    const qForm = document.getElementById('quotationForm');
+    if (qForm) {
+        qForm.onsubmit = (e) => { e.preventDefault(); window.handleQuotationSubmit(e); };
+        qForm.addEventListener('input', () => {
+            window.isQuotationModified = true;
+        });
+    }
 
     // Component-specific inits wrapped in safety checks
     if (typeof window.initQuotationAutocomplete === 'function') {

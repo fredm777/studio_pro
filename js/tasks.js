@@ -307,9 +307,12 @@ window.deleteTask = function(taskId) {
     Swal.fire({
         title: '確定要刪除？',
         icon: 'warning',
-        showCancelButton: true,
+        showDenyButton: true,
+        showCancelButton: false,
         confirmButtonText: '刪除',
-        cancelButtonText: '取消'
+        denyButtonText: '取消',
+        confirmButtonColor: '#ef4444',
+        denyButtonColor: '#667A8E'
     }).then(async (result) => {
         if (result.isConfirmed) {
             window.allTasks = window.allTasks.filter(t => String(t.taskId) !== String(taskId));

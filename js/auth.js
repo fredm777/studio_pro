@@ -376,11 +376,11 @@ window.logout = function () {
 
 window.togglePassword = (id) => {
     const el = document.getElementById(id); if (!el) return;
-    const isPass = el.type === 'password'; el.type = isPass ? 'text' : 'password';
-    const toggle = el.parentElement.querySelector('.toggle-password i');
-    if (toggle) {
-        toggle.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
-        if (window.lucide) lucide.createIcons();
+    const isPass = el.type === 'password'; 
+    el.type = isPass ? 'text' : 'password';
+    const img = el.parentElement.querySelector('.toggle-password img');
+    if (img) {
+        img.src = isPass ? 'assets/icons/eye.svg' : 'assets/icons/eye off.svg';
     }
 };
 

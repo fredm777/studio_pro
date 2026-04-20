@@ -1,15 +1,23 @@
 function initTabs() {
     document.querySelectorAll('.tab-link').forEach(t => {
-        t.onclick = () => {
+        t.onclick = async (e) => {
             const tabId = t.dataset.tab;
+            
+            // Check if we are allowed to switch tabs (Guard for unsaved changes)
+            if (typeof window.switchSubView === 'function') {
+                const canSwitch = await window.switchSubView(tabId, 'list');
+                if (!canSwitch) {
+                    console.log(">> Navigation blocked by unsaved changes guard.");
+                    return;
+                }
+            }
+
             document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
             t.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const section = document.getElementById(tabId);
             if (section) {
                 section.classList.add('active');
-                // Always reset to list view when switching main tabs
-                switchSubView(tabId, 'list');
             }
 
             // Section-specific logic

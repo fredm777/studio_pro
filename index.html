@@ -10,7 +10,7 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=1.9">
+    <link rel="stylesheet" href="css/style.css?v=2.1.0">
 </head>
 
 <body>
@@ -87,25 +87,37 @@
                         placeholder="請輸入 Email"></div>
                 <div class="compact-form-row"><label>手機號碼</label><input type="text" id="profPhone"
                         placeholder="09XX-XXXXXX"></div>
-                <div class="compact-form-row"><label>修改密碼</label><input type="password" id="profPass1"
-                        placeholder="輸入新密碼"></div>
-                <div class="compact-form-row"><label>再次輸入</label><input type="password" id="profPass2"
-                        placeholder="再次輸入以確認"></div>
+                <div class="compact-form-row"><label>修改密碼</label>
+                    <div class="password-wrapper" style="flex: 1;">
+                        <input type="password" id="profPass1" placeholder="輸入新密碼">
+                        <span class="toggle-password visible" onclick="togglePassword('profPass1')">
+                            <img src="assets/icons/eye off.svg" alt="toggle">
+                        </span>
+                    </div>
+                </div>
+                <div class="compact-form-row"><label>再次輸入</label>
+                    <div class="password-wrapper" style="flex: 1;">
+                        <input type="password" id="profPass2" placeholder="再次輸入以確認">
+                        <span class="toggle-password visible" onclick="togglePassword('profPass2')">
+                            <img src="assets/icons/eye off.svg" alt="toggle">
+                        </span>
+                    </div>
+                </div>
 
                 <div id="profPassError" class="auth-error-inline" style="margin-bottom: 12px; margin-top: 0;"></div>
 
                 <div id="profAdminSection" style="display: none;">
                     <div class="compact-nav-grid" style="margin-top: 16px;">
                         <div class="nav-shortcut-card" onclick="routeFromProfile('settings', 'bankSettingsView')">
-                            <i data-lucide="credit-card"></i>
+                            <img src="assets/icons/credit-card.svg" alt="card">
                             <span>收款帳號</span>
                         </div>
                         <div class="nav-shortcut-card" onclick="routeFromProfile('settings', 'workflowSettingsView')">
-                            <i data-lucide="file-text"></i>
+                            <img src="assets/icons/file-text.svg" alt="file">
                             <span>報價單備註</span>
                         </div>
                         <div class="nav-shortcut-card" onclick="routeFromProfile('permissions', 'permissionsListView')">
-                            <i data-lucide="star"></i>
+                            <img src="assets/icons/star.svg" alt="star">
                             <span>權限管理</span>
                         </div>
                     </div>
@@ -138,8 +150,9 @@
                         </div>
                         <div class="password-wrapper">
                             <input type="password" id="loginPass" required>
-                            <span class="toggle-password" onclick="togglePassword('loginPass')"><i
-                                    data-lucide="eye"></i></span>
+                            <span class="toggle-password visible" onclick="togglePassword('loginPass')">
+                                <img src="assets/icons/eye off.svg" alt="toggle">
+                            </span>
                         </div>
                     </div>
                     <div id="loginMainError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0.5rem;">
@@ -212,8 +225,9 @@
                         <label>密碼</label>
                         <div class="password-wrapper">
                             <input type="password" id="regPass" required>
-                            <span class="toggle-password" onclick="togglePassword('regPass')"><i
-                                    data-lucide="eye"></i></span>
+                            <span class="toggle-password visible" onclick="togglePassword('regPass')">
+                                <img src="assets/icons/eye off.svg" alt="toggle">
+                            </span>
                         </div>
                     </div>
                     <div id="registerMainError" class="auth-error-inline"
@@ -233,7 +247,10 @@
                     <div class="form-group"><label>註冊 Email</label><input type="email" id="forgotEmail" required></div>
                     <div id="forgotError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0.5rem;">
                     </div>
-                    <button type="submit" class="primary-btn">發送重設驗證碼</button>
+                    <button type="submit" class="primary-btn">
+                        <img src="assets/icons/send.svg" alt="send" style="width:18px;height:18px;filter:brightness(0) invert(1);margin-right:8px;">
+                        <span>發送驗證碼</span>
+                    </button>
                     <div class="auth-footer">想起來了？ <a href="#" onclick="switchAuthStage('login')">返回登入</a></div>
                 </form>
             </div>
@@ -277,22 +294,11 @@
 
                 <div class="user-nav-segmented">
                     <div class="user-nav-slider"></div>
-                    <button id="userInfoTrigger" class="user-nav-btn" title="個人設定">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="10.2" r="2.9" />
-                            <path d="M7.1,19.4v-1.6c0-2.7,2.1-4.8,4.8-4.8H12h0.2c2.7,0,4.8,2.2,4.8,4.8v1.6" />
-                            <circle cx="12" cy="12" r="8.9" />
-                        </svg>
+                    <button id="userInfoTrigger" class="user-nav-btn" onclick="openProfileModal()" title="個人設定">
+                        <img src="assets/icons/settings.svg" alt="settings">
                     </button>
-                    <button id="logoutBtn" class="user-nav-btn" title="登出">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="12,5.7 5.6,5.7 5.6,18.3 12,18.3" />
-                            <line x1="18.4" y1="12" x2="10.3" y2="12" />
-                            <line x1="18.4" y1="12" x2="15.8" y2="8.8" />
-                            <line x1="18.4" y1="12" x2="15.8" y2="15.2" />
-                        </svg>
+                    <button id="logoutBtn" class="user-nav-btn" onclick="logout()" title="登出">
+                        <img src="assets/icons/logout.svg" alt="logout">
                     </button>
                 </div>
 
@@ -307,13 +313,13 @@
                         <!-- Floating centered actions -->
                         <div class="card-actions-row">
                             <button id="addCustomerBtn" class="card-add-btn" title="新增客戶資料">
-                                <i data-lucide="plus"></i>
+                                <img src="assets/icons/plus.svg" alt="add">
                             </button>
                             <div class="card-search-wrapper">
                                 <input type="text" id="customerSearchInput" class="card-search-input"
                                     placeholder="搜尋客戶...">
                                 <div class="card-search-icon">
-                                    <i data-lucide="search"></i>
+                                    <img src="assets/icons/search.svg" alt="search">
                                 </div>
                             </div>
                         </div>
@@ -360,7 +366,7 @@
                 <div id="customersEditView" class="sub-view-stack">
                     <div class="view-header">
                         <button class="back-btn" onclick="switchSubView('customers', 'list')">
-                            <i data-lucide="chevron-left"></i> 返回列表
+                            <img src="assets/icons/chevron-left.svg" alt="back"><span>返回列表</span>
                         </button>
                         <h2 id="viewTitleCustomer">客戶詳細資料</h2>
                     </div>
@@ -419,10 +425,15 @@
 
                             <div id="customerError" class="auth-error-inline" style="margin-bottom: 1.5rem;"></div>
                             <div style="display: flex; gap: 12px; margin-top: 1.5rem;">
-                                <button type="submit" class="action-btn save-btn" style="flex: 1;">儲存變更</button>
-                                <button type="button" id="deleteCustomerBtn" class="action-btn delete-btn" onclick="deleteCustomer()" style="flex: 1; display: none;">刪除客戶</button>
-                                <button type="button" class="action-btn btn-outline"
-                                    onclick="switchSubView('customers', 'list')" style="flex: 1;">取消</button>
+                                <button type="submit" class="action-btn save-btn" style="flex: 1;">
+                                    <img src="assets/icons/bound.svg" alt="save"><span>儲存變更</span>
+                                </button>
+                                <button type="button" id="deleteCustomerBtn" class="action-btn delete-btn" onclick="deleteCustomer()" style="flex: 1; display: none;">
+                                    <img src="assets/icons/trash.svg" alt="delete"><span>刪除客戶</span>
+                                </button>
+                                <button type="button" class="action-btn btn-outline" onclick="switchSubView('customers', 'list')" style="flex: 1;">
+                                    <img src="assets/icons/close.svg" alt="cancel"><span>取消</span>
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -434,14 +445,14 @@
                     <div class="card-wrapper">
                         <div class="card-actions-row">
                             <button id="addTaskBtn" class="card-add-btn" title="新增任務">
-                                <i data-lucide="plus"></i>
+                                <img src="assets/icons/plus.svg" alt="add">
                             </button>
 
                             <div id="taskFilters" style="display: flex; align-items: center; gap: 12px;">
                                 <div class="status-filter-group">
                                     <button type="button" class="filter-pill active" id="uncompletedFilterBtn"
                                         onclick="toggleTaskStatusFilter('uncompleted')" title="未完成任務">
-                                        <img src="assets/icons/unchecked.svg" style="width: 20px; height: 20px;">
+                                        <img src="assets/icons/unchecked.svg" alt="uncompleted">
                                     </button>
                                     <button type="button" class="filter-pill active" id="completedFilterBtn"
                                         onclick="toggleTaskStatusFilter('completed')" title="已完成任務">
@@ -466,7 +477,7 @@
                     <div id="tasksEditView" class="sub-view-stack">
                         <div class="view-header">
                             <button class="back-btn" onclick="switchSubView('tasks', 'list')">
-                                <i data-lucide="chevron-left"></i> 返回任務列表
+                                <img src="assets/icons/chevron-left.svg" alt="back" style="width: 18px; height: 18px; margin-right: 4px;"> 返回任務列表
                             </button>
                             <h2 id="taskEditorTitle">+ 新增</h2>
                         </div>
@@ -497,11 +508,11 @@
                                 <div class="task-status-container">
                                     <div id="statusIncomplete" class="status-item active"
                                         onclick="setTaskEditorStatus(false)">
-                                        <i data-lucide="square"></i>
+                                        <img src="assets/icons/square.svg" alt="unchecked">
                                         <span>未完成</span>
                                     </div>
                                     <div id="statusComplete" class="status-item" onclick="setTaskEditorStatus(true)">
-                                        <i data-lucide="square-check"></i>
+                                        <img src="assets/icons/square-check.svg" alt="checked">
                                         <span>已完成</span>
                                     </div>
                                 </div>
@@ -540,7 +551,7 @@
                 <div id="permissionsEditView" class="sub-view-stack">
                     <div class="view-header">
                         <button class="back-btn" onclick="switchSubView('permissions', 'list')">
-                            <i data-lucide="chevron-left"></i> 返回列表
+                            <img src="assets/icons/chevron-left.svg" alt="back"><span>返回列表</span>
                         </button>
                         <h2 style="margin: 0;">權限編輯</h2>
                     </div>
@@ -665,31 +676,28 @@
                     <div class="card-wrapper">
                         <div class="card-actions-row">
                             <button id="addProjectBtn" class="card-add-btn" title="建立新報價單">
-                                <i data-lucide="plus"></i>
+                                <img src="assets/icons/plus.svg" alt="add">
                             </button>
                             <!-- Project Status Filter -->
                             <div class="status-filter-group">
                                 <button class="filter-pill" id="projFilterPending" title="待確認專案"
                                     onclick="setProjectStatusFilter('1')">
-                                    <img src="./assets/icons/inprocess.svg" alt="pending"
-                                        style="width: 20px; height: 20px;">
+                                    <img src="assets/icons/TBD.svg" alt="pending">
                                 </button>
                                 <button class="filter-pill" id="projFilterOngoing" title="進行中專案"
                                     onclick="setProjectStatusFilter('2')">
-                                    <img src="./assets/icons/unchecked.svg" alt="ongoing"
-                                        style="width: 20px; height: 20px;">
+                                    <img src="assets/icons/unchecked.svg" alt="ongoing">
                                 </button>
                                 <button class="filter-pill" id="projFilterCompleted" title="已完成專案"
                                     onclick="setProjectStatusFilter('3')">
-                                    <img src="./assets/icons/checked.svg" alt="completed"
-                                        style="width: 20px; height: 20px;">
+                                    <img src="assets/icons/checked.svg" alt="completed">
                                 </button>
                             </div>
                             <div class="card-search-wrapper">
                                 <input type="text" id="projectSearchInput" class="card-search-input"
                                     placeholder="搜尋專案...">
                                 <div class="card-search-icon">
-                                    <i data-lucide="search"></i>
+                                    <img src="assets/icons/search.svg" alt="search">
                                 </div>
                             </div>
                         </div>
@@ -738,7 +746,7 @@
                 <div id="projectsEditView" class="sub-view-stack">
                     <div class="view-header">
                         <button class="back-btn" onclick="switchSubView('projects', 'list')">
-                            <i data-lucide="chevron-left"></i> 返回專案列表
+                            <img src="assets/icons/chevron-left.svg" alt="back" style="width: 18px; height: 18px; margin-right: 4px;"> 返回專案列表
                         </button>
                         <h2 id="quotationTitle">專案報價單</h2>
                         <div class="print-controls"
@@ -986,7 +994,7 @@
                                             <td colspan="6" style="padding: 0; background: #fafafa;">
                                                 <button type="button" onclick="addQuotationRow()"
                                                     style="width:100%; border:none; background:transparent; padding: 8px; cursor:pointer; color: #2563eb; font-weight:600; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                                    <i data-lucide="plus" style="width:16px;height:16px;"></i> 新增
+                                                    <img src="assets/icons/plus.svg" alt="add" style="width:16px;height:16px; margin-right: 4px;"> 新增
                                                 </button>
                                             </td>
                                         </tr>
@@ -1136,47 +1144,35 @@
                                 
                                 <div style="display: flex; gap: 12px; flex: 1;">
                                     <div class="action-btn btn-outline"
-                                        style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; cursor: pointer;">
-                                        <img id="quoteStatusIcon" src="./assets/icons/inprocess.svg" alt="status"
-                                            style="width: 20px; height: 20px;">
+                                        style="flex: 1; position: relative; cursor: pointer;">
+                                        <img id="quoteStatusIcon" src="assets/icons/TBD.svg" alt="status">
                                         <span id="quoteStatusText" style="font-size: 0.875rem;">待確認</span>
-                                        <i data-lucide="chevron-down"
-                                            style="width: 14px; height: 14px; color: #94a3b8; margin-left: auto;"></i>
+                                        <img src="assets/icons/chevron-down.svg" alt="chevron" style="width: 14px; height: 14px; margin-left: auto;">
                                         <select id="projStatusSelect" onchange="handleStatusChange(this.value)"
                                             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
                                             <option value="1">待確認</option>
                                             <option value="2">進行中</option>
                                             <option value="3">已完成</option>
-                                        </select>
+                                         </select>
                                     </div>
-                                    <button type="button" class="action-btn btn-outline" onclick="preparePrint()"
-                                        style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;" title="列印或轉存 PDF">
-                                        <i data-lucide="printer" style="width: 18px; height: 18px;"></i>
-                                        <span>另存PDF</span>
+                                    <button type="button" class="action-btn btn-outline" onclick="preparePrint()" title="列印或轉存 PDF" style="flex: 1;">
+                                        <img src="assets/icons/printer.svg" alt="print"><span>另存PDF</span>
                                     </button>
                                     <button type="button" class="action-btn btn-outline" onclick="handleAddProjectTask()"
-                                        style="flex: 1; border-color: var(--primary); color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                                        <img src="./assets/icons/tasks.svg" alt="add" style="width: 18px; height: 18px;">
-                                        <span>新增任務</span>
+                                        style="flex: 1;">
+                                        <img src="assets/icons/tasks.svg" alt="add"><span>新增任務</span>
                                     </button>
                                 </div>
 
                                 <div style="display: flex; gap: 12px; flex: 1; justify-content: flex-end;">
-                                    <button type="button" class="action-btn save-btn" onclick="handleQuotationSubmit(event)"
-                                        style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                                        <img src="./assets/icons/bound.svg" alt="save"
-                                            style="width: 18px; height: 18px; filter: brightness(0) invert(1);">
-                                        <span>儲存專案</span>
+                                    <button type="button" class="action-btn save-btn" onclick="handleQuotationSubmit(event)" style="flex: 1;">
+                                        <img src="assets/icons/bound.svg" alt="save"><span>儲存專案</span>
                                     </button>
-                                    <button type="button" id="duplicateProjectBtn" class="action-btn btn-outline" onclick="duplicateProject()"
-                                        style="flex: 1; display: none; align-items: center; justify-content: center; gap: 8px;">
-                                        <img src="assets/icons/duplicate.svg" alt="duplicate" style="width: 18px; height: 18px; filter: brightness(0) saturate(100%) invert(48%) sepia(23%) saturate(382%) hue-rotate(177deg) brightness(93%) contrast(85%);">
-                                        <span>複製專案</span>
+                                    <button type="button" id="duplicateProjectBtn" class="action-btn btn-outline" onclick="duplicateProject()" style="flex: 1; display: none;">
+                                        <img src="assets/icons/duplicate.svg" alt="duplicate"><span>複製專案</span>
                                     </button>
-                                    <button type="button" id="deleteProjectBtn" class="action-btn delete-btn" onclick="deleteProject()"
-                                        style="flex: 1; display: none; align-items: center; justify-content: center; gap: 8px;">
-                                        <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
-                                        <span>刪除專案</span>
+                                    <button type="button" id="deleteProjectBtn" class="action-btn delete-btn" onclick="deleteProject()" style="flex: 1; display: none;">
+                                        <img src="assets/icons/trash.svg" alt="delete"><span>刪除專案</span>
                                     </button>
                                 </div>
                             </div>
@@ -1188,14 +1184,14 @@
 
 
         <!-- Scripts -->
-        <script src="js/config.js?v=2.0.6"></script>
-        <script src="js/auth.js?v=2.0.6"></script>
-        <script src="js/ui.js?v=2.0.6"></script>
-        <script src="js/customers.js?v=2.0.6"></script>
-        <script src="js/projects.js?v=2.0.6"></script>
-        <script src="js/tasks.js?v=2.0.6"></script>
-        <script src="js/admin.js?v=2.0.6"></script>
-        <script src="js/main.js?v=2.0.6"></script>
+        <script src="js/config.js?v=2.2.0"></script>
+        <script src="js/auth.js?v=2.2.0"></script>
+        <script src="js/ui.js?v=2.2.0"></script>
+        <script src="js/customers.js?v=2.2.0"></script>
+        <script src="js/projects.js?v=2.2.0"></script>
+        <script src="js/tasks.js?v=2.2.0"></script>
+        <script src="js/admin.js?v=2.2.0"></script>
+        <script src="js/main.js?v=2.2.0"></script>
 </body>
 
 </html>
