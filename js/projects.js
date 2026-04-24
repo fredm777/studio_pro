@@ -445,10 +445,20 @@ window.showQuotationEditor = function(title, data = null) {
     window.isQuotationModified = false;
 
     // Toggle delete and duplicate buttons visibility based on existing record
+    const saveBtn = form ? form.querySelector('button[type="submit"]') : null;
+    const isUpdate = !!data;
+    window.applyPermissionState(saveBtn, isUpdate ? 'proj_u' : 'proj_c');
+
     const deleteBtn = document.getElementById('deleteProjectBtn');
     const duplicateBtn = document.getElementById('duplicateProjectBtn');
-    if (deleteBtn) deleteBtn.style.display = data ? 'flex' : 'none';
-    if (duplicateBtn) duplicateBtn.style.display = data ? 'flex' : 'none';
+    if (deleteBtn) {
+        deleteBtn.style.display = data ? 'flex' : 'none';
+        window.applyPermissionState(deleteBtn, 'proj_d');
+    }
+    if (duplicateBtn) {
+        duplicateBtn.style.display = data ? 'flex' : 'none';
+        window.applyPermissionState(duplicateBtn, 'proj_c');
+    }
 
     // --- NEW: Force Auto-expand for all textareas after load ---
     setTimeout(() => {
@@ -465,7 +475,7 @@ window.deleteProject = async function() {
     const projectId = document.getElementById('projId').value;
     const projName = document.getElementById('qProjName').value || '未命名專案';
     
-    if (!projectId) return;
+    if (!window.hasPermission('proj_d')) return Swal.fire('權限不足', '您的帳號級別無法執行刪除動作', 'error');
 
     const result = await Swal.fire({
         title: '確定要刪除？',
@@ -485,7 +495,8 @@ window.deleteProject = async function() {
     try {
         const body = {
             action: 'delete_project',
-            projectId: projectId
+            projectId: projectId,
+            userLevel: window.currentUser.level
         };
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -718,12 +729,12 @@ function addQuotationRow(data = null) {
     const rowIdx = tbody.children.length + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td class="text-center" style="cursor: pointer; color: var(--primary); font-weight: 700;" title="連點兩下刪除此列" ondblclick="if(confirm('確定要刪除此列項目？')) { this.closest('tr').remove(); calcQuotation(); triggerQuotationAutoSave(); }">${rowIdx}</td>
-        <td><input class="i-name" placeholder="項目名稱" value="${data ? data.name : ''}" oninput="triggerQuotationAutoSave()"></td>
-        <td><textarea class="i-content" placeholder="細項詳述..." rows="1" style="resize:vertical;" oninput="autoExpandTextarea(this); triggerQuotationAutoSave()">${data ? data.content : ''}</textarea></td>
-        <td><input type="number" class="i-price text-right" value="${data ? data.price : ''}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
-        <td><input type="number" class="i-qty text-center" value="${data ? data.qty : 1}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
-        <td>
+        <td class="text-center" data-label="#" style="cursor: pointer; color: var(--primary); font-weight: 700;" title="連點兩下刪除此列" ondblclick="if(confirm('確定要刪除此列項目？')) { this.closest('tr').remove(); calcQuotation(); triggerQuotationAutoSave(); }">${rowIdx}</td>
+        <td data-label="項目名稱"><input class="i-name" placeholder="項目名稱" value="${data ? data.name : ''}" oninput="triggerQuotationAutoSave()"></td>
+        <td data-label="細項詳述"><textarea class="i-content" placeholder="細項詳述..." rows="1" style="resize:vertical;" oninput="autoExpandTextarea(this); triggerQuotationAutoSave()">${data ? data.content : ''}</textarea></td>
+        <td data-label="單價"><input type="number" class="i-price text-right" value="${data ? data.price : ''}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
+        <td data-label="數量"><input type="number" class="i-qty text-center" value="${data ? data.qty : 1}" oninput="calcQuotation(); triggerQuotationAutoSave();"></td>
+        <td data-label="小計">
             <input type="number" class="i-total text-right fw-bold" readonly tabindex="-1" value="${data ? data.subtotal : 0}">
         </td>
     `;
@@ -806,6 +817,19 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
     let rowIndex = rowIdxInput?.value || '';
     const projectId = getVal('projId');
 
+    // Permission check
+    const isUpdate = !!rowIndex;
+    if (isUpdate && !window.hasPermission('proj_u')) {
+        Swal.fire('權限不足', '您的帳號級別無法編輯專案', 'error');
+        isSavingQuotation = false;
+        return;
+    }
+    if (!isUpdate && !window.hasPermission('proj_c')) {
+        Swal.fire('權限不足', '您的帳號級別無法建立專案', 'error');
+        isSavingQuotation = false;
+        return;
+    }
+
     // Safety Match: Find rowIndex if missing
     if (!rowIndex && projectId) {
         const found = (window.allProjects || []).find(p => p.projectId === projectId);
@@ -874,7 +898,7 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
             method: 'POST',
             mode: 'cors', 
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_project', project, items })
+            body: JSON.stringify({ action: 'save_project', project, items, userLevel: window.currentUser.level })
         });
 
         const result = await response.json();

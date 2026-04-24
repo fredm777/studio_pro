@@ -198,17 +198,26 @@ window.renderTasks = function() {
                        placeholder="任務內容...">
             </div>
             <div class="task-actions" style="display: flex; gap: 8px; align-items: center; padding-right: 8px;">
-                <button class="action-btn-icon" onclick="window.toggleTaskStatus('${t.taskId}')" title="完成/取消">
+                <button class="action-btn-icon btn-toggle-status" onclick="window.toggleTaskStatus('${t.taskId}')" title="完成/取消">
                     <img src="${checkIcon}" style="${iconStyle}">
                 </button>
-                <button class="action-btn-icon" onclick="window.duplicateTask('${t.taskId}')" title="複製項目">
+                <button class="action-btn-icon btn-duplicate-task" onclick="window.duplicateTask('${t.taskId}')" title="複製項目">
                     <img src="assets/icons/duplicate.svg" style="${iconStyle}">
                 </button>
-                <button class="action-btn-icon" onclick="window.deleteTask('${t.taskId}')" title="刪除任務">
+                <button class="action-btn-icon btn-delete-task" onclick="window.deleteTask('${t.taskId}')" title="刪除任務">
                     <img src="assets/icons/trash.svg" style="${iconStyle}">
                 </button>
             </div>
         `;
+        
+        // Apply Permissions to inline buttons
+        const btnToggle = item.querySelector('.btn-toggle-status');
+        const btnDup = item.querySelector('.btn-duplicate-task');
+        const btnDel = item.querySelector('.btn-delete-task');
+        window.applyPermissionState(btnToggle, 'task_u');
+        window.applyPermissionState(btnDup, 'task_c');
+        window.applyPermissionState(btnDel, 'task_d');
+
         list.appendChild(item);
     });
 
@@ -246,7 +255,7 @@ window.saveTaskOrder = async function(orderedIds) {
         await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'update_tasks_order', updates })
+            body: JSON.stringify({ action: 'update_tasks_order', updates, userLevel: window.currentUser.level })
         });
         console.log(">> Task order synced. Refreshing Row Indices...");
         window.fetchTasks(); // Ensure fresh indices
@@ -277,7 +286,7 @@ window.updateTaskField = async function(taskId, field, value) {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task })
+            body: JSON.stringify({ action: 'save_task', task, userLevel: window.currentUser.level })
         });
         const json = await res.json();
         if (json.success && json.data) {
@@ -324,7 +333,7 @@ window.deleteTask = function(taskId) {
                     await fetch(GAS_WEB_APP_URL, {
                         method: 'POST', mode: 'cors',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: 'delete_task', rowIndex: task.rowIndex })
+                        body: JSON.stringify({ action: 'delete_task', rowIndex: task.rowIndex, userLevel: window.currentUser.level })
                     });
                     // Crucial: Refresh from backend to sync RowIndices for remaining tasks
                     window.fetchTasks();
@@ -355,7 +364,7 @@ window.duplicateTask = async function(taskId) {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task: newTask })
+            body: JSON.stringify({ action: 'save_task', task: newTask, userLevel: window.currentUser.level })
         });
         const json = await res.json();
         if (json.success && json.data) {
@@ -372,6 +381,7 @@ window.duplicateTask = async function(taskId) {
 }
 
 window.addTaskInline = function() {
+    if (!window.hasPermission('task_c')) return Toast.fire({ icon: 'warning', title: '無新增任務權限' });
     const newTask = {
         taskId: 'T-' + Date.now(),
         projectId: '',
@@ -457,7 +467,7 @@ window.selectTaskProjectForInline = async function(taskId, projectId) {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task })
+            body: JSON.stringify({ action: 'save_task', task, userLevel: window.currentUser.level })
         });
         const json = await res.json();
         if (json.success && json.data) {

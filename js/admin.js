@@ -9,6 +9,7 @@ window.switchAdminSubTab = function(target) {
         if (listEl) listEl.classList.add('active');
         if (tabEl) tabEl.classList.add('active');
         fetchMembers();
+        fetchRolePermissions(); // New: Fetch matrix data
     } else if (target === 'settings') {
         const settingsEl = document.getElementById('adminSettingsView');
         const tabEl = document.getElementById('adminSettingsTab');
@@ -138,6 +139,15 @@ async function fetchMembers() {
     }
 }
 
+function mapStatus(status) {
+    const s = (status || '').toLowerCase().trim();
+    if (s === 'active' || s === '啟用') return '啟用';
+    if (s === 'unverified' || s === '待驗證') return '待驗證';
+    if (s === 'pending' || s === '待審核') return '待審核';
+    if (s === 'banned' || s === '暫停使用' || s === '停用') return '暫停使用';
+    return status || '未知';
+}
+
 function renderMembers(list) {
     const tbody = document.getElementById('memberTableBody');
     if (!tbody) return;
@@ -146,7 +156,14 @@ function renderMembers(list) {
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
         tr.ondblclick = () => showMemberEditor(m.rowIndex);
-        tr.innerHTML = `<td>${m.username}</td><td>${m.nickname || ''}</td><td><span class="status-badge" style="background:#f1f5f9; color:var(--text-dark); border:1px solid var(--border);">${m.level || '未知'}</span></td><td>${m.email || ''}</td>`;
+        const displayStatus = mapStatus(m.status);
+        tr.innerHTML = `
+            <td>${m.username}</td>
+            <td>${m.nickname || ''}</td>
+            <td><span class="status-badge" style="background:#f1f5f9; color:var(--text-dark); border:1px solid var(--border);">${m.level || '未知'}</span></td>
+            <td>${m.email || ''}</td>
+            <td>${displayStatus}</td>
+        `;
         tbody.appendChild(tr);
     });
 }
@@ -173,7 +190,7 @@ window.showMemberEditor = (idx) => {
     document.getElementById('memberTargetRow').value = idx;
     document.getElementById('memberUser').value = m.username || '';
     document.getElementById('memberLevel').value = m.level || '客戶';
-    document.getElementById('memberStatus').value = m.status || '啟用';
+    document.getElementById('memberStatus').value = mapStatus(m.status);
 
     // Clear error
     const memErr = document.getElementById('memberError');
@@ -222,4 +239,166 @@ window.handleMemberUpdateSubmit = async function(e) {
         setSyncStatus(false);
     }
 }
+
+// --- Granular Permission Matrix Logic ---
+
+const PERM_DEFINITIONS = [
+    { group: '客戶管理', icon: 'users.svg', perms: [
+        { key: 'cust_v', label: '檢視列表' },
+        { key: 'cust_c', label: '新增客戶' },
+        { key: 'cust_u', label: '編輯資料' },
+        { key: 'cust_d', label: '刪除客戶' }
+    ]},
+    { group: '專案報價', icon: 'projects.svg', perms: [
+        { key: 'proj_v', label: '檢視專案' },
+        { key: 'proj_c', label: '建立報價單' },
+        { key: 'proj_u', label: '編輯報價單' },
+        { key: 'proj_d', label: '刪除專案' }
+    ]},
+    { group: '任務管理', icon: 'tasks.svg', perms: [
+        { key: 'task_v', label: '檢視任務' },
+        { key: 'task_c', label: '新增任務' },
+        { key: 'task_u', label: '編輯任務' },
+        { key: 'task_d', label: '刪除任務' }
+    ]},
+    { group: '系統設定', icon: 'settings.svg', perms: [
+        { key: 'set_v', label: '進入設定頁' },
+        { key: 'set_u', label: '修改全域設定' },
+        { key: 'perm_m', label: '權限管理 (Admin)' }
+    ]}
+];
+
+const ROLES = ['管理者', '操作人員', '客戶'];
+
+async function fetchRolePermissions() {
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'get_role_permissions' })
+        });
+        const json = await res.json();
+        if (json.success) {
+            window.rolePermissionsCache = json.permissions;
+            renderPermissionMatrix();
+        }
+    } catch (e) { console.error("Fetch Permissions Error:", e); }
+}
+
+function renderPermissionMatrix() {
+    const tbody = document.getElementById('permissionMatrixBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const perms = window.rolePermissionsCache || {};
+
+    PERM_DEFINITIONS.forEach(group => {
+        // Group Header
+        const groupTr = document.createElement('tr');
+        groupTr.className = 'perm-row-group';
+        groupTr.innerHTML = `
+            <td colspan="4" style="background: #f1f5f9; font-weight: bold; color: #475569; padding: 12px 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="assets/icons/${group.icon}" data-lucide="${group.icon.replace('.svg','')}" style="width: 18px; height: 18px;">
+                    ${group.group}
+                </div>
+            </td>`;
+        tbody.appendChild(groupTr);
+
+        group.perms.forEach(p => {
+            const tr = document.createElement('tr');
+            let html = `<td>${p.label}</td>`;
+            ROLES.forEach(role => {
+                const isChecked = (perms[role] && perms[role][p.key]) ? 'checked' : '';
+                const isDisabled = (role === '管理者') ? 'disabled' : ''; // Admin always has full power
+                html += `<td><input type="checkbox" class="perm-checkbox" data-role="${role}" data-key="${p.key}" ${isChecked} ${isDisabled}></td>`;
+            });
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+        });
+    });
+
+    // Re-trigger icon replacement for the new matrix rows
+    if (window.replaceIcons) window.replaceIcons();
+}
+
+window.saveRolePermissions = async function() {
+    const matrix = {};
+    ROLES.forEach(role => { matrix[role] = {}; });
+
+    // Special case: Admin always has all permissions
+    PERM_DEFINITIONS.forEach(g => g.perms.forEach(p => { matrix['管理者'][p.key] = true; }));
+
+    // Read checkboxes for others
+    const checkboxes = document.querySelectorAll('.perm-checkbox:not(:disabled)');
+    checkboxes.forEach(cb => {
+        const role = cb.getAttribute('data-role');
+        const key = cb.getAttribute('data-key');
+        matrix[role][key] = cb.checked;
+    });
+
+    setSyncStatus(true);
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'update_role_permissions', permissions: matrix })
+        });
+        const json = await res.json();
+        if (json.success) {
+            window.rolePermissionsCache = matrix;
+            Swal.fire({ icon: 'success', title: '權限設定已更新', text: '變更將在使用者下次登入時生效', timer: 2000, showConfirmButton: false });
+        } else {
+            Swal.fire('錯誤', '存檔失敗', 'error');
+        }
+    } catch (e) { Swal.fire('錯誤', '網路連線失敗', 'error'); }
+    finally { setSyncStatus(false); }
+}
+
+/**
+ * Navigation shortcut handler for Profile Modal cards
+ */
+window.routeFromProfile = function(tabId, viewId) {
+    console.log(`>> Routing from Profile: Tab[${tabId}] View[${viewId}]`);
+    
+    // 1. Close Modal
+    if (typeof closeModal === 'function') closeModal('profileModal');
+    
+    // 2. Perform Direct Tab Switching (Bypassing click logic if necessary)
+    // First, standard tab link UI update
+    document.querySelectorAll('.tab-link').forEach(x => x.classList.remove('active'));
+    const targetBtn = document.querySelector(`.tab-link[data-tab="${tabId}"]`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    // Second, main content visibility
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const section = document.getElementById(tabId);
+    if (section) {
+        section.classList.add('active');
+    } else {
+        console.error(`>> [Route Error] Section #${tabId} not found.`);
+        return;
+    }
+    
+    // 3. Switch Sub-view if specified
+    if (viewId) {
+        // Handle both .sub-view-stack and .admin-sub-tab
+        const subViews = section.querySelectorAll('.sub-view-stack, .admin-sub-tab');
+        subViews.forEach(v => v.classList.remove('active'));
+        
+        const targetView = document.getElementById(viewId);
+        if (targetView) {
+            targetView.classList.add('active');
+            console.log(`>> Successfully activated sub-view: ${viewId}`);
+        } else {
+            console.warn(`>> [Route Warning] Sub-view #${viewId} not found.`);
+        }
+    }
+
+    // 4. Trigger Refreshes
+    if (tabId === 'settings' && typeof fetchSettings === 'function') fetchSettings();
+    if (tabId === 'permissions' && typeof fetchRolePermissions === 'function') fetchRolePermissions();
+    if (tabId === 'permissions' && typeof fetchMembers === 'function') fetchMembers();
+
+    // Re-init UI elements
+    if (window.replaceIcons) window.replaceIcons();
+};
 

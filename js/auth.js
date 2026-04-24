@@ -29,26 +29,67 @@ function enterApp() {
 
     if (!window.currentUser) { showAuth(); return; }
 
-    if (displayEl) displayEl.innerText = (window.currentUser.nickname || window.currentUser.username || "使用者");
+    window.hasPermission = function(key) {
+        if (!window.currentUser) return false;
+        
+        // --- Admin Always Has All Permissions ---
+        const lvl = (window.currentUser.level || '').trim();
+        const isAdmin = (lvl === '管理者' || lvl === '管理員');
+        if (isAdmin) return true;
 
-    const userLevel = (window.currentUser.level || '').trim();
+        // --- Compatibility Mode for existing sessions or standard logic ---
+        if (!window.currentUser.permissions) {
+            const isOp = (lvl === '操作人員');
+            const isClient = (lvl === '客戶');
 
-    if (userLevel === '管理者' || userLevel === '管理員') {
-        if (tasksBtn) tasksBtn.classList.remove('hidden');
-        if (customersBtn) { customersBtn.classList.remove('hidden'); customersBtn.click(); }
-        if (customerActions) customerActions.style.display = 'flex';
-    } else if (userLevel === '操作人員') {
-        if (settingsBtn) settingsBtn.classList.add('hidden');
-        if (permissionsBtn) permissionsBtn.classList.add('hidden');
-        if (tasksBtn) tasksBtn.classList.remove('hidden');
-        if (customersBtn) { customersBtn.classList.remove('hidden'); customersBtn.click(); }
-        if (customerActions) customerActions.style.display = 'flex';
-    } else {
-        if (settingsBtn) settingsBtn.classList.add('hidden');
-        if (permissionsBtn) permissionsBtn.classList.add('hidden');
-        if (tasksBtn) tasksBtn.classList.add('hidden');
-        if (customersBtn) { customersBtn.classList.remove('hidden'); customersBtn.click(); }
-        if (customerActions) customerActions.style.display = 'none';
+            if (isOp) {
+                if (key === 'perm_m') return false;
+                if (key === 'set_u') return false;
+                if (key.endsWith('_d')) return false; // Default: Operators cannot delete
+                return true; 
+            }
+            if (isClient) {
+                return (key === 'proj_v' || key === 'cust_v');
+            }
+            return false;
+        }
+        
+        return window.currentUser.permissions[key] === true;
+    };
+
+    window.applyPermissionState = function(el, key) {
+        if (!el) return;
+        const hasPerm = window.hasPermission(key);
+        if (hasPerm) {
+            el.classList.remove('permission-locked');
+            if (el.tagName === 'BUTTON') el.disabled = false;
+        } else {
+            el.classList.add('permission-locked');
+            if (el.tagName === 'BUTTON') el.disabled = true;
+        }
+    };
+
+    // Dynamic Tab & Action Visibility based on permissions (Now using LOCK instead of HIDE)
+    window.applyPermissionState(customersBtn, 'cust_v');
+    window.applyPermissionState(projectsBtn, 'proj_v');
+    window.applyPermissionState(tasksBtn, 'task_v');
+    window.applyPermissionState(permissionsBtn, 'perm_m');
+
+    // Default tab click logic (only if the tab is NOT locked)
+    if (customersBtn && !customersBtn.classList.contains('permission-locked') && !document.querySelector('.tab-link.active')) {
+        customersBtn.click();
+    }
+
+    // Global Action Buttons (Add Customer, etc.)
+    applyPermissionState(document.getElementById('addCustomerBtn'), 'cust_c');
+    applyPermissionState(document.getElementById('addProjectBtn'), 'proj_c');
+    applyPermissionState(document.getElementById('addTaskBtn'), 'task_c');
+
+    // Settings Save Button
+    const settingsForm = document.querySelector('form[onsubmit="handleGlobalSettingsSubmit(event)"]');
+    if (settingsForm) {
+        const saveBtn = settingsForm.querySelector('button[type="submit"]');
+        applyPermissionState(saveBtn, 'set_u');
     }
 
     if (typeof fetchCustomers === 'function') fetchCustomers();
@@ -286,10 +327,11 @@ window.openProfileModal = function () {
     const modal = document.getElementById('profileModal');
     if (modal) modal.classList.add('active');
 
-    // Admin Shortcut Logic
-    const adminSec = document.getElementById('profAdminSection');
-    const userLevel = (window.currentUser.level || '').trim();
-    if (adminSec) adminSec.style.display = (userLevel === '管理者' || userLevel === '管理員') ? 'block' : 'none';
+    // Apply Permissions to Shortcut Cards
+    window.applyPermissionState(document.getElementById('cardBankSettings'), 'set_v');
+    window.applyPermissionState(document.getElementById('cardNoteSettings'), 'set_v');
+    window.applyPermissionState(document.getElementById('cardUserAdmin'), 'perm_m');
+    window.applyPermissionState(document.getElementById('cardPermAdmin'), 'perm_m');
 
     if (document.getElementById('profUser')) document.getElementById('profUser').value = window.currentUser.username;
     if (document.getElementById('profNick')) document.getElementById('profNick').value = window.currentUser.nickname || '';

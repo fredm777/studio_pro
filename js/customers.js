@@ -228,10 +228,14 @@ window.showCustomerEditor = (title, data = null) => {
     if (window.lucide) lucide.createIcons();
     window.isCustomerModified = false;
 
-    // Toggle delete button visibility based on existing record
+    // Apply Permission State to Buttons
+    const saveBtn = form ? form.querySelector('button[type="submit"]') : null;
+    window.applyPermissionState(saveBtn, 'cust_u');
+    
     const deleteBtn = document.getElementById('deleteCustomerBtn');
     if (deleteBtn) {
         deleteBtn.style.display = data ? 'block' : 'none';
+        window.applyPermissionState(deleteBtn, 'cust_d');
     }
 }
 
@@ -239,7 +243,7 @@ window.deleteCustomer = async function() {
     const rIndex = document.getElementById('rowIndex').value;
     const companyName = document.getElementById('companyName').value;
     
-    if (!rIndex) return;
+    if (!window.hasPermission('cust_d')) return Swal.fire('權限不足', '您的帳號級別無法執行刪除動作', 'error');
 
     const result = await Swal.fire({
         title: '確定要刪除？',
@@ -259,7 +263,8 @@ window.deleteCustomer = async function() {
     try {
         const body = {
             action: 'delete_customer',
-            rowIndex: parseInt(rIndex)
+            rowIndex: parseInt(rIndex),
+            userLevel: window.currentUser.level
         };
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -292,8 +297,12 @@ window.saveCustomer = async function() {
     if (taxId.startsWith('0')) taxId = "'" + taxId;
     if (phone.startsWith('0')) phone = "'" + phone;
 
+    const isUpdate = !!rIndex;
+    if (isUpdate && !window.hasPermission('cust_u')) return Swal.fire('權限不足', '您的帳號級別無法編輯資料', 'error');
+    if (!isUpdate && !window.hasPermission('cust_c')) return Swal.fire('權限不足', '您的帳號級別無法新增客戶', 'error');
+
     const body = {
-        action: rIndex ? 'update_customer' : 'add_customer',
+        action: isUpdate ? 'update_customer' : 'add_customer',
         rowIndex: rIndex ? parseInt(rIndex) : null,
         companyName,
         taxId,
@@ -303,7 +312,8 @@ window.saveCustomer = async function() {
         email: document.getElementById('email').value,
         address: document.getElementById('address').value || '',
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : '',
-        customerId: document.getElementById('customerId').value || ''
+        customerId: document.getElementById('customerId').value || '',
+        userLevel: window.currentUser.level
     };
 
     const originalData = JSON.parse(JSON.stringify(window.allCustomers));

@@ -10,17 +10,14 @@ function initEventListeners() {
         const isCmdOrCtrl = e.metaKey || e.ctrlKey;
         const key = e.key;
 
-        // A. Navigation Shortcuts (Cmd/Ctrl + 1-6)
-        if (isCmdOrCtrl && ['1', '2', '3', '4', '5', '6'].includes(key)) {
+        // A. Navigation Shortcuts (Cmd/Ctrl + 1-3)
+        if (isCmdOrCtrl && ['1', '2', '3'].includes(key)) {
             e.preventDefault();
             e.stopPropagation();
-            console.log(`>> Shortcut Detected: Cmd/Ctrl + ${key}`);
+            console.log(`>> Navigation Shortcut Detected: Cmd/Ctrl + ${key}`);
             if (key === '1') window.switchToTab('customers');
             if (key === '2') window.switchToTab('projects');
             if (key === '3') window.switchToTab('tasks');
-            if (key === '4') window.routeFromProfile('settings', 'bankSettingsView');
-            if (key === '5') window.routeFromProfile('settings', 'workflowSettingsView');
-            if (key === '6') window.routeFromProfile('permissions', 'permissionsListView');
             return;
         }
 
@@ -430,3 +427,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initBackgroundParallax();
     setTimeout(checkModalIntegrity, 2000);
 });
+

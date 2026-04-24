@@ -34,6 +34,15 @@
     --max-width-list: 1100px;
 }
 
+/* Permission Locked State */
+.permission-locked {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    filter: grayscale(0.8) !important;
+    user-select: none !important;
+}
+
 html {
     overflow-y: scroll;
     /* Force scrollbar to prevent layout shift */
@@ -2983,4 +2992,182 @@ input[type="date"].task-inline-input {
 .task-date-separator.drag-over {
     border-bottom-color: rgba(34, 197, 94, 0.3); /* 30% Green */
     border-bottom-width: 3px;
+}
+
+/* Permission Matrix Table */
+.permission-matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1rem;
+}
+
+.permission-matrix-table th, 
+.permission-matrix-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+}
+
+.permission-matrix-table th:last-child, 
+.permission-matrix-table td:last-child {
+    border-right: none;
+}
+
+.permission-matrix-table thead th {
+    font-weight: 700;
+    font-size: 0.875rem;
+    background: #f8fafc;
+    position: sticky;
+    top: 0;
+}
+
+.permission-matrix-table tbody tr:hover {
+    background: #f1f5f9;
+}
+
+.permission-matrix-table td {
+    text-align: center;
+}
+
+.permission-matrix-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: #f8fafc;
+    width: 250px;
+}
+
+.perm-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.perm-row-group {
+    background: #f1f5f9;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE OPTIMIZATION
+   ========================================== */
+@media (max-width: 768px) {
+    /* 1. Global Layout Adjustments */
+    .header-content, .sub-nav-content, .card-actions-row {
+        padding: 0 12px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .card-search-wrapper {
+        width: 100% !important; /* Search bar takes full width */
+    }
+
+    .tabs {
+        width: 100%;
+        overflow-x: auto; /* Allow horizontal scroll for tabs */
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    /* 2. Table Simplification (Hiding secondary columns) */
+    /* Customers Table: Keep Name (1) and TaxId (2), Hide others */
+    #customerTable th:nth-child(3), #customerTable td:nth-child(3),
+    #customerTable th:nth-child(4), #customerTable td:nth-child(4),
+    #customerTable th:nth-child(5), #customerTable td:nth-child(5) {
+        display: none;
+    }
+
+    /* Projects Table: Keep Customer (1), Date (2), Name (3), Total (7), Hide others */
+    #projectTable th:nth-child(4), #projectTable td:nth-child(4),
+    #projectTable th:nth-child(5), #projectTable td:nth-child(5),
+    #projectTable th:nth-child(6), #projectTable td:nth-child(6) {
+        display: none;
+    }
+
+    /* 3. Editor & Modal Optimization */
+    .modal-content {
+        width: 95% !important;
+        padding: 16px !important;
+        margin: 10px auto;
+    }
+
+    .quotation-editor-container {
+        padding: 12px !important;
+    }
+
+    /* Transform Quotation Items Table into Cards */
+    .quotation-items-table thead {
+        display: none; /* Hide header on mobile */
+    }
+
+    .quotation-items-table tr {
+        display: block;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 12px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .quotation-items-table td {
+        display: block;
+        width: 100% !important;
+        border: none !important;
+        padding: 6px 0 !important;
+        text-align: left !important;
+    }
+
+    /* Make buttons bigger and easier to click on mobile */
+    .primary-btn, .save-btn, .delete-btn {
+        padding: 14px;
+        font-size: 1.1rem;
+    }
+
+    /* 4. Task Management Mobile Adjustments */
+    .task-item {
+        flex-wrap: wrap;
+        padding: 16px 12px !important;
+        background: #fff;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        border: 1px solid var(--border);
+    }
+
+    .task-drag-handle {
+        display: none !important; /* Hide drag on mobile for cleaner look */
+    }
+
+    .autocomplete-container {
+        width: 100% !important;
+        order: 1;
+    }
+
+    .task-item > div:nth-child(3) { /* Date display */
+        width: 70px !important;
+        order: 2;
+    }
+
+    .task-item > div:nth-child(4) { /* Task name */
+        flex: 1 !important;
+        order: 3;
+    }
+
+    .task-actions {
+        width: 100% !important;
+        order: 4;
+        justify-content: flex-end;
+        padding-top: 8px;
+        border-top: 1px solid #f1f5f9;
+        margin-top: 4px;
+    }
 }

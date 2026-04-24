@@ -107,18 +107,28 @@
                 <div id="profPassError" class="auth-error-inline" style="margin-bottom: 12px; margin-top: 0;"></div>
 
                 <div id="profAdminSection" style="display: none;">
-                    <div class="compact-nav-grid" style="margin-top: 16px;">
-                        <div class="nav-shortcut-card" onclick="routeFromProfile('settings', 'bankSettingsView')">
-                            <img src="assets/icons/credit-card.svg" alt="card">
-                            <span>收款帳號</span>
+                    <div class="compact-nav-grid" style="margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <!-- Left Column -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div id="cardBankSettings" class="nav-shortcut-card" onclick="routeFromProfile('settings', 'bankSettingsView')" style="width: 100%;">
+                                <img src="assets/icons/credit-card.svg" alt="card">
+                                <span>收款帳號</span>
+                            </div>
+                            <div id="cardNoteSettings" class="nav-shortcut-card" onclick="routeFromProfile('settings', 'workflowSettingsView')" style="width: 100%;">
+                                <img src="assets/icons/process.svg" alt="process">
+                                <span>報價單備註</span>
+                            </div>
                         </div>
-                        <div class="nav-shortcut-card" onclick="routeFromProfile('settings', 'workflowSettingsView')">
-                            <img src="assets/icons/file-text.svg" alt="file">
-                            <span>報價單備註</span>
-                        </div>
-                        <div class="nav-shortcut-card" onclick="routeFromProfile('permissions', 'permissionsListView')">
-                            <img src="assets/icons/star.svg" alt="star">
-                            <span>權限管理</span>
+                        <!-- Right Column -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div id="cardUserAdmin" class="nav-shortcut-card" onclick="routeFromProfile('permissions', 'permissionsListView')" style="width: 100%;">
+                                <img src="assets/icons/users.svg" alt="users">
+                                <span>使用者管理</span>
+                            </div>
+                            <div id="cardPermAdmin" class="nav-shortcut-card" onclick="routeFromProfile('permissions', 'permissionsMatrixView')" style="width: 100%;">
+                                <img src="assets/icons/star.svg" alt="star">
+                                <span>權限管理</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -290,6 +300,7 @@
                     <button id="customersTabBtn" class="tab-link active" data-tab="customers">客戶</button>
                     <button id="projectsTabBtn" class="tab-link" data-tab="projects">專案</button>
                     <button id="tasksTabBtn" class="tab-link" data-tab="tasks">任務</button>
+                    <button id="permissionsTabBtn" class="tab-link" data-tab="permissions">成員</button>
                 </nav>
 
                 <div class="user-nav-segmented">
@@ -324,7 +335,7 @@
                             </div>
                         </div>
                         <div class="grid-container">
-                            <table>
+                            <table id="customerTable">
                                 <thead>
                                     <tr class="sortable-row">
                                         <th>客戶名稱</th>
@@ -539,9 +550,44 @@
                                         <th>使用者暱稱</th>
                                         <th>目前的級別</th>
                                         <th>郵件地址</th>
+                                        <th>帳號狀態</th>
                                     </tr>
                                 </thead>
                                 <tbody id="memberTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Granular Permission Matrix View -->
+                <div id="permissionsMatrixView" class="sub-view-stack">
+                    <div class="view-header">
+                        <button class="back-btn" onclick="switchSubView('permissions', 'list')">
+                            <img src="assets/icons/chevron-left.svg" alt="back"><span>返回成員列表</span>
+                        </button>
+                        <h2 style="margin: 0;">權限矩陣設定</h2>
+                    </div>
+                    <div class="card-wrapper" style="padding: 2rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-dark); display: flex; align-items: center; gap: 8px;">
+                                <img src="assets/icons/star.svg" alt="perm" style="width: 20px;">
+                                功能權限矩陣設定
+                            </h3>
+                            <button class="primary-btn" onclick="saveRolePermissions()" style="width: auto; padding: 0.6rem 1.5rem;">儲存權限設定</button>
+                        </div>
+                        <div class="grid-container" style="overflow-x: auto;">
+                            <table class="permission-matrix-table">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left; background: #f8fafc;">功能項目 \ 使用者級別</th>
+                                        <th style="text-align: center; color: var(--primary);">管理者</th>
+                                        <th style="text-align: center; color: #6366f1;">操作人員</th>
+                                        <th style="text-align: center; color: #64748b;">客戶</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="permissionMatrixBody">
+                                    <!-- Rows will be injected by JS -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -702,7 +748,7 @@
                             </div>
                         </div>
                         <div class="grid-container">
-                            <table>
+                            <table id="projectTable">
                                 <thead>
                                     <tr class="sortable-row">
                                         <th onclick="toggleProjectSort('customer')" class="sortable-header" id="th-customer">客戶名稱 <span class="sort-icon"></span></th>
