@@ -703,17 +703,38 @@ header {
 .sub-nav-bar {
     position: sticky;
     top: 0;
-    /* Updated for clean stickiness */
     background: transparent;
-    border-bottom: none;
+    border: none;
+    box-shadow: none;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 54px;
-    /* Sufficient height for contents */
     margin-bottom: 12px;
-    /* Precise 12px gap to search bar */
     z-index: 1100;
+}
+
+.sub-nav-bar::before {
+    content: "";
+    position: absolute;
+    /* Top edge matches window top, bottom edge is 24px lower than navbar */
+    top: 0;
+    bottom: -24px;
+    left: 0;
+    right: 0;
+    
+    /* Colorless but with a tiny hint of alpha to trigger browser rendering */
+    background: rgba(255, 255, 255, 0.01);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: -1;
+
+    /* Soft edge without heavy clipping */
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 }
 
 .sub-nav-content {
@@ -1294,11 +1315,11 @@ tbody tr:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px;
     /* 全域置中 */
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    /* Removed border-bottom per user request */
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
@@ -2766,18 +2787,27 @@ input[type="date"].task-inline-input {
 }
 
 /* Rounded Inputs with light grey background */
-#profileForm .compact-form-row {
-    margin-bottom: 12px;
+.profile-form-grid-row {
     display: flex;
-    align-items: center;
-    gap: 16px;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+#profileForm .compact-form-row {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 0;
 }
 
 #profileForm label {
-    width: 65px;
-    font-size: 0.875rem;
+    width: auto;
+    font-size: 0.8125rem;
     font-weight: 700;
     color: var(--text-muted);
+    margin-left: 4px;
 }
 
 #profileForm input {

@@ -17,13 +17,21 @@ window.fetchCustomers = async function() {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_customers' })
+            body: JSON.stringify({ action: 'get_customers', sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success) { 
             window.allCustomers = json.data || []; 
             window.currentFilteredCustomers = [...window.allCustomers];
             window.renderCustomers(); 
+        } else {
+            // Display backend error (e.g. "Please fill in Spreadsheet ID")
+            Swal.fire({
+                title: '資料讀取受阻',
+                text: json.error || '請確認個人設定中的試算表 ID 是否正確。',
+                icon: 'info',
+                confirmButtonColor: 'var(--primary)'
+            });
         }
     } catch (err) { 
         console.error("Fetch Error:", err);
@@ -187,8 +195,11 @@ window.switchSubView = async function(tabId, viewType) {
 
 window.showCustomerEditor = (title, data = null) => {
     if (!window.currentUser) return Toast.fire({ icon: 'warning', title: '請先登入' });
-    const userRole = (window.currentUser.level || '').trim();
-    if (userRole === '客戶') return Swal.fire('提示', '客戶帳號僅供讀取，無法修改資料', 'info');
+    
+    // Check dynamic permissions instead of hardcoded role check
+    const isUpdate = !!(data && data.rowIndex);
+    if (isUpdate && !window.hasPermission('cust_u')) return Swal.fire('權限不足', '您的帳號級別無法編輯資料', 'error');
+    if (!isUpdate && !window.hasPermission('cust_c')) return Swal.fire('權限不足', '您的帳號級別無法新增客戶', 'error');
     
     const titleEl = document.getElementById('viewTitleCustomer');
     const form = document.getElementById('customerForm');
@@ -264,7 +275,8 @@ window.deleteCustomer = async function() {
         const body = {
             action: 'delete_customer',
             rowIndex: parseInt(rIndex),
-            userLevel: window.currentUser.level
+            userLevel: window.currentUser.level,
+            sheetId: window.currentUser.sheetId
         };
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -313,7 +325,8 @@ window.saveCustomer = async function() {
         address: document.getElementById('address').value || '',
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : '',
         customerId: document.getElementById('customerId').value || '',
-        userLevel: window.currentUser.level
+        userLevel: window.currentUser.level,
+        sheetId: window.currentUser.sheetId
     };
 
     const originalData = JSON.parse(JSON.stringify(window.allCustomers));

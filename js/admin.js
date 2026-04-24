@@ -26,7 +26,7 @@ async function fetchSettings() {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_settings' })
+            body: JSON.stringify({ action: 'get_settings', sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success && json.settings) {
@@ -99,7 +99,7 @@ window.handleGlobalSettingsSubmit = async function(e) {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'update_settings', settings })
+            body: JSON.stringify({ action: 'update_settings', settings, sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success) {
@@ -123,7 +123,7 @@ async function fetchMembers() {
         setSyncStatus(true);
         const res = await fetch(GAS_WEB_APP_URL, { 
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify({ action: 'get_all_members', username: window.currentUser.username }) 
+            body: JSON.stringify({ action: 'get_all_members', username: window.currentUser.username, sheetId: window.currentUser.sheetId }) 
         });
         const json = await res.json();
         if (json.success) {
@@ -212,7 +212,7 @@ window.handleMemberUpdateSubmit = async function(e) {
     if (memErr) { memErr.innerText = ''; memErr.classList.remove('active'); }
     
     try {
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, sheetId: window.currentUser.sheetId }) });
         const json = await res.json();
         if (json.success) { 
             Swal.fire({ icon: 'success', title: '權限已更新', timer: 1500, showConfirmButton: false });
@@ -244,27 +244,27 @@ window.handleMemberUpdateSubmit = async function(e) {
 
 const PERM_DEFINITIONS = [
     { group: '客戶管理', icon: 'users.svg', perms: [
-        { key: 'cust_v', label: '檢視列表' },
-        { key: 'cust_c', label: '新增客戶' },
-        { key: 'cust_u', label: '編輯資料' },
-        { key: 'cust_d', label: '刪除客戶' }
+        { key: 'cust_v', label: '檢視' },
+        { key: 'cust_c', label: '新增' },
+        { key: 'cust_u', label: '編輯' },
+        { key: 'cust_d', label: '刪除' }
     ]},
     { group: '專案報價', icon: 'projects.svg', perms: [
-        { key: 'proj_v', label: '檢視專案' },
-        { key: 'proj_c', label: '建立報價單' },
-        { key: 'proj_u', label: '編輯報價單' },
-        { key: 'proj_d', label: '刪除專案' }
+        { key: 'proj_v', label: '檢視' },
+        { key: 'proj_c', label: '新增' },
+        { key: 'proj_u', label: '編輯' },
+        { key: 'proj_d', label: '刪除' }
     ]},
     { group: '任務管理', icon: 'tasks.svg', perms: [
-        { key: 'task_v', label: '檢視任務' },
-        { key: 'task_c', label: '新增任務' },
-        { key: 'task_u', label: '編輯任務' },
-        { key: 'task_d', label: '刪除任務' }
+        { key: 'task_v', label: '檢視' },
+        { key: 'task_c', label: '新增' },
+        { key: 'task_u', label: '編輯' },
+        { key: 'task_d', label: '刪除' }
     ]},
     { group: '系統設定', icon: 'settings.svg', perms: [
-        { key: 'set_v', label: '進入設定頁' },
-        { key: 'set_u', label: '修改全域設定' },
-        { key: 'perm_m', label: '權限管理 (Admin)' }
+        { key: 'set_v', label: '進入分頁' },
+        { key: 'set_u', label: '修改設定' },
+        { key: 'perm_m', label: '管理權限' }
     ]}
 ];
 
@@ -274,7 +274,7 @@ async function fetchRolePermissions() {
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_role_permissions' })
+            body: JSON.stringify({ action: 'get_role_permissions', sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success) {
@@ -340,7 +340,7 @@ window.saveRolePermissions = async function() {
     try {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'update_role_permissions', permissions: matrix })
+            body: JSON.stringify({ action: 'update_role_permissions', permissions: matrix, sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success) {

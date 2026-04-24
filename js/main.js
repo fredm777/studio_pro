@@ -21,15 +21,37 @@ function initEventListeners() {
             return;
         }
 
-        // B. Save Shortcut (Cmd/Ctrl + S)
+        // B. Global Save Shortcut (Cmd/Ctrl + S)
         if (isCmdOrCtrl && key.toLowerCase() === 's') {
-            const editView = document.getElementById('projectsEditView');
-            if (editView && editView.classList.contains('active')) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log(">> Shortcut Detected: Cmd/Ctrl + S (Save)");
-                if (typeof window.handleQuotationSubmit === 'function') {
-                    window.handleQuotationSubmit(null, false);
+            const activeView = document.querySelector('.sub-view-stack.active, .admin-sub-tab.active, .tab-content.active');
+            if (!activeView) return;
+
+            // Define mapping of view IDs to their respective save functions and required permission keys
+            const saveMap = [
+                { id: 'projectsEditView', perm: ['proj_c', 'proj_u'], fn: () => window.handleQuotationSubmit(null, false) },
+                { id: 'customersEditView', perm: ['cust_c', 'cust_u'], fn: () => window.saveCustomer() },
+                { id: 'bankSettingsView', perm: ['set_u'], fn: () => window.handleGlobalSettingsSubmit(new Event('submit')) },
+                { id: 'workflowSettingsView', perm: ['set_u'], fn: () => window.handleGlobalSettingsSubmit(new Event('submit')) },
+                { id: 'permissionsMatrixView', perm: ['perm_m'], fn: () => window.saveRolePermissions() }
+            ];
+
+            // Check if current active view matches a saveable view and has permission
+            for (const item of saveMap) {
+                const el = document.getElementById(item.id);
+                if (el && el.classList.contains('active')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Permission Guard
+                    const hasPerm = item.perm.some(p => typeof window.hasPermission === 'function' && window.hasPermission(p));
+                    if (!hasPerm) {
+                        console.warn(`>> Permission Denied: Cannot save ${item.id} via shortcut.`);
+                        return;
+                    }
+
+                    console.log(`>> Global Shortcut Detected: Cmd/Ctrl + S (Saving ${item.id})`);
+                    item.fn();
+                    return;
                 }
             }
         }

@@ -147,7 +147,7 @@ window.fetchProjects = async function() {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_projects' })
+            body: JSON.stringify({ action: 'get_projects', sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success) {
@@ -155,6 +155,13 @@ window.fetchProjects = async function() {
             window.currentFilteredProjects = [...window.allProjects];
             window.renderProjects();
             if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
+        } else {
+            Swal.fire({
+                title: '資料讀取受阻',
+                text: json.error || '請確認個人設定中的試算表 ID 是否正確。',
+                icon: 'info',
+                confirmButtonColor: 'var(--primary)'
+            });
         }
     } catch (err) { console.error("Fetch Projects Error:", err); }
     finally {
@@ -172,7 +179,7 @@ window.syncSingleProject = async function(projectId) {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_project', projectId })
+            body: JSON.stringify({ action: 'get_project', projectId, sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         
@@ -496,7 +503,8 @@ window.deleteProject = async function() {
         const body = {
             action: 'delete_project',
             projectId: projectId,
-            userLevel: window.currentUser.level
+            userLevel: window.currentUser.level,
+            sheetId: window.currentUser.sheetId
         };
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -653,7 +661,7 @@ async function loadSettingsPreview() {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_settings' })
+            body: JSON.stringify({ action: 'get_settings', sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success) {
@@ -898,7 +906,7 @@ window.handleQuotationSubmit = async function (e, isBackground = false) {
             method: 'POST',
             mode: 'cors', 
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_project', project, items, userLevel: window.currentUser.level })
+            body: JSON.stringify({ action: 'save_project', project, items, userLevel: window.currentUser.level, sheetId: window.currentUser.sheetId })
         });
 
         const result = await response.json();
@@ -1014,7 +1022,7 @@ window.preparePrint = function() {
 
     if (window.lucide) lucide.createIcons();
 
-    document.title = `${yymmdd}_報價單_${custName}_${projName}`;
+    document.title = `${yymmdd}_${custName}_${projName}`;
     document.body.classList.add('printing');
     
     // Automatically apply current size/orientation from header

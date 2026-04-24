@@ -21,7 +21,8 @@ window.fetchTasks = async function () {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ 
                 action: 'get_all_tasks',
-                username: (window.currentUser ? window.currentUser.username : '')
+                username: (window.currentUser ? window.currentUser.username : ''),
+                sheetId: window.currentUser.sheetId
             })
         });
         
@@ -34,6 +35,13 @@ window.fetchTasks = async function () {
             
             if (typeof window.updateTaskProjectFilter === 'function') window.updateTaskProjectFilter();
             window.filterTasksByProject();
+        } else {
+            Swal.fire({
+                title: '資料讀取受阻',
+                text: json.error || '請確認個人設定中的試算表 ID 是否正確。',
+                icon: 'info',
+                confirmButtonColor: 'var(--primary)'
+            });
         }
     } catch (e) {
         console.error("Fetch Tasks Error:", e);
@@ -255,7 +263,7 @@ window.saveTaskOrder = async function(orderedIds) {
         await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'update_tasks_order', updates, userLevel: window.currentUser.level })
+            body: JSON.stringify({ action: 'update_tasks_order', updates, userLevel: window.currentUser.level, sheetId: window.currentUser.sheetId })
         });
         console.log(">> Task order synced. Refreshing Row Indices...");
         window.fetchTasks(); // Ensure fresh indices
@@ -286,7 +294,7 @@ window.updateTaskField = async function(taskId, field, value) {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task, userLevel: window.currentUser.level })
+            body: JSON.stringify({ action: 'save_task', task, userLevel: window.currentUser.level, sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success && json.data) {
@@ -333,7 +341,7 @@ window.deleteTask = function(taskId) {
                     await fetch(GAS_WEB_APP_URL, {
                         method: 'POST', mode: 'cors',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: 'delete_task', rowIndex: task.rowIndex, userLevel: window.currentUser.level })
+                        body: JSON.stringify({ action: 'delete_task', rowIndex: task.rowIndex, userLevel: window.currentUser.level, sheetId: window.currentUser.sheetId })
                     });
                     // Crucial: Refresh from backend to sync RowIndices for remaining tasks
                     window.fetchTasks();
@@ -364,7 +372,7 @@ window.duplicateTask = async function(taskId) {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task: newTask, userLevel: window.currentUser.level })
+            body: JSON.stringify({ action: 'save_task', task: newTask, userLevel: window.currentUser.level, sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success && json.data) {
@@ -467,7 +475,7 @@ window.selectTaskProjectForInline = async function(taskId, projectId) {
         const res = await fetch(GAS_WEB_APP_URL, {
             method: 'POST', mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_task', task, userLevel: window.currentUser.level })
+            body: JSON.stringify({ action: 'save_task', task, userLevel: window.currentUser.level, sheetId: window.currentUser.sheetId })
         });
         const json = await res.json();
         if (json.success && json.data) {

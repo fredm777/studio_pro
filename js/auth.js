@@ -29,35 +29,24 @@ function enterApp() {
 
     if (!window.currentUser) { showAuth(); return; }
 
-    window.hasPermission = function(key) {
+    window.hasPermission = function (key) {
         if (!window.currentUser) return false;
-        
+
         // --- Admin Always Has All Permissions ---
         const lvl = (window.currentUser.level || '').trim();
         const isAdmin = (lvl === '管理者' || lvl === '管理員');
         if (isAdmin) return true;
 
-        // --- Compatibility Mode for existing sessions or standard logic ---
-        if (!window.currentUser.permissions) {
-            const isOp = (lvl === '操作人員');
-            const isClient = (lvl === '客戶');
-
-            if (isOp) {
-                if (key === 'perm_m') return false;
-                if (key === 'set_u') return false;
-                if (key.endsWith('_d')) return false; // Default: Operators cannot delete
-                return true; 
-            }
-            if (isClient) {
-                return (key === 'proj_v' || key === 'cust_v');
-            }
-            return false;
+        // --- Use Dynamic Permissions from Server ---
+        if (window.currentUser.permissions) {
+            return window.currentUser.permissions[key] === true;
         }
-        
-        return window.currentUser.permissions[key] === true;
+
+        // Default to safe false if no permissions loaded
+        return false;
     };
 
-    window.applyPermissionState = function(el, key) {
+    window.applyPermissionState = function (el, key) {
         if (!el) return;
         const hasPerm = window.hasPermission(key);
         if (hasPerm) {
@@ -339,6 +328,7 @@ window.openProfileModal = function () {
     let phone = String(window.currentUser.phone || '');
     if (phone.startsWith("'")) phone = phone.slice(1);
     if (document.getElementById('profPhone')) document.getElementById('profPhone').value = phone;
+    if (document.getElementById('profSheetId')) document.getElementById('profSheetId').value = window.currentUser.sheetId || '';
 
     const p1 = document.getElementById('profPass1');
     const p2 = document.getElementById('profPass2');
@@ -388,6 +378,7 @@ window.handleProfileUpdateSubmit = async function (e) {
         action: 'update_profile', username: window.currentUser.username,
         nickname: document.getElementById('profNick').value, email: document.getElementById('profEmail').value,
         phone: document.getElementById('profPhone').value.startsWith("'") ? document.getElementById('profPhone').value : "'" + document.getElementById('profPhone').value,
+        sheetId: document.getElementById('profSheetId').value.trim(),
         newPassword: pass1 || null
     };
     if (btn) btn.classList.add('btn-loading');
@@ -401,6 +392,10 @@ window.handleProfileUpdateSubmit = async function (e) {
             if (displayEl) displayEl.innerText = window.currentUser.nickname || window.currentUser.username;
             Swal.fire({ icon: 'success', title: '資料已更新', timer: 1500, showConfirmButton: false });
             window.closeModal('profileModal');
+            // Trigger global data refresh for all modules
+            if (typeof window.fetchCustomers === 'function') window.fetchCustomers();
+            if (typeof window.fetchProjects === 'function') window.fetchProjects();
+            if (typeof window.fetchTasks === 'function') window.fetchTasks();
         } else if (passErr) { passErr.innerText = json.error || '更新失敗'; passErr.classList.add('active'); }
     } catch (e) { if (passErr) { passErr.innerText = '連線失敗'; passErr.classList.add('active'); } }
     finally { if (btn) btn.classList.remove('btn-loading'); setSyncStatus(false); }
@@ -418,7 +413,7 @@ window.logout = function () {
 
 window.togglePassword = (id) => {
     const el = document.getElementById(id); if (!el) return;
-    const isPass = el.type === 'password'; 
+    const isPass = el.type === 'password';
     el.type = isPass ? 'text' : 'password';
     const img = el.parentElement.querySelector('.toggle-password img');
     if (img) {
