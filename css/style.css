@@ -717,9 +717,9 @@ header {
 .sub-nav-bar::before {
     content: "";
     position: absolute;
-    /* Top edge matches window top, bottom edge is 24px lower than navbar */
+    /* Top edge matches window top, bottom edge is 40px lower than navbar */
     top: 0;
-    bottom: -24px;
+    bottom: -40px;
     left: 0;
     right: 0;
     

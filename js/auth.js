@@ -61,11 +61,17 @@ function enterApp() {
         }
     };
 
-    // Dynamic Tab & Action Visibility based on permissions (Now using LOCK instead of HIDE)
+    // Dynamic Tab & Action Visibility based on permissions
     window.applyPermissionState(customersBtn, 'cust_v');
     window.applyPermissionState(projectsBtn, 'proj_v');
     window.applyPermissionState(tasksBtn, 'task_v');
-    window.applyPermissionState(permissionsBtn, 'perm_m');
+    
+    // 只有擁有 perm_m 權限的人可以看到權限管理分頁 (包含管理者與主帳號)
+    if (permissionsBtn) {
+        window.applyPermissionState(permissionsBtn, 'perm_m');
+        const isLocked = permissionsBtn.classList.contains('permission-locked');
+        permissionsBtn.style.display = isLocked ? 'none' : 'flex';
+    }
 
     // Default tab click logic (only if the tab is NOT locked)
     if (customersBtn && !customersBtn.classList.contains('permission-locked') && !document.querySelector('.tab-link.active')) {
@@ -116,7 +122,7 @@ function showAuth(initialErrorMsg = null) {
     }
 }
 
-async function handleLogin(e) {
+window.handleLogin = async function(e) {
     if (e) e.preventDefault();
     const btn = e.target ? e.target.querySelector('button[type="submit"]') : null;
     const username = (document.getElementById('loginUser').value || '').trim();
@@ -322,7 +328,7 @@ window.openProfileModal = function () {
     // Apply Permissions to Shortcut Cards
     window.applyPermissionState(document.getElementById('cardBankSettings'), 'set_v');
     window.applyPermissionState(document.getElementById('cardNoteSettings'), 'set_v');
-    window.applyPermissionState(document.getElementById('cardUserAdmin'), 'perm_m');
+    window.applyPermissionState(document.getElementById('cardUserAdmin'), 'member_m');
     window.applyPermissionState(document.getElementById('cardPermAdmin'), 'perm_m');
 
     if (document.getElementById('profUser')) document.getElementById('profUser').value = window.currentUser.username;

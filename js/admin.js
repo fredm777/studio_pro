@@ -340,8 +340,17 @@ function renderPermissionMatrix() {
             let html = `<td>${p.label}</td>`;
             ROLES.forEach(role => {
                 const isChecked = (perms[role] && perms[role][p.key]) ? 'checked' : '';
-                const isDisabled = (role === '管理者') ? 'disabled' : ''; // Admin always has full power
-                html += `<td><input type="checkbox" class="perm-checkbox" data-role="${role}" data-key="${p.key}" ${isChecked} ${isDisabled}></td>`;
+                
+                // 權限鎖定邏輯：
+                // 1. 「管理者」欄位永遠不可改 (系統固定)
+                // 2. 如果是「系統設定」群組，且目前登入者不是「管理者」，則全部設為不可改 (唯讀)
+                let isDisabled = (role === '管理者'); 
+                const userLevel = (window.currentUser.level || '').trim();
+                if (group.group === '系統設定' && userLevel !== '管理者') {
+                    isDisabled = true;
+                }
+                
+                html += `<td><input type="checkbox" class="perm-checkbox" data-role="${role}" data-key="${p.key}" ${isChecked} ${isDisabled ? 'disabled' : ''}></td>`;
             });
             tr.innerHTML = html;
             tbody.appendChild(tr);
@@ -353,13 +362,18 @@ function renderPermissionMatrix() {
 }
 
 window.saveRolePermissions = async function() {
-    const matrix = {};
-    ROLES.forEach(role => { matrix[role] = {}; });
+    // 從快取開始建立新的矩陣，確保沒被修改到的 (例如 disabled 的系統設定) 數值能被保留
+    const matrix = JSON.parse(JSON.stringify(window.rolePermissionsCache || {}));
+    
+    // 確保所有角色都有初始化物件
+    ROLES.forEach(role => { 
+        if (!matrix[role]) matrix[role] = {}; 
+    });
 
-    // Special case: Admin always has all permissions
+    // 強制設定：管理者 (Super Admin) 永遠擁有所有權限
     PERM_DEFINITIONS.forEach(g => g.perms.forEach(p => { matrix['管理者'][p.key] = true; }));
 
-    // Read checkboxes for others
+    // 讀取畫面上「未被禁用」的勾選框來更新矩陣 (包含主帳號與副帳號的業務權限)
     const checkboxes = document.querySelectorAll('.perm-checkbox:not(:disabled)');
     checkboxes.forEach(cb => {
         const role = cb.getAttribute('data-role');
