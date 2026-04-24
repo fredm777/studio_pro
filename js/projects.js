@@ -138,6 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.fetchProjects = async function() {
+    if (!window.currentUser || !window.currentUser.sheetId) {
+        console.warn(">> fetchProjects skipped: No valid user or sheetId found.");
+        return;
+    }
     setSyncStatus(true);
     const loading = document.getElementById('projectLoading');
     if (loading) loading.style.display = 'block';

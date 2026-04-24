@@ -634,10 +634,10 @@
                                     style="background: #f8fafc; color: var(--text-muted);"></div>
                             <div style="display: flex; gap: 1.5rem; margin-top: 1rem;">
                                 <div class="form-group" style="flex: 1;"><label>設定級別</label>
-                                    <select id="memberLevel">
+                                    <select id="memberLevel" onchange="toggleSuperiorField()">
                                         <option value="管理者">管理者</option>
-                                        <option value="操作人員">操作人員</option>
-                                        <option value="客戶">客戶</option>
+                                        <option value="主帳號">主帳號</option>
+                                        <option value="副帳號">副帳號</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="flex: 1;"><label>帳號狀態</label>
@@ -647,6 +647,13 @@
                                         <option value="暫停使用">暫停使用</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div class="form-group" id="superiorGroup" style="display: none; margin-top: 1rem;">
+                                <label>上級主帳號 (所屬工作區)</label>
+                                <select id="memberSuperior">
+                                    <option value="">-- 請選擇主帳號 --</option>
+                                </select>
                             </div>
                             <div id="memberError" class="auth-error-inline" style="margin-bottom: 1.5rem;"></div>
                             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">

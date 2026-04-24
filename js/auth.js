@@ -30,19 +30,22 @@ function enterApp() {
     if (!window.currentUser) { showAuth(); return; }
 
     window.hasPermission = function (key) {
-        if (!window.currentUser) return false;
+        if (!window.currentUser) {
+            console.warn(">> Permission Check Failed: No current user session.");
+            return false;
+        }
 
-        // --- Admin Always Has All Permissions ---
         const lvl = (window.currentUser.level || '').trim();
         const isAdmin = (lvl === '管理者' || lvl === '管理員');
         if (isAdmin) return true;
 
-        // --- Use Dynamic Permissions from Server ---
         if (window.currentUser.permissions) {
-            return window.currentUser.permissions[key] === true;
+            const hasIt = window.currentUser.permissions[key] === true;
+            if (!hasIt) console.log(`>> Access Denied for [${key}]`);
+            return hasIt;
         }
 
-        // Default to safe false if no permissions loaded
+        console.error(">> Permission Check Error: Permissions object missing in session.");
         return false;
     };
 

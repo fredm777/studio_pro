@@ -11,6 +11,10 @@ window.itemsPerPage = parseInt(localStorage.getItem('st_pro_items_per_page')) ||
 window.isCustomerModified = false;
 
 window.fetchCustomers = async function() {
+    if (!window.currentUser || !window.currentUser.sheetId) {
+        console.warn(">> fetchCustomers skipped: No valid user or sheetId found.");
+        return;
+    }
     setSyncStatus(true);
     try {
         const res = await fetch(GAS_WEB_APP_URL, {

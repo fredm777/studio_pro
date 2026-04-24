@@ -189,8 +189,26 @@ window.showMemberEditor = (idx) => {
 
     document.getElementById('memberTargetRow').value = idx;
     document.getElementById('memberUser').value = m.username || '';
-    document.getElementById('memberLevel').value = m.level || '客戶';
+    document.getElementById('memberLevel').value = m.level || '主帳號';
     document.getElementById('memberStatus').value = mapStatus(m.status);
+
+    // --- Superior Account Handling ---
+    const supGroup = document.getElementById('superiorGroup');
+    const supSelect = document.getElementById('memberSuperior');
+    if (supSelect) {
+        supSelect.innerHTML = '<option value="">-- 請選擇主帳號 --</option>';
+        // Find all Main Accounts from cached members list
+        allMembers.forEach(person => {
+            if (person.level === '主帳號' || person.level === '管理者') {
+                const opt = document.createElement('option');
+                opt.value = person.username;
+                opt.innerText = `${person.nickname} (${person.username})`;
+                supSelect.appendChild(opt);
+            }
+        });
+        supSelect.value = m.superior || '';
+    }
+    toggleSuperiorField();
 
     // Clear error
     const memErr = document.getElementById('memberError');
@@ -202,7 +220,14 @@ window.showMemberEditor = (idx) => {
 window.handleMemberUpdateSubmit = async function(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
-    const body = { action: 'update_member_status', adminUser: window.currentUser.username, targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), level: document.getElementById('memberLevel').value, status: document.getElementById('memberStatus').value };
+    const body = { 
+        action: 'update_member_status', 
+        adminUser: window.currentUser.username, 
+        targetRowIndex: parseInt(document.getElementById('memberTargetRow').value), 
+        level: document.getElementById('memberLevel').value, 
+        status: document.getElementById('memberStatus').value,
+        superior: document.getElementById('memberSuperior').value
+    };
     
     if (btn) btn.classList.add('btn-loading');
     setSyncStatus(true);
@@ -240,6 +265,12 @@ window.handleMemberUpdateSubmit = async function(e) {
     }
 }
 
+window.toggleSuperiorField = function() {
+    const lvl = document.getElementById('memberLevel').value;
+    const group = document.getElementById('superiorGroup');
+    if (group) group.style.display = (lvl === '副帳號') ? 'block' : 'none';
+}
+
 // --- Granular Permission Matrix Logic ---
 
 const PERM_DEFINITIONS = [
@@ -268,7 +299,7 @@ const PERM_DEFINITIONS = [
     ]}
 ];
 
-const ROLES = ['管理者', '操作人員', '客戶'];
+const ROLES = ['管理者', '副帳號', '主帳號'];
 
 async function fetchRolePermissions() {
     try {
