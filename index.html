@@ -356,11 +356,11 @@
                             <table id="customerTable">
                                 <thead>
                                     <tr class="sortable-row">
-                                        <th>客戶名稱</th>
-                                        <th>統編</th>
-                                        <th>聯絡人</th>
+                                        <th onclick="toggleCustomerSort('companyName')" class="sortable-header" id="th-cust-companyName">客戶名稱 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleCustomerSort('taxId')" class="sortable-header" id="th-cust-taxId">統編 <span class="sort-icon"></span></th>
+                                        <th onclick="toggleCustomerSort('contact')" class="sortable-header" id="th-cust-contact">聯絡人 <span class="sort-icon"></span></th>
                                         <th>聯絡電話</th>
-                                        <th style="text-align:center;">電子發票</th>
+                                         <th onclick="toggleCustomerSort('invoiceInfo')" class="sortable-header" id="th-cust-invoiceInfo" style="text-align:center;">電子發票 <span class="sort-icon"></span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="customerTableBody"></tbody>
@@ -498,6 +498,21 @@
                             </div>
                         </div>
                         <div class="tasks-container">
+                            <div class="task-header-row">
+                                <div class="task-header-btn task-drag-handle-header task-col-drag active" id="sort-drag" onclick="window.setTaskSort('drag')" title="原始排序">
+                                    <img src="assets/icons/drag.svg" style="width: 14px; height: 14px; filter: brightness(0.5);">
+                                </div>
+                                <div class="task-header-btn task-project-header task-col-project" id="sort-project" onclick="window.setTaskSort('project')">
+                                    專 案 <span class="sort-arrow"></span>
+                                </div>
+                                <div class="task-header-btn task-date-header task-col-date" id="sort-date" onclick="window.setTaskSort('date')">
+                                    日 期 <span class="sort-arrow"></span>
+                                </div>
+                                <div class="task-header-btn task-content-header task-col-content" id="sort-content" onclick="window.setTaskSort('content')">
+                                    任 務 內 容 <span class="sort-arrow"></span>
+                                </div>
+                                <div class="task-header-btn task-actions-header task-col-actions"></div>
+                            </div>
                             <ul id="taskList" style="list-style: none; padding: 0; margin: 0;">
                                 <!-- Tasks inject here -->
                             </ul>

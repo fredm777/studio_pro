@@ -494,12 +494,15 @@ window.togglePassword = (id) => {
 };
 
 window.bindSocialAccount = function (type) {
-    window.closeModal('profileModal');
+    // Keep modal open for binding as per previous request
     if (type === 'line') window.startLiffBinding();
     else if (type === 'google') window.bindGoogle();
 };
 
 window.unbindSocialAccount = async function (type) {
+    // Close modal for unbinding as per user request (to show Swal clearly)
+    window.closeModal('profileModal');
+    
     const result = await Swal.fire({
         title: '確定解除綁定？',
         text: `解除後將無法使用 ${type.toUpperCase()} 快速登入。`,
@@ -521,16 +524,21 @@ window.unbindSocialAccount = async function (type) {
             if (json.success) {
                 window.currentUser = json.user;
                 localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
-                window.openProfileModal();
-                // Swal.fire success removed as per user request
+                // No need to reopen modal here as user wants it closed for unbinding
+                Toast.fire({ title: '已成功解除綁定', icon: 'success' });
             } else {
                 Swal.fire('失敗', json.error, 'error');
+                window.openProfileModal(); // Reopen if failed
             }
         } catch (e) {
             Swal.fire('錯誤', '連線失敗', 'error');
+            window.openProfileModal(); // Reopen if failed
         } finally {
             setSyncStatus(false);
         }
+    } else {
+        // If user cancelled, reopen the modal
+        window.openProfileModal();
     }
 };
 
@@ -541,3 +549,33 @@ window.loginViaGoogle = async function () {
 window.bindGoogle = async function () {
     Swal.fire({ icon: 'info', title: 'Google 綁定開發中', showCancelButton: true });
 }
+
+// --- API Helper Wrapper ---
+window.apiPost = async function(action, data = {}) {
+    if (!window.currentUser) {
+        console.warn(">> API Request Blocked: No active session.");
+        return { success: false, error: "請先登入系統" };
+    }
+
+    const body = {
+        action: action,
+        sheetId: window.currentUser.sheetId,
+        userEmail: window.currentUser.email,
+        userRole: window.currentUser.level,
+        parentEmail: window.currentUser.parentEmail || '', // Sub-account's parent
+        ...data
+    };
+
+    try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        });
+        return await res.json();
+    } catch (err) {
+        console.error(`>> API Error [${action}]:`, err);
+        return { success: false, error: "連線至資料庫失敗，請檢查網路狀態。" };
+    }
+};

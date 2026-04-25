@@ -5,6 +5,7 @@ window.allTasks = window.allTasks || [];
 window.currentFilteredTasks = window.currentFilteredTasks || [];
 const cachedTaskFilters = typeof getCache === 'function' ? getCache('taskStatusFilters') : null;
 window.taskStatusFilters = cachedTaskFilters || ['uncompleted', 'completed']; 
+window.taskSort = { column: 'drag', direction: 'asc' }; // Initialize sorting state
 
 if (!window.saveLocks) window.saveLocks = new Map();
 
@@ -15,18 +16,9 @@ window.fetchTasks = async function () {
     
     setSyncStatus(true);
     try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ 
-                action: 'get_all_tasks',
-                username: (window.currentUser ? window.currentUser.username : ''),
-                sheetId: window.currentUser.sheetId
-            })
+        const json = await window.apiPost('get_all_tasks', {
+            username: (window.currentUser ? window.currentUser.username : '')
         });
-        
-        const json = await res.json();
         console.log(">> Tasks json response:", json);
         if (json.success) {
             const raw = json.data || json.tasks || [];
@@ -110,6 +102,20 @@ window.filterTasksByProject = function () {
     window.renderTasks();
 }
 
+window.setTaskSort = function (col) {
+    if (col === 'drag') {
+        window.taskSort = { column: 'drag', direction: 'asc' };
+    } else {
+        if (window.taskSort.column === col) {
+            window.taskSort.direction = window.taskSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            window.taskSort.column = col;
+            window.taskSort.direction = 'asc';
+        }
+    }
+    window.renderTasks();
+}
+
 window.renderTasks = function() {
     console.log(">> renderTasks called. allTasks size:", (window.allTasks || []).length);
     const list = document.getElementById('taskList');
@@ -136,22 +142,64 @@ window.renderTasks = function() {
         return;
     }
 
-    // 1. Mandatory Pre-sort: orderWeight (User custom order) is now HIGHEST priority
-    tasksToRender.sort((a,b) => {
-        const weightA = parseFloat(a.orderWeight || 0);
-        const weightB = parseFloat(b.orderWeight || 0);
-        if (weightA !== weightB) return weightA - weightB;
-        
-        // Secondary sort by date if weights are same
-        const dateA = (a.taskDate || '1970-01-01').substring(0, 10);
-        const dateB = (b.taskDate || '1970-01-01').substring(0, 10);
-        return dateB.localeCompare(dateA); 
+    // --- NEW SORTING LOGIC ---
+    const { column, direction } = window.taskSort || { column: 'drag', direction: 'asc' };
+    
+    // Update Header UI
+    document.querySelectorAll('.task-header-btn').forEach(btn => {
+        btn.classList.remove('active', 'asc', 'desc');
+        const arrow = btn.querySelector('.sort-arrow');
+        if (arrow) arrow.innerText = '';
     });
+    const activeHeader = document.getElementById(`sort-${column}`);
+    if (activeHeader) {
+        activeHeader.classList.add('active', direction);
+        const arrow = activeHeader.querySelector('.sort-arrow');
+        if (arrow && column !== 'drag') {
+            arrow.innerText = direction === 'asc' ? ' ↑' : ' ↓';
+        }
+    }
+
+    if (column === 'drag') {
+        // Original Order Weight
+        tasksToRender.sort((a, b) => {
+            const wA = parseFloat(a.orderWeight || 0);
+            const wB = parseFloat(b.orderWeight || 0);
+            return wA - wB;
+        });
+    } else {
+        tasksToRender.sort((a, b) => {
+            let valA, valB;
+            if (column === 'project') {
+                const getProjName = (t) => {
+                    const p = (window.allProjects || []).find(pj => String(pj.projectId) === String(t.projectId));
+                    return (p ? p.projectName : '') || String(t.projectId || '');
+                };
+                valA = getProjName(a);
+                valB = getProjName(b);
+            } else if (column === 'date') {
+                valA = a.taskDate || '';
+                valB = b.taskDate || '';
+                // No date logic: "沒有選日期的項目，意義上，跟時間比較近相同"
+                // Asc: No-date (top) -> Today -> Future
+                // Desc: Future -> Today -> No-date (bottom)
+                if (!valA && valB) return direction === 'asc' ? -1 : 1;
+                if (valA && !valB) return direction === 'asc' ? 1 : -1;
+                if (!valA && !valB) return 0;
+                return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            } else if (column === 'content') {
+                valA = a.taskName || '';
+                valB = b.taskName || '';
+            }
+
+            const res = String(valA).localeCompare(String(valB), 'zh-Hant');
+            return direction === 'asc' ? res : -res;
+        });
+    }
 
     tasksToRender.forEach((t, index) => {
         const item = document.createElement('li'); // Reverted to LI for list structure
         item.className = `task-item ${t.isCompleted ? 'is-completed' : ''}`;
-        item.style.cssText = 'display: flex; align-items: center; padding: 10px 0; gap: 12px;';
         item.dataset.id = t.taskId;
         
         // Find project name and customer nickname
@@ -171,17 +219,17 @@ window.renderTasks = function() {
         const checkIcon = t.isCompleted ? 'assets/icons/checked.svg' : 'assets/icons/unchecked.svg';
 
         item.innerHTML = `
-            <div class="task-drag-handle" style="width: 24px; display: flex; justify-content: center; cursor: grab;">
+            <div class="task-drag-handle task-col-drag">
                 <img src="assets/icons/drag.svg" style="width: 16px; height: 16px; ${iconStyle}">
             </div>
-            <div style="width: 150px; position: relative;" class="autocomplete-container">
+            <div class="autocomplete-container task-col-project">
                 <input class="task-inline-input customer-search" value="${displayValue}" 
                        onfocus="this.select(); showTaskCustomerSearch(this, '${t.taskId}')" 
                        oninput="filterTaskCustomerSearch(this)"
                        onblur="window.saveTaskCustomTarget('${t.taskId}', this.value)"
                        placeholder="請輸入對象">
             </div>
-            <div style="width: 80px; position: relative;">
+            <div class="task-col-date" style="position: relative;">
                 <div class="task-date-display" style="
                     font-size: 0.8125rem; 
                     color: var(--text-main); 
@@ -191,6 +239,7 @@ window.renderTasks = function() {
                     padding: 8px 0;
                     border-radius: 8px;
                     border: 1px solid transparent;
+                    width: 100%;
                 ">
                     ${t.taskDate ? t.taskDate.substring(5).replace('-', '/') : '00/00'}
                 </div>
@@ -200,12 +249,12 @@ window.renderTasks = function() {
                        onclick="if(this.showPicker) this.showPicker()"
                        onchange="window.updateTaskField('${t.taskId}', 'taskDate', this.value)">
             </div>
-            <div style="flex: 1;">
+            <div class="task-col-content">
                 <input class="task-inline-input" value="${t.taskName || ''}" 
                        onblur="window.updateTaskField('${t.taskId}', 'taskName', this.value)" 
                        placeholder="任務內容...">
             </div>
-            <div class="task-actions" style="display: flex; gap: 8px; align-items: center; padding-right: 8px;">
+            <div class="task-actions task-col-actions">
                 <button class="action-btn-icon btn-toggle-status" onclick="window.toggleTaskStatus('${t.taskId}')" title="完成/取消">
                     <img src="${checkIcon}" style="${iconStyle}">
                 </button>
@@ -229,11 +278,18 @@ window.renderTasks = function() {
         list.appendChild(item);
     });
 
+    // Only enable Drag & Drop if sorted by 'drag'
     if (window.Sortable) {
         if (window.taskSortable) window.taskSortable.destroy();
+        
+        const isDragSort = (window.taskSort.column === 'drag');
         window.taskSortable = new Sortable(list, {
             handle: '.task-drag-handle',
             animation: 150,
+            disabled: !isDragSort,
+            onStart: () => {
+                if (!isDragSort) return false;
+            },
             onEnd: () => {
                 const items = Array.from(list.querySelectorAll('.task-item'));
                 const orderedIds = items.map(el => el.dataset.id);

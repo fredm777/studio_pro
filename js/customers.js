@@ -17,13 +17,7 @@ window.fetchCustomers = async function() {
     }
     setSyncStatus(true);
     try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_customers', sheetId: window.currentUser.sheetId })
-        });
-        const json = await res.json();
+        const json = await window.apiPost('get_customers');
         if (json.success) { 
             window.allCustomers = json.data || []; 
             window.currentFilteredCustomers = [...window.allCustomers];
@@ -72,6 +66,33 @@ window.changePage = (dir) => {
     }
 };
 
+window.toggleCustomerSort = function(field) {
+    if (window.customerSortField === field) {
+        window.customerSortOrder = (window.customerSortOrder === 'asc') ? 'desc' : 'asc';
+    } else {
+        window.customerSortField = field;
+        window.customerSortOrder = 'asc';
+    }
+    window.renderCustomers();
+};
+
+window.updateCustomerSortHeaderUI = function() {
+    document.querySelectorAll('#customerTable .sortable-header').forEach(th => {
+        th.classList.remove('active', 'asc', 'desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.innerText = '';
+    });
+    
+    const activeTh = document.getElementById(`th-cust-${window.customerSortField}`);
+    if (activeTh) {
+        activeTh.classList.add('active', window.customerSortOrder);
+        const icon = activeTh.querySelector('.sort-icon');
+        if (icon) {
+            icon.innerText = window.customerSortOrder === 'asc' ? ' ↑' : ' ↓';
+        }
+    }
+};
+
 window.renderCustomers = function() {
     const tbody = document.getElementById('customerTableBody');
     if (!tbody) return;
@@ -95,8 +116,17 @@ window.renderCustomers = function() {
     if (prevBtn) { prevBtn.disabled = (window.currentPage === 1); prevBtn.style.opacity = (window.currentPage === 1) ? '0.3' : '1'; }
     if (nextBtn) { nextBtn.disabled = (window.currentPage === totalPages); nextBtn.style.opacity = (window.currentPage === totalPages) ? '0.3' : '1'; }
     
+    // Sorting logic
+    window.updateCustomerSortHeaderUI();
+    const sortedData = [...window.currentFilteredCustomers].sort((a, b) => {
+        const valA = String(a[window.customerSortField] || '');
+        const valB = String(b[window.customerSortField] || '');
+        const res = valA.localeCompare(valB, 'zh-Hant');
+        return window.customerSortOrder === 'asc' ? res : -res;
+    });
+
     const startIndex = (window.currentPage - 1) * window.itemsPerPage;
-    const paginatedData = window.currentFilteredCustomers.slice(startIndex, startIndex + window.itemsPerPage);
+    const paginatedData = sortedData.slice(startIndex, startIndex + window.itemsPerPage);
     
     if (paginatedData.length === 0) {
         tbody.innerHTML = `
@@ -277,19 +307,10 @@ window.deleteCustomer = async function() {
 
     setSyncStatus(true);
     try {
-        const body = {
-            action: 'delete_customer',
+        const json = await window.apiPost('delete_customer', {
             rowIndex: parseInt(rIndex),
-            userLevel: window.currentUser.level,
-            sheetId: window.currentUser.sheetId
-        };
-        const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(body)
+            userLevel: window.currentUser.level
         });
-        const json = await res.json();
         if (json.success) {
             Toast.fire({ icon: 'success', title: '客戶資料已刪除' });
             window.switchSubView('customers', 'list');
@@ -318,8 +339,7 @@ window.saveCustomer = async function() {
     if (isUpdate && !window.hasPermission('cust_u')) return Swal.fire('權限不足', '您的帳號級別無法編輯資料', 'error');
     if (!isUpdate && !window.hasPermission('cust_c')) return Swal.fire('權限不足', '您的帳號級別無法新增客戶', 'error');
 
-    const body = {
-        action: isUpdate ? 'update_customer' : 'add_customer',
+    const bodyData = {
         rowIndex: rIndex ? parseInt(rIndex) : null,
         companyName,
         taxId,
@@ -330,8 +350,7 @@ window.saveCustomer = async function() {
         address: document.getElementById('address').value || '',
         invoiceInfo: document.getElementById('invoiceInfo').checked ? 'v' : '',
         customerId: document.getElementById('customerId').value || '',
-        userLevel: window.currentUser.level,
-        sheetId: window.currentUser.sheetId
+        userLevel: window.currentUser.level
     };
 
     const originalData = JSON.parse(JSON.stringify(window.allCustomers));
@@ -340,9 +359,9 @@ window.saveCustomer = async function() {
     
     if (rIndex && parseInt(rIndex) !== -1) {
         const idx = window.allCustomers.findIndex(c => c.rowIndex == rIndex);
-        if (idx !== -1) window.allCustomers[idx] = { ...window.allCustomers[idx], ...body };
+        if (idx !== -1) window.allCustomers[idx] = { ...window.allCustomers[idx], ...bodyData };
     } else {
-        window.allCustomers.unshift({ ...body, rowIndex: -1 });
+        window.allCustomers.unshift({ ...bodyData, rowIndex: -1 });
     }
     
     window.currentFilteredCustomers = [...window.allCustomers];
@@ -350,12 +369,7 @@ window.saveCustomer = async function() {
     setSyncStatus(true);
 
     try {
-        const res = await fetch(GAS_WEB_APP_URL, { 
-            method: 'POST', mode: 'cors', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify(body) 
-        });
-        const json = await res.json();
+        const json = await window.apiPost(isUpdate ? 'update_customer' : 'add_customer', bodyData);
         if (json.success) { 
             Toast.fire({ icon: 'success', title: '客戶已儲存' });
             window.isCustomerModified = false;

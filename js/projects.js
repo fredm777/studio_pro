@@ -103,14 +103,8 @@ window.updateProjectSortHeaderUI = function() {
         activeTh.classList.add('active', window.projectSortOrder);
         const icon = activeTh.querySelector('.sort-icon');
         if (icon) {
-            // Use Lucide if available, else simple arrows
-            if (window.lucide) {
-                const iconName = window.projectSortOrder === 'asc' ? 'arrow-up-narrow' : 'arrow-down-wide';
-                icon.innerHTML = `<i data-lucide="${iconName}" style="width:14px; height:14px;"></i>`;
-                lucide.createIcons();
-            } else {
-                icon.innerText = window.projectSortOrder === 'asc' ? ' ↑' : ' ↓';
-            }
+            // Force text arrows to match Task list exactly
+            icon.innerText = window.projectSortOrder === 'asc' ? ' ↑' : ' ↓';
         }
     }
 };
@@ -147,13 +141,7 @@ window.fetchProjects = async function() {
     if (loading) loading.style.display = 'block';
 
     try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'get_projects', sheetId: window.currentUser.sheetId })
-        });
-        const json = await res.json();
+        const json = await window.apiPost('get_projects');
         if (json.success) {
             window.allProjects = json.projects || [];
             window.currentFilteredProjects = [...window.allProjects];

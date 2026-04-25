@@ -246,11 +246,11 @@ textarea::-webkit-resizer {
 }
 
 .line-btn:hover {
-    background: rgba(6, 199, 85, 0.05);
-    color: var(--primary);
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.1);
+    background: #f0fdf4;
+    color: #06c755;
+    border-color: #06c755;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px 0 rgba(6, 199, 85, 0.2);
 }
 
 .line-btn svg {
@@ -412,18 +412,22 @@ textarea {
     width: 100%;
     padding: 0.75rem 1rem;
     background: #f1f5f9;
-    border: 1.5px solid var(--border); /* Standardized to 1.5px */
+    border: 1.5px solid var(--border);
     border-radius: 10px;
     font-size: 0.9375rem;
     color: var(--text-dark);
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
     font-family: inherit;
+    /* Prevent jitter */
+    outline: none;
 }
 
 input:hover,
 select:hover,
 textarea:hover {
     border-color: var(--color-hover-blue);
+    /* Use a subtle shadow instead of thicker border to avoid jitter */
+    box-shadow: 0 0 0 1px var(--color-hover-blue);
 }
 
 input:focus,
@@ -431,8 +435,7 @@ select:focus,
 textarea:focus {
     background: #fff;
     border-color: var(--primary);
-    box-shadow: 0 0 0 5px var(--primary-30); /* Standardized to 5px ring */
-    outline: none;
+    box-shadow: 0 0 0 4px var(--primary-glow);
 }
 
 .input-error-msg {
@@ -526,13 +529,14 @@ textarea:focus {
     background: #667A8E;
     color: white;
     border: none;
-    padding: 1rem;
+    height: 48px; /* Fixed height for consistency */
+    padding: 0 1rem;
     border-radius: 10px;
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px 0 rgba(102, 122, 142, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -541,46 +545,65 @@ textarea:focus {
 
 .primary-btn:hover,
 .save-btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     background: #55667a;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px 0 rgba(102, 122, 142, 0.4);
 }
 
 .delete-btn {
-    background: #667A8E;
+    background: #ef4444;
     color: white;
     border: none;
-    padding: 1rem;
+    height: 48px;
+    padding: 0 1rem;
     border-radius: 10px;
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
 }
 
-/* SweetAlert2 Button Customization */
-.swal2-confirm, .swal2-deny {
-    width: 140px !important;
-    height: 48px !important;
-    margin: 0 10px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
-}
-
 .delete-btn:hover {
-    background: #55667a;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    background: #dc2626;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px 0 rgba(239, 68, 68, 0.4);
 }
 
+.secondary-btn,
+.cancel-btn {
+    width: 100%;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    height: 48px;
+    padding: 0 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(100, 116, 139, 0.1);
+}
+
+.secondary-btn:hover,
+.cancel-btn:hover {
+    background: #e2e8f0;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(100, 116, 139, 0.2);
+    color: #475569;
+    /* No stroke/border on hover as requested */
+    border: none !important;
+    outline: none !important;
+}
 .auth-footer {
     margin-top: 2rem;
     text-align: center;
@@ -1070,7 +1093,7 @@ main {
 
 .placeholder-container {
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px dashed var(--border);
     padding: 4rem 2rem;
     text-align: center;
@@ -1383,8 +1406,7 @@ tbody tr:hover {
 
 .edit-card {
     background: white;
-    border-radius: 10px;
-    /* 這裡改為 10px */
+    border-radius: 12px;
     border: 1.5px solid var(--border);
     padding: 2.8rem;
     max-width: 800px;
@@ -1613,7 +1635,7 @@ tbody tr:hover {
 
 /* --- Premium SweetAlert2 Overrides --- */
 .swal2-popup {
-    border-radius: 24px !important;
+    border-radius: 12px;
     padding: 2rem !important;
     font-family: 'Inter', sans-serif !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
@@ -1642,10 +1664,19 @@ tbody tr:hover {
 
 .swal2-cancel {
     background-color: #f1f5f9 !important;
-    color: var(--text-muted) !important;
-    border-radius: 10px !important;
+    color: #64748b !important;
+    border-radius: 12px !important;
     padding: 12px 28px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
+    transition: all 0.25s ease !important;
+    border: none !important;
+}
+
+.swal2-cancel:hover {
+    background-color: #e2e8f0 !important;
+    transform: translateY(-2px) !important;
+    color: #475569 !important;
+    box-shadow: 0 6px 12px rgba(100, 116, 139, 0.15) !important;
 }
 
 .swal2-actions {
@@ -2400,7 +2431,6 @@ tbody tr:hover {
 .main-btn:active,
 .primary-btn:active {
     background: var(--color-active-bg) !important;
-    transform: scale(0.96);
 }
 
 .google-auth-btn {
@@ -2416,16 +2446,14 @@ tbody tr:hover {
     justify-content: center;
     gap: 0.75rem;
     cursor: pointer;
-    transition: 0.2s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 0.9375rem;
 }
 
 .google-auth-btn:hover {
-    background: #f8fbff;
-    border-color: #4285F4;
-    color: #4285F4;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.1);
+    background: #f8fafc;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px 0 rgba(66, 133, 244, 0.15);
 }
 
 /* Specific solid style for Binding */
@@ -2433,7 +2461,7 @@ tbody tr:hover {
     background: #4285F4 !important;
     color: white !important;
     border: none !important;
-    border-radius: 20px !important;
+    border-radius: 12px;
     font-weight: 700 !important;
     padding: 0 1rem !important;
     height: 36px !important;
@@ -2626,7 +2654,7 @@ tbody tr:hover {
     width: 100%;
     padding: 0.5rem 0.75rem;
     /* Balanced padding */
-    background: #eef2f6;
+    background: #f8fafc;
     border: 1.5px solid transparent;
     border-radius: 10px;
     font-size: 0.9rem;
@@ -2717,17 +2745,16 @@ input[type="date"].task-inline-input {
 .compact-form-row textarea {
     padding: 10px 16px;
     background: #f8fafc;
-    border: 1.5px solid #f8fafc; /* Match background for stability */
+    border: 1.5px solid #f1f5f9;
     border-radius: 10px;
     font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-dark);
     font-family: inherit;
-    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s;
 }
 
 .compact-form-row input {
-    height: 40px;
     text-align: center;
 }
 
@@ -2748,8 +2775,7 @@ input[type="date"].task-inline-input {
 #profileModal .modal-card {
     max-width: 440px;
     padding: 32px 24px;
-    border-radius: 10px;
-    /* Standardized to 10px */
+    border-radius: 12px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
@@ -2835,19 +2861,20 @@ input[type="date"].task-inline-input {
     transition: all 0.2s;
 }
 
+/* Use global hover/focus logic for modal inputs to prevent jitter */
 #profileModal input:hover,
 #profileModal textarea:hover,
 .compact-form-row input:hover,
 .compact-form-row textarea:hover {
-    border-color: #0085FF !important;
-    border-width: 1.5px !important;
-    border-style: solid !important;
+    border-color: var(--color-hover-blue) !important;
+    box-shadow: 0 0 0 1px var(--color-hover-blue) !important;
 }
 
+#profileModal input:focus,
 #profileForm input:focus,
 .compact-form-row input:focus {
     border-color: var(--primary) !important;
-    box-shadow: 0 0 0 5px var(--primary-30) !important;
+    box-shadow: 0 0 0 4px var(--primary-glow) !important;
     background: white !important;
 }
 
@@ -2908,21 +2935,22 @@ input[type="date"].task-inline-input {
     gap: 8px;
 }
 
+#profileModal .primary-btn {
+    width: 100%; /* Ensure width is consistent */
+}
+
 #profileModal .primary-btn:hover {
     background: #55667a !important;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px 0 rgba(102, 122, 142, 0.4);
 }
 
 #profileModal .secondary-btn {
-    background: #f1f5f9 !important;
-    border-radius: 10px !important;
-    color: #C0C6CF !important;
-    border: none !important;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
+    /* Inherits from global .secondary-btn */
+}
+
+#profileModal .secondary-btn:hover {
+    /* Inherits from global .secondary-btn:hover */
 }
 
 #profileForm label {
@@ -2957,7 +2985,7 @@ input[type="date"].task-inline-input {
     align-items: center;
     border: none;
     background: #f8fafc;
-    border-radius: 16px;
+    border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 12px;
     box-shadow: none;
@@ -2967,22 +2995,48 @@ input[type="date"].task-inline-input {
     background: #00C800;
     color: white;
     border: none;
-    padding: 8px 20px;
+    width: 110px; /* Fixed width */
+    height: 42px; /* Fixed height */
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
     font-size: 0.875rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px 0 rgba(0, 200, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* Remove padding */
+}
+
+#profileModal .bind-btn-blue:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px 0 rgba(0, 200, 0, 0.45);
+    background: #00b300;
 }
 
 #profileModal .bind-btn-grey {
     background: #6A798F;
     color: white;
     border: none;
-    padding: 8px 20px;
+    width: 110px; /* Fixed width */
+    height: 42px; /* Fixed height */
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
     font-size: 0.875rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px 0 rgba(106, 121, 143, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* Remove padding */
+}
+
+#profileModal .bind-btn-grey:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px 0 rgba(106, 121, 143, 0.4);
+    background: #5c6a7e;
 }
 
 .nav-shortcut-card img {
@@ -3211,4 +3265,90 @@ input[type="date"].task-inline-input {
         border-top: 1px solid #f1f5f9;
         margin-top: 4px;
     }
+}
+
+/* --- Task List Sorting Headers --- */
+.task-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 0 12px 0;
+    margin-bottom: 4px;
+    border-bottom: 1.5px solid #f1f5f9;
+}
+
+.task-header-btn {
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 8px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1.5px solid transparent;
+    user-select: none;
+    letter-spacing: 0.05em;
+}
+
+.task-header-btn:hover {
+    border-color: var(--color-hover-blue);
+    box-shadow: 0 0 0 1px var(--color-hover-blue);
+    color: var(--primary);
+    background: white;
+}
+
+.task-header-btn.active {
+    color: var(--text-dark);
+}
+
+.task-header-btn .sort-arrow {
+    margin-left: 6px;
+    font-size: 0.75rem;
+    display: inline-block;
+}
+
+.task-drag-handle-header { width: 24px; padding: 0; }
+.task-project-header { width: 150px; }
+.task-date-header { width: 80px; }
+.task-content-header { flex: 1; }
+.task-actions-header { width: 92px; cursor: default; background: transparent; }
+.task-actions-header:hover { border-color: transparent; box-shadow: none; background: transparent; }
+
+.task-header-row + #taskList {
+    margin-top: 8px;
+}
+
+/* --- Task Grid System (Alignment Fix) --- */
+.task-header-row,
+.task-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 6px 12px !important; /* Total vertical gap 12px */
+}
+
+.task-col-drag { width: 32px; flex-shrink: 0; display: flex; justify-content: center; }
+.task-col-project { width: 180px; flex-shrink: 0; }
+.task-col-date { width: 100px; flex-shrink: 0; }
+.task-col-content { flex: 1; min-width: 0; }
+.task-col-actions { width: 110px; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Override Header Button Widths */
+.task-header-btn.task-drag-handle-header { width: 32px; }
+.task-header-btn.task-project-header { width: 180px; }
+.task-header-btn.task-date-header { width: 100px; }
+.task-header-btn.task-content-header { flex: 1; }
+.task-header-btn.task-actions-header { width: 110px; background: transparent; border: none !important; cursor: default; }
+.task-header-btn.task-actions-header:hover { box-shadow: none !important; }
+
+
+/* --- Sorting Arrow Color (Green) --- */
+.task-header-btn.active .sort-arrow,
+.sortable-header.active .sort-icon {
+    color: var(--primary) !important;
+    font-weight: 900;
 }
