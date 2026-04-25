@@ -352,24 +352,34 @@ async function handleLiffLogin() {
 }
 
 async function handleLiffBinding() {
-    const profile = await liff.getProfile();
-    const res = await fetch(GAS_WEB_APP_URL, {
-        method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'bind_line', username: window.currentUser.username, lineId: profile.userId })
-    });
-    const json = await res.json();
-    if (json.success) {
-        window.currentUser = json.user;
-        localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
-        
-        // If we are already in the app, just update the UI
-        if (document.getElementById('app').classList.contains('hidden')) {
-            enterApp();
+    setSyncStatus(true);
+    try {
+        const profile = await liff.getProfile();
+        const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'bind_line', username: window.currentUser.username, lineId: profile.userId })
+        });
+        const json = await res.json();
+        if (json.success) {
+            window.currentUser = json.user;
+            localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
+            
+            // If the app was hidden (after redirect), show it
+            if (document.getElementById('app').classList.contains('hidden')) {
+                enterApp();
+            }
+            
+            // Re-render/Update the profile modal to show "Bounded"
+            window.openProfileModal();
+        } else {
+            Swal.fire('失敗', json.error, 'error');
         }
-        
-        window.openProfileModal();
-        // No Swal notification as per user request
-    } else Swal.fire('失敗', json.error, 'error');
+    } catch (e) {
+        console.error("LIFF Binding Error:", e);
+        Swal.fire('錯誤', '綁定過程中發生錯誤', 'error');
+    } finally {
+        setSyncStatus(false);
+    }
 }
 
 window.openProfileModal = function () {
