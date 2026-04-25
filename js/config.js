@@ -35,6 +35,9 @@ const Toast = Swal.mixin({
     }
 });
 
+// Disable all Toast notifications globally
+Toast.fire = () => Promise.resolve({ isConfirmed: true });
+
 let navHintTimer = null;
 function showNavHint(msg) {
     const saveBtn = document.querySelector('.save-btn');

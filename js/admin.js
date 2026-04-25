@@ -103,7 +103,7 @@ window.handleGlobalSettingsSubmit = async function(e) {
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire({ icon: 'success', title: '設定已儲存', timer: 1500, showConfirmButton: false });
+            // Swal.fire success removed as per user request
         } else {
             Swal.fire('錯誤', '儲存設定失敗', 'error');
         }
@@ -240,7 +240,7 @@ window.handleMemberUpdateSubmit = async function(e) {
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, sheetId: window.currentUser.sheetId }) });
         const json = await res.json();
         if (json.success) { 
-            Swal.fire({ icon: 'success', title: '權限已更新', timer: 1500, showConfirmButton: false });
+            // Swal.fire success removed as per user request
             switchSubView('permissions', 'list'); 
             fetchMembers(); 
         } else {
@@ -299,7 +299,7 @@ const PERM_DEFINITIONS = [
     ]}
 ];
 
-const ROLES = ['管理者', '副帳號', '主帳號'];
+const ROLES = ['管理者', '主帳號', '副帳號'];
 
 async function fetchRolePermissions() {
     try {
@@ -390,7 +390,7 @@ window.saveRolePermissions = async function() {
         const json = await res.json();
         if (json.success) {
             window.rolePermissionsCache = matrix;
-            Swal.fire({ icon: 'success', title: '權限設定已更新', text: '變更將在使用者下次登入時生效', timer: 2000, showConfirmButton: false });
+            // Swal.fire success removed as per user request
         } else {
             Swal.fire('錯誤', '存檔失敗', 'error');
         }

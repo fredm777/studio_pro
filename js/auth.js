@@ -143,7 +143,7 @@ window.handleLogin = async function(e) {
             window.currentUser = json.user;
             localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
             enterApp();
-            Swal.fire({ icon: 'success', title: '登入成功', text: `歡迎回來，${window.currentUser.nickname || window.currentUser.username}`, timer: 1500, showConfirmButton: false });
+            // Swal.fire success removed as per user request
         } else if (loginErr) {
             loginErr.innerText = json.error || '帳號或密碼錯誤';
             loginErr.classList.add('active');
@@ -232,9 +232,23 @@ window.handleVerify = async function (e) {
         const json = await res.json();
         if (json.success) {
             if (window.verifyContext === 'register') {
-                Swal.fire({ icon: 'success', title: '驗證成功', text: '帳號已啟用，請由管理員審核級別後即可使用。', confirmButtonText: '確定' }).then(() => switchAuthStage('login'));
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: '驗證成功', 
+                    text: '帳號已啟用，請由管理員審核級別後即可使用。系統將自動跳轉至登入頁面...', 
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: true,
+                    confirmButtonText: '立即跳轉' 
+                }).then(() => switchAuthStage('login'));
             } else {
-                Swal.fire({ icon: 'success', title: '密碼重設成功', text: `您的新密碼為: ${json.tempPassword}\n請登入後立即修改密碼。`, confirmButtonText: '確定' }).then(() => switchAuthStage('login'));
+                // 密碼重設需要看到暫時密碼，所以不自動跳轉
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: '密碼重設成功', 
+                    text: `您的新密碼為: ${json.tempPassword}\n請記下此密碼並於登入後立即修改。`, 
+                    confirmButtonText: '確定' 
+                }).then(() => switchAuthStage('login'));
             }
         } else if (errEl) {
             errEl.innerText = json.error || '驗證碼錯誤';
@@ -262,6 +276,40 @@ window.checkAvailability = async function (type, val) {
         }
     } catch (e) { }
 }
+
+window.loginViaLine = async function () {
+    setSyncStatus(true);
+    try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+            liff.login({ redirectUri: window.location.origin + window.location.pathname });
+        } else {
+            await handleLiffLogin();
+        }
+    } catch (e) {
+        console.error("LIFF Login Init Error:", e);
+        Swal.fire('錯誤', '無法啟動 LINE 登入模組', 'error');
+    } finally {
+        setSyncStatus(false);
+    }
+};
+
+window.loginViaLine = async function () {
+    setSyncStatus(true);
+    try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+            liff.login({ redirectUri: window.location.origin + window.location.pathname });
+        } else {
+            await handleLiffLogin();
+        }
+    } catch (e) {
+        console.error("LIFF Login Init Error:", e);
+        Swal.fire('錯誤', '無法啟動 LINE 登入模組', 'error');
+    } finally {
+        setSyncStatus(false);
+    }
+};
 
 window.startLiffBinding = async function () {
     if (!window.currentUser) return;
@@ -313,9 +361,14 @@ async function handleLiffBinding() {
     if (json.success) {
         window.currentUser = json.user;
         localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
-        enterApp();
+        
+        // If we are already in the app, just update the UI
+        if (document.getElementById('app').classList.contains('hidden')) {
+            enterApp();
+        }
+        
         window.openProfileModal();
-        Swal.fire({ icon: 'success', title: 'LINE 綁定成功', timer: 1500 });
+        // No Swal notification as per user request
     } else Swal.fire('失敗', json.error, 'error');
 }
 
@@ -399,8 +452,8 @@ window.handleProfileUpdateSubmit = async function (e) {
             window.currentUser = json.user; localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
             const displayEl = document.getElementById('displayUser');
             if (displayEl) displayEl.innerText = window.currentUser.nickname || window.currentUser.username;
-            Swal.fire({ icon: 'success', title: '資料已更新', timer: 1500, showConfirmButton: false });
             window.closeModal('profileModal');
+            // Swal.fire success removed as per user request
             // Trigger global data refresh for all modules
             if (typeof window.fetchCustomers === 'function') window.fetchCustomers();
             if (typeof window.fetchProjects === 'function') window.fetchProjects();
@@ -459,7 +512,7 @@ window.unbindSocialAccount = async function (type) {
                 window.currentUser = json.user;
                 localStorage.setItem('st_pro_session', JSON.stringify(window.currentUser));
                 window.openProfileModal();
-                Swal.fire({ icon: 'success', title: '已解除綁定', timer: 1500, showConfirmButton: false });
+                // Swal.fire success removed as per user request
             } else {
                 Swal.fire('失敗', json.error, 'error');
             }

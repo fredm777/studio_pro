@@ -288,6 +288,7 @@
                 <form id="verifyForm">
                     <div class="form-group">
                         <input type="text" id="vCodeInput" required maxlength="6"
+                            oninput="if(this.value.length === 6) document.getElementById('verifyForm').requestSubmit()"
                             style="text-align: center; font-size: 2.5rem; letter-spacing: 0.5rem; height: 80px;">
                     </div>
                     <div id="verifyError" class="auth-error-inline" style="margin-bottom: 1rem; margin-top: 0.5rem;">
@@ -605,8 +606,8 @@
                                     <tr>
                                         <th style="text-align: left; background: #f8fafc;"></th>
                                         <th style="text-align: center; color: var(--primary);">管理者</th>
-                                        <th style="text-align: center; color: #6366f1;">操作人員</th>
-                                        <th style="text-align: center; color: #64748b;">客戶</th>
+                                        <th style="text-align: center; color: #64748b;">主帳號</th>
+                                        <th style="text-align: center; color: #6366f1;">副帳號</th>
                                     </tr>
                                 </thead>
                                 <tbody id="permissionMatrixBody">
@@ -1291,11 +1292,6 @@
         <script src="js/tasks.js?v=2.2.0"></script>
         <script src="js/admin.js?v=2.2.0"></script>
         <script src="js/main.js?v=2.2.0"></script>
-</body>
-
-</html>
-<script src="js/admin.js?v=2.2.0"></script>
-<script src="js/main.js?v=2.2.0"></script>
 </body>
 
 </html>
