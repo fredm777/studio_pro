@@ -28,6 +28,7 @@ window.fetchCustomers = async function() {
             window.allCustomers = json.data || []; 
             window.currentFilteredCustomers = [...window.allCustomers];
             window.renderCustomers(); 
+            if (typeof window.filterTasksByProject === 'function') window.filterTasksByProject();
         } else {
             // Display backend error (e.g. "Please fill in Spreadsheet ID")
             Swal.fire({

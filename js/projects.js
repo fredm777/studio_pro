@@ -159,6 +159,7 @@ window.fetchProjects = async function() {
             window.currentFilteredProjects = [...window.allProjects];
             window.renderProjects();
             if (typeof updateTaskProjectFilter === 'function') updateTaskProjectFilter();
+            if (typeof filterTasksByProject === 'function') filterTasksByProject();
         } else {
             Swal.fire({
                 title: '資料讀取受阻',

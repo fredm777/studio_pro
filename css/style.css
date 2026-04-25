@@ -312,7 +312,7 @@ textarea::-webkit-resizer {
 }
 
 .auth-header .logo-big {
-    color: var(--primary);
+    color: #667A8E;
     font-size: 1.25rem;
     font-weight: 800;
     margin-bottom: 0.5rem;
@@ -596,43 +596,82 @@ textarea:focus {
 }
 
 /* Dashboard UI */
-header {
-    background: transparent;
-    padding: 0.75rem 1.5rem;
-    border-bottom: none;
-    display: flex;
-    justify-content: center;
+.sticky-nav-container {
     position: sticky;
     top: 0;
     z-index: 1200;
+}
+
+.sticky-nav-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* 76 (header height) + 30 (extension) = 106px */
+    height: 106px;
+    background: rgba(255, 255, 255, 0.01);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    pointer-events: none;
+    z-index: -1;
+    mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+}
+
+header {
+    background: transparent;
+    padding: 0.75rem 1.5rem;
+    height: 76px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 1201;
 }
 
 .header-content {
     width: 100%;
     max-width: 1400px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Center the whole group */
+    align-items: center;
+    gap: 12px; /* Fixed interval 12px */
+    position: relative;
+    padding: 12px 0;
+}
+
+.brand {
+    display: flex;
     align-items: center;
 }
 
+.user-nav-segmented {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 6px; /* Restored to backup spec */
+    border-radius: 12px;
+    gap: 4px;
+    border: 1px solid #f1f5f9;
+    position: relative;
+    z-index: 10;
+}
+
+/* Fix icons inside sticky container - only for specific buttons */
+.user-nav-btn img, 
+.user-nav-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
 .brand h1 {
-    color: var(--primary);
+    color: #667A8E;
     font-weight: 800;
     font-size: 1.1rem;
     letter-spacing: -0.01em;
 }
 
-.user-nav-segmented {
-    display: flex;
-    background: white;
-    padding: 6px;
-    border-radius: 10px;
-    gap: 4px;
-    border: 1px solid #f1f5f9;
-    /* Flat border instead of shadow */
-    position: relative;
-    align-items: center;
-}
 
 .user-nav-btn {
     width: 40px;
@@ -651,8 +690,8 @@ header {
 
 .user-nav-btn svg,
 .user-nav-btn img {
-    width: 22px;
-    height: 22px;
+    width: 22px !important;
+    height: 22px !important;
     /* Slate Blue: #667A8E */
     filter: invert(48%) sepia(13%) saturate(1005%) hue-rotate(171deg) brightness(95%) contrast(89%);
     transition: all 0.3s ease;
@@ -660,8 +699,8 @@ header {
 
 .user-nav-slider {
     position: absolute;
-    top: 6px;
-    left: 6px;
+    top: 6px; /* Restored to backup spec */
+    left: 6px; /* Restored to backup spec */
     width: 40px;
     height: 40px;
     background: #F1F5F9;
@@ -669,16 +708,16 @@ header {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
     opacity: 0;
     pointer-events: none;
+    z-index: 0;
 }
 
-.user-nav-segmented:has(#userInfoTrigger:hover) .user-nav-slider {
+#userInfoTrigger:hover ~ .user-nav-slider {
     transform: translateX(0);
     opacity: 1;
 }
 
-.user-nav-segmented:has(#logoutBtn:hover) .user-nav-slider {
-    transform: translateX(44px);
-    /* 40px width + 4px gap */
+#logoutBtn:hover ~ .user-nav-slider {
+    transform: translateX(44px); /* 40px width + 4px gap */
     opacity: 1;
 }
 
@@ -701,8 +740,6 @@ header {
 }
 
 .sub-nav-bar {
-    position: sticky;
-    top: 0;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -711,30 +748,8 @@ header {
     align-items: center;
     height: 54px;
     margin-bottom: 12px;
-    z-index: 1100;
-}
-
-.sub-nav-bar::before {
-    content: "";
-    position: absolute;
-    /* Top edge matches window top, bottom edge is 40px lower than navbar */
-    top: 0;
-    bottom: -40px;
-    left: 0;
-    right: 0;
-    
-    /* Colorless but with a tiny hint of alpha to trigger browser rendering */
-    background: rgba(255, 255, 255, 0.01);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: -1;
-
-    /* Soft edge without heavy clipping */
-    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    position: relative;
+    z-index: 1201;
 }
 
 .sub-nav-content {
@@ -743,9 +758,7 @@ header {
     padding: 0 1.5rem;
     display: flex;
     justify-content: center;
-    /* Center everything together */
     gap: 12px;
-    /* 12px gap between Tabs and User Actions */
     height: 100%;
     position: relative;
 }
@@ -753,15 +766,13 @@ header {
 .tabs {
     display: flex;
     background: white;
-    padding: 6px;
-    border-radius: 10px;
+    padding: 6px; /* Restored to backup spec */
+    border-radius: 12px;
     gap: 4px;
     border: 1px solid #f1f5f9;
-    /* Flat border instead of shadow */
-    margin: 0;
-    /* Let parent handle centering */
     align-items: center;
     position: relative;
+    z-index: 10;
 }
 
 .card-actions-row {
@@ -771,10 +782,7 @@ header {
     align-items: center;
     gap: 12px;
     width: 100%;
-    height: 48px;
-    /* Standardize height */
-    margin-bottom: 12px;
-    /* Precise 12px gap to table area */
+    margin-bottom: 2rem;
     z-index: 100;
 }
 
@@ -866,10 +874,10 @@ header {
 
 .tabs-slider {
     position: absolute;
-    top: 6px;
-    left: 6px;
-    width: 90px;
-    height: calc(100% - 12px);
+    top: 6px; /* Restored to backup spec */
+    left: 6px; /* Restored to backup spec */
+    width: 80px;
+    height: 40px;
     background: #f1f5f9;
     border-radius: 8px;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -877,34 +885,37 @@ header {
     pointer-events: none;
 }
 
-.tabs:has(#customersTabBtn.active) .tabs-slider {
+.tab-link[data-tab="customers"].active ~ .tabs-slider {
     transform: translateX(0);
 }
 
-.tabs:has(#projectsTabBtn.active) .tabs-slider {
-    transform: translateX(94px);
+.tab-link[data-tab="projects"].active ~ .tabs-slider {
+    transform: translateX(84px);
 }
 
-.tabs:has(#tasksTabBtn.active) .tabs-slider {
-    transform: translateX(188px);
+.tab-link[data-tab="tasks"].active ~ .tabs-slider {
+    transform: translateX(168px);
 }
 
-.tabs:has(#customersTabBtn:hover) .tabs-slider {
+/* Hover effects using siblings */
+.tab-link[data-tab="customers"]:hover ~ .tabs-slider {
     transform: translateX(0) !important;
 }
 
-.tabs:has(#projectsTabBtn:hover) .tabs-slider {
-    transform: translateX(94px) !important;
+.tab-link[data-tab="projects"]:hover ~ .tabs-slider {
+    transform: translateX(84px) !important;
 }
 
-.tabs:has(#tasksTabBtn:hover) .tabs-slider {
-    transform: translateX(188px) !important;
+.tab-link[data-tab="tasks"]:hover ~ .tabs-slider {
+    transform: translateX(168px) !important;
 }
 
 .tab-link {
-    width: 90px;
-    padding: 10px 0;
-    text-align: center;
+    width: 80px;
+    height: 40px; /* Internal height to fit in 48px container */
+    display: flex;
+    justify-content: center;
+    align-items: center;
     border: none;
     background: transparent;
     border-radius: 8px;

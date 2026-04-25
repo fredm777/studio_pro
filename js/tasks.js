@@ -355,15 +355,17 @@ window.deleteTask = function(taskId) {
 }
 
 window.duplicateTask = async function(taskId) {
-    const src = window.allTasks.find(t => String(t.taskId) === String(taskId));
-    if (!src) return;
+    const srcIndex = window.allTasks.findIndex(t => String(t.taskId) === String(taskId));
+    if (srcIndex === -1) return;
+    const src = window.allTasks[srcIndex];
 
     // Create a new copy with unique ID and no rowIndex yet
+    // Set orderWeight slightly higher than source to appear below it
     const newTask = { 
         ...src, 
         taskId: 'T-' + Date.now(), 
         rowIndex: null, 
-        orderWeight: Date.now(), // Put at top by giving it high weight or unshifting
+        orderWeight: parseFloat(src.orderWeight || 0) + 1, 
         isCompleted: false 
     };
 
@@ -377,9 +379,9 @@ window.duplicateTask = async function(taskId) {
         const json = await res.json();
         if (json.success && json.data) {
             newTask.rowIndex = json.data.rowIndex;
-            window.allTasks.unshift(newTask);
+            // Insert directly after source in memory
+            window.allTasks.splice(srcIndex + 1, 0, newTask);
             window.filterTasksByProject();
-            // Removed notification for smoother UX
         }
     } catch (e) {
         console.error("Duplicate Error:", e);
@@ -387,6 +389,7 @@ window.duplicateTask = async function(taskId) {
         setSyncStatus(false);
     }
 }
+
 
 window.addTaskInline = function() {
     if (!window.hasPermission('task_c')) return Toast.fire({ icon: 'warning', title: '無新增任務權限' });

@@ -121,32 +121,26 @@
 
                 <div id="profAdminSection">
                     <div class="compact-nav-grid"
-                        style="margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <!-- Left Column -->
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div id="cardBankSettings" class="nav-shortcut-card"
-                                onclick="routeFromProfile('settings', 'bankSettingsView')" style="width: 100%;">
-                                <img src="assets/icons/credit-card.svg" alt="card">
-                                <span>收款帳號</span>
-                            </div>
-                            <div id="cardNoteSettings" class="nav-shortcut-card"
-                                onclick="routeFromProfile('settings', 'workflowSettingsView')" style="width: 100%;">
-                                <img src="assets/icons/process.svg" alt="process">
-                                <span>報價單備註</span>
-                            </div>
+                        style="margin-top: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                        <div id="cardBankSettings" class="nav-shortcut-card"
+                            onclick="routeFromProfile('settings', 'bankSettingsView')">
+                            <img src="assets/icons/credit-card.svg" alt="card">
+                            <span>帳號</span>
                         </div>
-                        <!-- Right Column -->
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div id="cardUserAdmin" class="nav-shortcut-card"
-                                onclick="routeFromProfile('permissions', 'permissionsListView')" style="width: 100%;">
-                                <img src="assets/icons/users.svg" alt="users">
-                                <span>使用者管理</span>
-                            </div>
-                            <div id="cardPermAdmin" class="nav-shortcut-card"
-                                onclick="routeFromProfile('permissions', 'permissionsMatrixView')" style="width: 100%;">
-                                <img src="assets/icons/star.svg" alt="star">
-                                <span>權限管理</span>
-                            </div>
+                        <div id="cardNoteSettings" class="nav-shortcut-card"
+                            onclick="routeFromProfile('settings', 'workflowSettingsView')">
+                            <img src="assets/icons/process.svg" alt="process">
+                            <span>報價單</span>
+                        </div>
+                        <div id="cardUserAdmin" class="nav-shortcut-card"
+                            onclick="routeFromProfile('permissions', 'permissionsListView')">
+                            <img src="assets/icons/users.svg" alt="users">
+                            <span>使用者</span>
+                        </div>
+                        <div id="cardPermAdmin" class="nav-shortcut-card"
+                            onclick="routeFromProfile('permissions', 'permissionsMatrixView')">
+                            <img src="assets/icons/star.svg" alt="star">
+                            <span>權限</span>
                         </div>
                     </div>
                 </div>
@@ -306,32 +300,37 @@
 
     <!-- Dashboard View (Initially Hidden) -->
     <div id="app" class="hidden">
-        <header>
-            <div class="header-content" style="display: none;">
-                <!-- Content moved to sub-nav-bar -->
-            </div>
-        </header>
+        <div class="sticky-nav-container">
+            <header>
+                <div class="header-content">
+                    <div class="brand">
+                        <h1>Studio Pro</h1>
+                    </div>
 
-        <div class="sub-nav-bar">
-            <div class="sub-nav-content">
-                <nav class="tabs">
-                    <div class="tabs-slider"></div>
-                    <button id="customersTabBtn" class="tab-link active" data-tab="customers">客戶</button>
-                    <button id="projectsTabBtn" class="tab-link" data-tab="projects">專案</button>
-                    <button id="tasksTabBtn" class="tab-link" data-tab="tasks">任務</button>
-                </nav>
+                    <div class="tabs">
+                        <button class="tab-link active" data-tab="customers" onclick="switchToTab('customers')">
+                            <span>客戶</span>
+                        </button>
+                        <button class="tab-link" data-tab="projects" onclick="switchToTab('projects')">
+                            <span>專案</span>
+                        </button>
+                        <button class="tab-link" data-tab="tasks" onclick="switchToTab('tasks')">
+                            <span>任務</span>
+                        </button>
+                        <div class="tabs-slider"></div>
+                    </div>
 
-                <div class="user-nav-segmented">
-                    <div class="user-nav-slider"></div>
-                    <button id="userInfoTrigger" class="user-nav-btn" onclick="openProfileModal()" title="個人設定">
-                        <img src="assets/icons/settings.svg" alt="settings">
-                    </button>
-                    <button id="logoutBtn" class="user-nav-btn" onclick="logout()" title="登出">
-                        <img src="assets/icons/logout.svg" alt="logout">
-                    </button>
+                    <div class="user-nav-segmented">
+                        <button id="userInfoTrigger" class="user-nav-btn" title="使用者資訊">
+                            <img src="assets/icons/settings.svg" alt="settings">
+                        </button>
+                        <button id="logoutBtn" class="user-nav-btn" title="登出系統">
+                            <img src="assets/icons/logout.svg" alt="logout">
+                        </button>
+                        <div class="user-nav-slider"></div>
+                    </div>
                 </div>
-
-            </div>
+            </header>
         </div>
 
         <main>
