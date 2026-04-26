@@ -805,7 +805,7 @@ header {
     align-items: center;
     gap: 12px;
     width: 100%;
-    margin-bottom: 2rem;
+    margin-bottom: 12px;
     z-index: 100;
 }
 
@@ -840,8 +840,11 @@ header {
 
 .card-search-wrapper {
     position: relative;
-    width: 350px;
-    /* Fixed stable width */
+    display: flex;
+    align-items: center;
+    width: auto; /* Let gap handle spacing */
+    flex-shrink: 0;
+    transition: all 0.35s ease;
 }
 
 .nav-search-wrapper {
@@ -1011,44 +1014,48 @@ header {
     z-index: 10;
 }
 
-.card-search-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 360px;
-    /* Increased to accommodate task filters/search info */
-    justify-content: flex-end;
-}
+/* Cleaned up redundant search styles */
 
 .card-search-input {
-    width: 360px;
-    min-width: 360px;
+    width: 100px; /* Base width directly on input */
     height: 48px;
-    background: #F1F5F9;
-    border: none;
-    border-radius: 10px;
-    padding: 0 42px 0 18px;
+    background: white;
+    border: 1.5px solid #ade4b8;
+    border-radius: 12px;
+    padding: 0;
+    text-align: center;
     font-size: 0.9375rem;
     font-weight: 500;
-    color: rgba(102, 122, 142, 0.5);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-search-input::placeholder {
-    color: rgba(102, 122, 142, 0.5);
-}
-
-.card-search-input:hover {
-    background: #eef2f6;
+    color: var(--text-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-search-input:focus {
-    background: white;
-    border: 1.5px solid var(--primary);
-    box-shadow: 0 0 0 5px var(--primary-30);
-    outline: none;
-    color: var(--text-dark);
+    width: 200px; /* Expand input directly */
 }
+
+.card-search-input:hover {
+    border-color: #0085FF;
+    background: white;
+}
+
+/* Ensure focus overrides everything */
+.card-search-input:focus,
+.card-search-wrapper:focus-within .card-search-input {
+    background: white !important;
+    border: 1.5px solid var(--primary-green) !important;
+    box-shadow: 0 0 0 5px rgba(74, 222, 128, 0.15) !important;
+    outline: none !important;
+    padding: 0 35px 0 12px;
+    text-align: left;
+    width: 200px;
+}
+
+.card-search-input::-webkit-input-placeholder { color: transparent !important; }
+.card-search-input::-moz-placeholder { color: transparent !important; }
+.card-search-input:-ms-input-placeholder { color: transparent !important; }
+.card-search-input::placeholder { color: transparent !important; }
 
 .card-search-icon {
     position: absolute;
@@ -1128,7 +1135,7 @@ main {
 
 .grid-container {
     background: white;
-    border-radius: 10px;
+    border-radius: var(--radius-xl) !important;
     border: 1.5px solid var(--border);
     overflow: auto;
     box-shadow: var(--shadow-sm);
@@ -1167,7 +1174,7 @@ td {
 
 .table-container {
     background: white;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-xl) !important;
     border: 1.5px solid var(--border);
     overflow-x: auto;
     /* Premium horizontal scroll */
@@ -1223,7 +1230,7 @@ tbody tr:hover {
 
 .modal-card {
     background: white;
-    border-radius: 10px !important;
+    border-radius: var(--radius-xl) !important;
     box-shadow: var(--card-shadow);
     padding: 2.5rem;
     width: 100%;
@@ -1296,7 +1303,7 @@ tbody tr:hover {
 /* Tasks Container (Matches .grid-container precisely in Shadow and Radius) */
 .tasks-container {
     background: white;
-    border-radius: 10px;
+    border-radius: var(--radius-xl);
     padding: var(--spacing-modal);
     box-shadow: var(--shadow-sm);
     border: 1.5px solid var(--border);
@@ -2047,11 +2054,14 @@ tbody tr:hover {
     /* Hide all main UI elements */
     #login-screen,
     .app-header,
+    header,
+    .sticky-nav-container,
     #nav-bar,
     .sub-nav-bar,
     .app-header-right,
     #syncProgressBar,
-    #syncBadge {
+    #syncBadge,
+    .print-controls {
         display: none !important;
     }
 
@@ -2085,15 +2095,7 @@ tbody tr:hover {
         width: 100% !important;
     }
 
-    #quotePrintArea {
-        display: block !important;
-        visibility: visible !important;
-    }
-
-    #qPrintStatus {
-        display: inline-block !important;
-    }
-
+    /* Hide the view header in editor */
     #projectsEditView .view-header {
         display: none !important;
     }
@@ -2103,7 +2105,7 @@ tbody tr:hover {
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
-        max-width: none !important; /* Break the 800px limit */
+        max-width: none !important;
         width: 100% !important;
     }
 
@@ -2116,7 +2118,7 @@ tbody tr:hover {
     }
 
     @page {
-        size: auto; /* Allow browser to show orientation/size selects */
+        size: auto;
         margin: 0.5cm !important;
     }
 
@@ -2133,23 +2135,39 @@ tbody tr:hover {
         padding: 0 !important;
         background: white !important;
         width: 100% !important;
-        min-height: 100vh !important; /* Fill full page height */
+        min-height: 100vh !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
     }
 
-    #quotePrintArea {
-        width: 100% !important;
+    /* Hide input noise in print */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=date]::-webkit-calendar-picker-indicator {
+        display: none !important;
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox specific spinner removal */
+    input[type=number] {
+        -moz-appearance: textfield !important;
+    }
+
+    .quote-sheet-wrapper {
+        font-size: 10pt !important;
+        line-height: 1.5;
         margin: 0 !important;
-        padding: 0 !important;
-        background: white !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
         visibility: visible !important;
         display: block !important;
     }
 
-    #quotePrintArea * {
+    .quote-sheet-wrapper * {
         visibility: visible !important;
     }
 
@@ -2171,13 +2189,13 @@ tbody tr:hover {
     }
 
     .info-box, .remark-box, .price-box {
-        min-height: 45mm !important; /* Rigid height */
+        min-height: auto !important; /* Remove rigid 45mm */
         border: 1px solid var(--text-dark) !important;
-        padding: 3mm !important;
+        padding: 4mm 3mm !important;
     }
 
     .quote-body-table {
-        min-height: 120mm !important; /* Locked main area */
+        min-height: auto !important; /* Remove rigid 120mm */
     }
 
     /* Input/Textarea cleanup for print */
@@ -2259,7 +2277,7 @@ tbody tr:hover {
     background: white;
     padding: 4px;
     border-radius: 12px;
-    margin-right: 1rem;
+    margin-right: 0;
     border: none;
     align-items: center;
 }

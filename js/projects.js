@@ -724,6 +724,15 @@ window.autoExpandTextarea = function(el) {
     el.style.height = (el.scrollHeight) + 'px';
 };
 
+// Listen for window resize to fix height on text wrapping
+window.addEventListener('resize', () => {
+    const editView = document.getElementById('projectsEditView');
+    if (editView && editView.classList.contains('active')) {
+        const textareas = editView.querySelectorAll('textarea');
+        textareas.forEach(ta => window.autoExpandTextarea(ta));
+    }
+});
+
 function addQuotationRow(data = null) {
     const tbody = document.getElementById('quotationItemsBody');
     if (!tbody) return;
@@ -1176,3 +1185,21 @@ window.selectQuotationCustomer = function(id, isInit = false) {
     
     console.log(">> [SUCCESS] Imported Customer Info for:", displayName);
 };
+
+/**
+ * Keyboard Shortcuts Binding
+ */
+window.addEventListener('keydown', (e) => {
+    // Check if we are in the Quotation Editor View
+    const editView = document.getElementById('projectsEditView');
+    if (editView && editView.style.display !== 'none') {
+        // Bind Cmd+P or Ctrl+P to customized preparePrint()
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            console.log(">> Custom Print Shortcut Triggered");
+            if (typeof window.preparePrint === 'function') {
+                window.preparePrint();
+            }
+        }
+    }
+});
