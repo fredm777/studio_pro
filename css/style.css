@@ -1172,6 +1172,18 @@ td {
     text-overflow: ellipsis;
 }
 
+/* Ensure full display for Customer and Project names on Desktop */
+#projectTableBody td:nth-child(1),
+#projectTableBody td:nth-child(3) {
+    white-space: normal !important;
+    text-overflow: initial !important;
+    overflow: visible !important;
+    min-width: 200px;
+    line-height: 1.5;
+    padding: 1.25rem 1rem !important;
+}
+
+
 .table-container {
     background: white;
     border-radius: var(--radius-xl) !important;
@@ -3546,9 +3558,9 @@ input[type="date"].task-inline-input {
    FINAL MOBILE OVERRIDES (PRIORITY V3)
    ========================================== */
 @media (max-width: 768px) {
-    /* Requirement 1: Show Studio Pro (Unified with Desktop) */
+    /* Requirement 1: Hide Studio Pro on Mobile */
     .brand, .brand h1, header h1, .logo-big {
-        display: flex !important;
+        display: none !important;
     }
 
     /* Requirement 2 & 3: Tab proportions and User Nav side-by-side */
