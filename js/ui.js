@@ -20,6 +20,13 @@ function initTabs() {
                 section.classList.add('active');
             }
 
+            // Update URL hash without jumping
+            if (history.pushState) {
+                history.pushState(null, null, '#' + tabId);
+            } else {
+                window.location.hash = tabId;
+            }
+
             // Section-specific logic
             if (tabId === 'permissions') {
                 fetchMembers();
@@ -52,16 +59,21 @@ window.switchToTab = function (tabId, sectionId = null) {
             setTimeout(() => {
                 const target = document.getElementById(sectionId);
                 if (target) {
+                    // For settings/permissions sub-tabs
+                    if (target.classList.contains('admin-sub-tab') || target.classList.contains('sub-view-stack')) {
+                        document.querySelectorAll('.admin-sub-tab, .sub-view-stack').forEach(s => s.classList.remove('active'));
+                        target.classList.add('active');
+                    }
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    // Highlight the section briefly
-                    target.style.transition = 'background-color 0.5s';
-                    const originalBg = target.style.backgroundColor;
-                    target.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
-                    setTimeout(() => target.style.backgroundColor = originalBg, 2000);
                 }
             }, 200);
         }
     }
+};
+
+window.routeFromProfile = function(tabId, sectionId) {
+    if (typeof window.closeAllModals === 'function') window.closeAllModals();
+    window.switchToTab(tabId, sectionId);
 };
 
 
@@ -168,4 +180,45 @@ window.addEventListener('beforeprint', () => {
         el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
     });
+});
+
+// --- Hash Navigation Support ---
+function handleInitialHash() {
+    const hash = window.location.hash.substring(1);
+    if (!hash) return;
+
+    if (hash === 'login') {
+        if (typeof showAuth === 'function') showAuth();
+        return;
+    }
+
+    const hashMapping = {
+        'customers': { tab: 'customers' },
+        'projects': { tab: 'projects' },
+        'tasks': { tab: 'tasks' },
+        'settings': { tab: 'settings' },
+        'permissions': { tab: 'permissions' },
+        'bankaccount': { tab: 'settings', section: 'bankSettingsView' },
+        'remarks': { tab: 'settings', section: 'workflowSettingsView' },
+        'users': { tab: 'permissions' },
+        'permission': { tab: 'permissions', section: 'permissionsMatrixView' }
+    };
+
+    const route = hashMapping[hash];
+    if (route) {
+        window.switchToTab(route.tab, route.section);
+    }
+}
+
+// Global initialization
+window.addEventListener('DOMContentLoaded', () => {
+    handleInitialHash();
+});
+
+window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.substring(1);
+    const activeTab = document.querySelector('.tab-link.active');
+    if (hash && hash !== activeTab?.dataset.tab) {
+        handleInitialHash();
+    }
 });

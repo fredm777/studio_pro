@@ -316,8 +316,16 @@ window.renderProjects = function() {
     if (info) info.innerText = `第 ${window.projectPage} / ${totalPages || 1} 頁 (共 ${window.currentFilteredProjects.length} 筆)`;
 
     pagedEntries.forEach(proj => {
+        const truncate = (str, len = 5) => {
+            if (!str) return '';
+            return str.length > len ? str.substring(0, len) + '...' : str;
+        };
+
         const cust = window.allCustomers ? window.allCustomers.find(c => c.customerId === proj.customerId) : null;
-        const custDisp = cust ? (cust.companyName || cust.nickname) : proj.customerId;
+        const custDispRaw = cust ? (cust.companyName || cust.nickname) : proj.customerId;
+        const custDisp = truncate(custDispRaw);
+        const projNameDisp = truncate(proj.projectName || '');
+
         const dateStr = proj.date || '';
         const totalDisp = proj.total ? Number(proj.total).toLocaleString() : '0';
         const depositDisp = proj.depositPaid ? Number(proj.depositPaid).toLocaleString() : '0';
@@ -326,9 +334,9 @@ window.renderProjects = function() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${custDisp}</td>
+            <td><span class="truncate-5" title="${custDispRaw}">${custDisp}</span></td>
             <td>${dateStr}</td>
-            <td>${proj.projectName || ''}</td>
+            <td><span class="truncate-5" title="${proj.projectName || ''}">${projNameDisp}</span></td>
             <td>${proj.pic || ''}</td>
             <td style="color:var(--text-muted);">$${depositDisp}</td>
             <td style="${balanceStyle}">$${balanceDisp}</td>
@@ -347,6 +355,17 @@ window.renderProjects = function() {
 }
 
 window.showQuotationEditor = function(title, data = null) {
+    // Mobile Reminder
+    if (window.innerWidth <= 768) {
+        Swal.fire({
+            title: '溫馨提示',
+            text: '建議使用電腦瀏覽器進行編輯與輸出，以獲得最佳體驗與排版效果。',
+            icon: 'info',
+            confirmButtonText: '知道了',
+            confirmButtonColor: '#667A8E'
+        });
+    }
+
     if (typeof switchSubView === 'function') switchSubView('projects', 'edit');
     const form = document.getElementById('quotationForm');
     if (form) form.reset();
