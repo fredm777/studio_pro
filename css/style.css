@@ -1321,6 +1321,10 @@ tbody tr:hover {
     margin: 0 auto;
 }
 
+.autocomplete-container {
+    position: relative;
+}
+
 /* Autocomplete Dropdown - Premium Style */
 .task-autocomplete-dropdown {
     position: absolute;
@@ -3372,6 +3376,26 @@ input[type="date"].task-inline-input {
 .task-col-content { flex: 1; min-width: 0; }
 .task-col-actions { width: 110px; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 8px; }
 
+/* Drag & Drop Cursor Logic */
+#taskList.is-draggable .task-item {
+    cursor: grab;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+#taskList.is-draggable .task-item:active {
+    cursor: grabbing;
+}
+
+#taskList.is-draggable .task-item:hover {
+    background-color: #f8fafc !important;
+}
+
+#taskList.is-draggable .task-item input,
+#taskList.is-draggable .task-item button,
+#taskList.is-draggable .task-item .task-date-display {
+    cursor: default;
+}
+
 /* Override Header Button Widths */
 .task-header-btn.task-drag-handle-header { width: 32px; }
 .task-header-btn.task-project-header { width: 180px; }
@@ -3522,16 +3546,16 @@ input[type="date"].task-inline-input {
    FINAL MOBILE OVERRIDES (PRIORITY V3)
    ========================================== */
 @media (max-width: 768px) {
-    /* Requirement 1: Hide Studio Pro */
+    /* Requirement 1: Show Studio Pro (Unified with Desktop) */
     .brand, .brand h1, header h1, .logo-big {
-        display: none !important;
+        display: flex !important;
     }
 
     /* Requirement 2 & 3: Tab proportions and User Nav side-by-side */
     header {
         padding: 6px 12px !important;
         height: auto !important;
-        background: white !important;
+        background: transparent !important;
     }
 
     .header-content {
@@ -3548,10 +3572,11 @@ input[type="date"].task-inline-input {
         flex: 1 !important;
         margin: 0 !important;
         display: flex !important;
-        background: #f1f5f9 !important;
+        background: white !important;
         padding: 6px !important; /* Standard padding */
         gap: 4px !important;
         border-radius: 12px !important;
+        border: 1px solid #f1f5f9 !important;
         width: auto !important;
         position: relative !important;
     }
@@ -3572,8 +3597,8 @@ input[type="date"].task-inline-input {
         height: 36px !important;
         top: 6px !important;
         left: 6px !important;
-        background: white !important; /* Visible color */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        background: #f1f5f9 !important; /* Unified Slider color */
+        box-shadow: none !important;
         display: block !important;
     }
 
@@ -3585,8 +3610,9 @@ input[type="date"].task-inline-input {
         margin: 0 !important;
         padding: 6px !important;
         gap: 4px !important;
-        background: #f1f5f9 !important;
+        background: white !important;
         border-radius: 12px !important;
+        border: 1px solid #f1f5f9 !important;
         display: flex !important;
         position: relative !important;
     }
@@ -3602,7 +3628,7 @@ input[type="date"].task-inline-input {
         height: 36px !important;
         top: 6px !important;
         left: 6px !important;
-        background: white !important;
+        background: #f1f5f9 !important;
         opacity: 0;
         display: block !important;
     }
@@ -3629,9 +3655,10 @@ input[type="date"].task-inline-input {
         display: flex !important;
         gap: 4px !important;
         flex-shrink: 0 !important;
-        background: #f1f5f9 !important;
+        background: white !important;
         padding: 4px !important;
         border-radius: 12px !important;
+        border: 1px solid #f1f5f9 !important;
     }
 
     .filter-pill {

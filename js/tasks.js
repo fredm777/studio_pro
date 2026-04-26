@@ -283,10 +283,12 @@ window.renderTasks = function() {
         if (window.taskSortable) window.taskSortable.destroy();
         
         const isDragSort = (window.taskSort.column === 'drag');
+        list.classList.toggle('is-draggable', isDragSort);
         window.taskSortable = new Sortable(list, {
-            handle: '.task-drag-handle',
             animation: 150,
             disabled: !isDragSort,
+            filter: 'input, button, .action-btn-icon', // Prevent drag when clicking inputs or buttons
+            preventOnFilter: false, // Allow interaction with filtered elements
             onStart: () => {
                 if (!isDragSort) return false;
             },
