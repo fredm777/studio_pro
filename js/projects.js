@@ -392,6 +392,7 @@ window.showQuotationEditor = function(title, data = null) {
         if (document.getElementById('qWfDeposit')) document.getElementById('qWfDeposit').value = data.wfDeposit || '';
         if (document.getElementById('qWfDelivery')) document.getElementById('qWfDelivery').value = data.wfDelivery || '';
         if (document.getElementById('qBankData')) document.getElementById('qBankData').value = data.bankData || '';
+        if (document.getElementById('qWfRemark')) document.getElementById('qWfRemark').value = data.remark || '';
         if (document.getElementById('qDepositPaid')) document.getElementById('qDepositPaid').value = data.depositPaid || 0;
         
         const finalStatus = String(data.status || '1');
